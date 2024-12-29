@@ -7,10 +7,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="menu-container">
+        <div class="menu-icon">&#9776;</div>
+        <div class="menu-options">
+            <div class="menu-item" data-difficulty="easy">简单</div>
+            <div class="menu-item" data-difficulty="normal">普通</div>
+            <div class="menu-item" data-difficulty="hard">困难</div>
+        </div>
+    </div>
     <h1>五子棋游戏</h1>
     <div id="game-board"></div>
     <div id="winner-message"></div>
     <button id="reset-btn">重新开始</button>
+    <div id="confirm-dialog" class="dialog">
+        <div class="dialog-content">
+            <p id="confirm-message"></p>
+            <div class="dialog-buttons">
+                <button id="confirm-yes">是</button>
+                <button id="confirm-no">否</button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

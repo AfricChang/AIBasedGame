@@ -2,6 +2,59 @@ const boardSize = 15;
 let board = [];
 let currentPlayer = 'black';
 let gameOver = false;
+let difficulty = 'normal'; // 默认难度
+
+// 菜单交互
+const menuIcon = document.querySelector('.menu-icon');
+const menuOptions = document.querySelector('.menu-options');
+
+// 显示/隐藏菜单
+menuIcon.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menuOptions.style.display = menuOptions.style.display === 'block' ? 'none' : 'block';
+});
+
+// 点击其他地方隐藏菜单
+document.addEventListener('click', () => {
+    menuOptions.style.display = 'none';
+});
+
+// 处理难度选择
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newDifficulty = item.dataset.difficulty;
+        // 检查棋盘是否为空
+        const isBoardEmpty = board.every(row => row.every(cell => cell === null));
+        
+        if (isBoardEmpty) {
+            // 如果棋盘为空，直接切换难度
+            difficulty = newDifficulty;
+            menuOptions.style.display = 'none';
+        } else {
+            // 如果棋盘不为空，弹出确认对话框
+            showConfirmDialog(`已选择${newDifficulty}难度，是否重新开始游戏？`, () => {
+                difficulty = newDifficulty;
+                menuOptions.style.display = 'none';
+                initBoard();
+            });
+        }
+    });
+});
+
+// 根据难度调整AI策略
+function getAIDifficultyMultiplier() {
+    switch (difficulty) {
+        case 'easy':
+            return 0.5; // 降低AI评分权重
+        case 'normal':
+            return 1;
+        case 'hard':
+            return 2; // 提高AI评分权重
+        default:
+            return 1;
+    }
+}
 
 // 计算某个位置的得分
 function calculateScore(row, col, player) {
@@ -66,7 +119,7 @@ function aiMove() {
                 const defenseScore = calculateScore(i, j, 'black');
                 // 计算进攻得分（自己连子）
                 const offenseScore = calculateScore(i, j, 'white');
-                const totalScore = defenseScore * 2 + offenseScore;  // 更注重防守
+                const totalScore = (defenseScore * 2 + offenseScore) * getAIDifficultyMultiplier();
                 
                 if (totalScore > bestScore) {
                     bestScore = totalScore;
@@ -191,6 +244,38 @@ document.getElementById('reset-btn').addEventListener('click', () => {
         winnerMessage.style.display = 'none';
     }
 });
+
+// 显示确认对话框
+function showConfirmDialog(message, confirmCallback) {
+    const dialog = document.getElementById('confirm-dialog');
+    const messageElement = document.getElementById('confirm-message');
+    const yesButton = document.getElementById('confirm-yes');
+    const noButton = document.getElementById('confirm-no');
+
+    messageElement.textContent = message;
+    dialog.style.display = 'block';
+
+    // 阻止对话框内容区域的点击事件冒泡
+    dialog.querySelector('.dialog-content').addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    const handleResponse = (confirmed) => {
+        dialog.style.display = 'none';
+        if (confirmed && confirmCallback) {
+            confirmCallback();
+        }
+        // 移除旧的事件监听器
+        yesButton.removeEventListener('click', yesHandler);
+        noButton.removeEventListener('click', noHandler);
+    };
+
+    const yesHandler = () => handleResponse(true);
+    const noHandler = () => handleResponse(false);
+
+    yesButton.addEventListener('click', yesHandler);
+    noButton.addEventListener('click', noHandler);
+}
 
 // 初始化游戏
 initBoard();
