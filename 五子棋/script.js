@@ -94,7 +94,14 @@ function placeMove(row, col) {
     
     if (checkWin(row, col)) {
         gameOver = true;
-        alert(`${currentPlayer === 'black' ? '黑棋' : '白棋'}获胜！`);
+        const winner = currentPlayer === 'black' ? '黑棋' : '白棋';
+        const winnerMessage = document.querySelector('#winner-message');
+        if (winnerMessage) {
+            winnerMessage.textContent = `${winner}获胜！`;
+            winnerMessage.style.display = 'block';
+        } else {
+            console.error('未找到获胜提示元素');
+        }
         return;
     }
     
@@ -179,6 +186,10 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     initBoard();
     currentPlayer = 'black';
     gameOver = false;
+    const winnerMessage = document.querySelector('#winner-message');
+    if (winnerMessage) {
+        winnerMessage.style.display = 'none';
+    }
 });
 
 // 初始化游戏

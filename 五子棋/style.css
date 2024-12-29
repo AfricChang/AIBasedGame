@@ -143,6 +143,21 @@ body {
     margin-top: 20px;
 }
 
+#winner-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-size: 36px;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px 40px;
+    border-radius: 10px;
+    z-index: 10;
+    display: none;
+}
+
 #reset-btn:hover {
     background-color: #45a049;
 }
