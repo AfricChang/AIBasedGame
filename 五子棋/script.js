@@ -39,13 +39,13 @@ function calculateScore(row, col, player) {
             y -= dy;
         }
         
-// 根据连子数和开放端评分
-        if (count >= 4) score += 100000;  // 阻止四连
+        // 根据连子数和开放端评分
+        if (count >= 4) score += 1000000;  // 阻止四连
         else if (count === 3) {
-            if (openEnds >= 2) score += 10000;  // 开放三连
-            else if (openEnds >= 1) score += 5000;  // 半开放三连
+            if (openEnds >= 2) score += 100000;  // 开放三连
+            else if (openEnds >= 1) score += 50000;  // 半开放三连
         }
-        else if (count === 2 && openEnds >= 2) score += 1000;  // 开放二连
+        else if (count === 2 && openEnds >= 2) score += 10000;  // 开放二连
     }
     
     return score;
