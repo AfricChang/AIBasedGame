@@ -18,12 +18,10 @@ body {
     grid-template-columns: repeat(15, 1fr);
     grid-template-rows: repeat(15, 1fr);
     gap: 1px;
-    width: min(85vmin, 85vh);
-    height: min(85vmin, 85vh);
+    width: min(85vw, 85vh, min(100vw, 100vh) - 60px);
+    height: min(85vw, 85vh, min(100vw, 100vh) - 60px);
     min-width: 300px;
     min-height: 300px;
-    max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 180px);
     aspect-ratio: 1/1;
     background-color: #d2b48c;
     padding: 5px;
