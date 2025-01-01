@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直棋游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>直棋游戏</h1>
+        <div class="game-status">
+            <div class="player-info">
+                <div class="player player1-info">
+                    <span class="player-name">玩家一</span>
+                    <span class="piece-count"></span>
+                </div>
+                <div class="player player2-info">
+                    <span class="player-name">玩家二</span>
+                    <span class="piece-count"></span>
+                </div>
+            </div>
+            <div class="game-phase">
+                <span class="phase-text">放置阶段</span>
+                <span class="current-player">当前回合: 玩家一</span>
+            </div>
+        </div>
+        
+        <div class="board">
+            <div class="connecting-line"></div>
+            <div class="connecting-line-bottom"></div>
+            <div class="connecting-line-left-top"></div>
+            <div class="connecting-line-left-bottom"></div>
+            <div class="connecting-line-top-mid"></div>
+            <div class="connecting-line-right-mid"></div>
+            <div class="connecting-line-bottom-mid"></div>
+            <div class="connecting-line-left-mid"></div>
+            <div class="inner-square"></div>
+            <!-- 落子点 -->
+            <div class="points">
+                <!-- 外圈点 -->
+                <div class="point" data-index="0"></div>
+                <div class="point" data-index="1"></div>
+                <div class="point" data-index="2"></div>
+                <div class="point" data-index="3"></div>
+                <div class="point" data-index="4"></div>
+                <div class="point" data-index="5"></div>
+                <div class="point" data-index="6"></div>
+                <div class="point" data-index="7"></div>
+                <!-- 中圈点 -->
+                <div class="point" data-index="8"></div>
+                <div class="point" data-index="9"></div>
+                <div class="point" data-index="10"></div>
+                <div class="point" data-index="11"></div>
+                <div class="point" data-index="12"></div>
+                <div class="point" data-index="13"></div>
+                <div class="point" data-index="14"></div>
+                <div class="point" data-index="15"></div>
+                <!-- 内圈点 -->
+                <div class="point" data-index="16"></div>
+                <div class="point" data-index="17"></div>
+                <div class="point" data-index="18"></div>
+                <div class="point" data-index="19"></div>
+                <div class="point" data-index="20"></div>
+                <div class="point" data-index="21"></div>
+                <div class="point" data-index="22"></div>
+                <div class="point" data-index="23"></div>
+            </div>
+        </div>
+        <button id="resetButton" class="reset-button">重新开始</button>
+
+        <!-- 胜利对话框 -->
+        <div id="winDialog" class="dialog">
+            <div class="dialog-content">
+                <h2>游戏结束</h2>
+                <p id="winMessage"></p>
+                <div class="dialog-buttons">
+                    <button id="playAgain" class="dialog-button">再玩一次</button>
+                    <button id="closeDialog" class="dialog-button">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

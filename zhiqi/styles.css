@@ -1,0 +1,462 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.board {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    margin: 15px;
+    background-color: #f4d03f;
+    padding: 15px;
+    --outer-size: calc(100% - 30px);  /* 外层正方形的大小 */
+    --middle-size: 67%;  /* 中间正方形的大小 */
+    --inner-size: 40%;  /* 内层正方形的大小 */
+}
+
+/* 三个正方形的样式 */
+.board::before,
+.board::after {
+    content: '';
+    position: absolute;
+    border: 2px solid #c0392b;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+/* 最外层正方形 */
+.board::before {
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+}
+
+/* 中间正方形 */
+.board::after {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 67%;
+    height: 67%;
+}
+
+/* 内层正方形 */
+.inner-square {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40%;
+    height: 40%;
+    border: 2px solid #c0392b;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+/* 落子点样式 */
+.point {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+.point:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.point.player1 {
+    background-color: #3498db;
+    border: 1px solid #2980b9;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    z-index: 2;
+}
+
+.point.player2 {
+    background-color: #e74c3c;
+    border: 1px solid #c0392b;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+    z-index: 2;
+}
+
+.point[data-index="0"] { top: 20px; left: 20px; }
+.point[data-index="1"] { top: 20px; left: 50%; }
+.point[data-index="2"] { top: 20px; right: 20px; transform: translate(50%, -50%); }
+.point[data-index="3"] { top: 50%; right: 20px; transform: translate(50%, -50%); }
+.point[data-index="4"] { bottom: 20px; right: 20px; transform: translate(50%, 50%); }
+.point[data-index="5"] { bottom: 20px; left: 50%; transform: translate(-50%, 50%); }
+.point[data-index="6"] { bottom: 20px; left: 20px; transform: translate(-50%, 50%); }
+.point[data-index="7"] { top: 50%; left: 20px; }
+
+.point[data-index="8"] { top: calc(50% - 67%/2); left: calc(50% - 67%/2); }
+.point[data-index="9"] { top: calc(50% - 67%/2); left: 50%; }
+.point[data-index="10"] { top: calc(50% - 67%/2); right: calc(50% - 67%/2); transform: translate(50%, -50%); }
+.point[data-index="11"] { top: 50%; right: calc(50% - 67%/2); transform: translate(50%, -50%); }
+.point[data-index="12"] { bottom: calc(50% - 67%/2); right: calc(50% - 67%/2); transform: translate(50%, 50%); }
+.point[data-index="13"] { bottom: calc(50% - 67%/2); left: 50%; transform: translate(-50%, 50%); }
+.point[data-index="14"] { bottom: calc(50% - 67%/2); left: calc(50% - 67%/2); transform: translate(-50%, 50%); }
+.point[data-index="15"] { top: 50%; left: calc(50% - 67%/2); }
+
+.point[data-index="16"] { top: calc(50% - 40%/2); left: calc(50% - 40%/2); }
+.point[data-index="17"] { top: calc(50% - 40%/2); left: 50%; }
+.point[data-index="18"] { top: calc(50% - 40%/2); right: calc(50% - 40%/2); transform: translate(50%, -50%); }
+.point[data-index="19"] { top: 50%; right: calc(50% - 40%/2); transform: translate(50%, -50%); }
+.point[data-index="20"] { bottom: calc(50% - 40%/2); right: calc(50% - 40%/2); transform: translate(50%, 50%); }
+.point[data-index="21"] { bottom: calc(50% - 40%/2); left: 50%; transform: translate(-50%, 50%); }
+.point[data-index="22"] { bottom: calc(50% - 40%/2); left: calc(50% - 40%/2); transform: translate(-50%, 50%); }
+.point[data-index="23"] { top: 50%; left: calc(50% - 40%/2); }
+
+/* 连接线的基础样式 */
+.board .connecting-line,
+.board .connecting-line-bottom,
+.board .connecting-line-left-top,
+.board .connecting-line-left-bottom,
+.board .connecting-line-top-mid,
+.board .connecting-line-right-mid,
+.board .connecting-line-bottom-mid,
+.board .connecting-line-left-mid {
+    z-index: 1;
+}
+
+/* 连接线 - 右上角 */
+.board .connecting-line {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 2px;
+    height: calc(((100% - 40%)/2 - 20px) * 1.414);
+    background-color: #c0392b;
+    transform-origin: top right;
+    transform: rotate(45deg);
+}
+
+.board .connecting-line-2 {
+    position: absolute;
+    top: calc(50% - 67%/2);
+    right: calc((100% - 67%)/2);
+    width: 2px;
+    height: calc(18.5% * 0.95);
+    background-color: #c0392b;
+    transform-origin: top right;
+    transform: rotate(45deg);
+}
+
+/* 连接线 - 左上角 */
+.board .connecting-line-left-top {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 2px;
+    height: calc(((100% - 40%)/2 - 20px) * 1.414);
+    background-color: #c0392b;
+    transform-origin: top left;
+    transform: rotate(-45deg);
+}
+
+.board .connecting-line-left-top-2 {
+    position: absolute;
+    top: calc(50% - 67%/2);
+    left: calc((100% - 67%)/2);
+    width: 2px;
+    height: calc(18.5% * 0.95);
+    background-color: #c0392b;
+    transform-origin: top left;
+    transform: rotate(-45deg);
+}
+
+/* 连接线 - 右下角 */
+.board .connecting-line-bottom {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 2px;
+    height: calc(((100% - 40%)/2 - 20px) * 1.414);
+    background-color: #c0392b;
+    transform-origin: bottom right;
+    transform: rotate(-45deg);
+}
+
+.board .connecting-line-bottom-2 {
+    position: absolute;
+    bottom: calc(50% - 67%/2);
+    right: calc((100% - 67%)/2);
+    width: 2px;
+    height: calc(18.5% * 0.95);
+    background-color: #c0392b;
+    transform-origin: bottom right;
+    transform: rotate(-45deg);
+}
+
+/* 连接线 - 左下角 */
+.board .connecting-line-left-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 2px;
+    height: calc(((100% - 40%)/2 - 20px) * 1.414);
+    background-color: #c0392b;
+    transform-origin: bottom left;
+    transform: rotate(45deg);
+}
+
+.board .connecting-line-left-bottom-2 {
+    position: absolute;
+    bottom: calc(50% - 67%/2);
+    left: calc((100% - 67%)/2);
+    width: 2px;
+    height: calc(18.5% * 0.95);
+    background-color: #c0392b;
+    transform-origin: bottom left;
+    transform: rotate(45deg);
+}
+
+/* 连接线 - 上边中点 */
+.board .connecting-line-top-mid {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: calc((100% - 40%)/2 - 15px);
+    background-color: #c0392b;
+}
+
+/* 连接线 - 右边中点 */
+.board .connecting-line-right-mid {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    height: 2px;
+    width: calc((100% - 40%)/2 - 15px);
+    background-color: #c0392b;
+}
+
+/* 连接线 - 下边中点 */
+.board .connecting-line-bottom-mid {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: calc((100% - 40%)/2 - 15px);
+    background-color: #c0392b;
+}
+
+/* 连接线 - 左边中点 */
+.board .connecting-line-left-mid {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    height: 2px;
+    width: calc((100% - 40%)/2 - 15px);
+    background-color: #c0392b;
+}
+
+/* 游戏容器 */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 游戏状态区域 */
+.game-status {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 玩家信息 */
+.player-info {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin: 5px 0;
+}
+
+.player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    border-radius: 5px;
+    background: #f5f5f5;
+}
+
+.player-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.player1-info {
+    color: #e74c3c;
+}
+
+.player2-info {
+    color: #2980b9;
+}
+
+/* 游戏阶段显示 */
+.game-phase {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.phase-text {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.current-player {
+    display: block;
+    color: #666;
+}
+
+/* 当前玩家高亮 */
+.player.active {
+    background: #fff3f3;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 对话框样式 */
+.dialog {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    max-width: 80%;
+    width: 300px;
+}
+
+.dialog h2 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 24px;
+}
+
+#winMessage {
+    margin: 15px 0;
+    font-size: 18px;
+    color: #666;
+}
+
+.dialog-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.dialog-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#playAgain {
+    background-color: #007bff;
+}
+
+#playAgain:hover {
+    background-color: #0056b3;
+}
+
+#closeDialog {
+    background-color: #6c757d;
+}
+
+#closeDialog:hover {
+    background-color: #545b62;
+}
+
+/* 重新开始按钮样式 */
+.reset-button {
+    display: block;
+    margin: 15px auto;
+    padding: 15px 30px;
+    font-size: 18px;
+    color: #fff;
+    background-color: #c0392b;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.reset-button:hover {
+    background-color: #a5281e;
+}
+
+.reset-button:active {
+    transform: scale(0.98);
+}
+
+/* 选中的棋子样式 */
+.point.selected {
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.8);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* 可以被吃掉的棋子样式 */
+.point.capturable {
+    animation: pulse 1s infinite;
+    cursor: pointer;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(192, 57, 43, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(192, 57, 43, 0);
+    }
+}
