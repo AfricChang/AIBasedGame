@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打砖块游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-board">
+                <span class="score">分数: <span id="score">0</span></span>
+                <span class="lives">生命: <span id="lives">3</span></span>
+            </div>
+        </div>
+
+        <canvas id="myCanvas"></canvas>
+
+        <!-- 主菜单 -->
+        <div id="mainMenu" class="menu-screen active">
+            <div class="menu-content">
+                <h1>打砖块游戏</h1>
+                <div class="menu-buttons">
+                    <button id="playButton" class="menu-button">开始游戏</button>
+                    <button id="instructionsButton" class="menu-button">游戏说明</button>
+                    <button id="settingsButton" class="menu-button">设置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏说明 -->
+        <div id="instructionsScreen" class="menu-screen">
+            <div class="menu-content">
+                <h2>游戏说明</h2>
+                <div class="instructions">
+                    <p>• 使用键盘左右方向键或鼠标移动挡板</p>
+                    <p>• 不要让球落到底部</p>
+                    <p>• 击碎所有砖块即可获胜</p>
+                    <p>• 手机端可使用底部按钮控制</p>
+                </div>
+                <button class="menu-button back-button" data-screen="mainMenu">返回</button>
+            </div>
+        </div>
+
+        <!-- 设置界面 -->
+        <div id="settingsScreen" class="menu-screen">
+            <div class="menu-content">
+                <h2>游戏设置</h2>
+                <div class="settings-group">
+                    <label>
+                        难度选择:
+                        <select id="difficulty" class="setting-select">
+                            <option value="easy">简单</option>
+                            <option value="normal" selected>普通</option>
+                            <option value="hard">困难</option>
+                        </select>
+                    </label>
+                    <p class="difficulty-desc" id="difficultyDesc"></p>
+                </div>
+                <div class="settings-group">
+                    <label>
+                        语言:
+                        <select id="language" class="setting-select">
+                            <option value="zh" selected>中文</option>
+                            <option value="en">English</option>
+                        </select>
+                    </label>
+                </div>
+                <button class="menu-button back-button" data-screen="mainMenu">返回</button>
+            </div>
+        </div>
+
+        <!-- 游戏结束界面 -->
+        <div id="gameOverScreen" class="menu-screen">
+            <div class="menu-content">
+                <h2>游戏结束</h2>
+                <div class="score-display">
+                    <p>本局得分: <span id="finalScore">0</span></p>
+                    <p>最高分数: <span id="highScore">0</span></p>
+                </div>
+                <div class="menu-buttons">
+                    <button id="restartButton" class="menu-button">再玩一次</button>
+                    <button class="menu-button back-button" data-screen="mainMenu">返回主菜单</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手机控制按钮 -->
+        <div id="mobileControls">
+            <button id="leftButton" class="control-button">←</button>
+            <button id="rightButton" class="control-button">→</button>
+        </div>
+    </div>
+    
+    <script src="lang.js"></script>
+    <script src="audio.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
