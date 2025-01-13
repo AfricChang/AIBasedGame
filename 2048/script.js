@@ -1,22 +1,36 @@
 const board = Array.from({ length: 4 }, () => Array(4).fill(0));
 let score = 0;
 let bestScore = 0;
-
-// 添加音频上下文
+let currentLang = localStorage.getItem('gameLanguage') || 'en';
 let audioContext = null;
+let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // 默认开启声音
 
+// 添加音频上下文和声音开关状态
 // 初始化音频上下文
 function initAudio() {
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        updateSoundToggleButton();
     } catch (e) {
         console.log('Web Audio API is not supported in this browser');
     }
 }
 
+// 更新声音开关按钮的显示
+function updateSoundToggleButton() {
+    const soundToggle = document.getElementById('soundToggle');
+    if (soundEnabled) {
+        soundToggle.textContent = currentLang === 'en' ? '🔊 Sound' : '🔊 音效';
+        soundToggle.classList.remove('sound-off');
+    } else {
+        soundToggle.textContent = currentLang === 'en' ? '🔈 Sound' : '🔈 音效';
+        soundToggle.classList.add('sound-off');
+    }
+}
+
 // 播放合并音效
 function playMergeSound(value) {
-    if (!audioContext) return;
+    if (!audioContext || !soundEnabled) return;
     
     // 创建振荡器和增益节点
     const oscillator = audioContext.createOscillator();
@@ -44,6 +58,23 @@ function playMergeSound(value) {
     oscillator.stop(audioContext.currentTime + 0.15);
 }
 
+// 更新语言
+function updateLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('gameLanguage', lang);
+    
+    // 更新所有带有 data-en 和 data-zh 属性的元素
+    document.querySelectorAll('[data-en][data-zh]').forEach(element => {
+        element.textContent = element.getAttribute(`data-${lang}`);
+    });
+    
+    // 更新语言切换按钮文本
+    document.getElementById('langToggle').textContent = lang === 'en' ? '中文' : 'English';
+    
+    // 更新声音按钮文本
+    updateSoundToggleButton();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 初始化音频
     initAudio();
@@ -55,30 +86,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { once: true });
     
-    // 语言切换功能
-    let currentLang = localStorage.getItem('gameLanguage') || 'en';
-    const langToggle = document.getElementById('langToggle');
-    
-    function updateLanguage(lang) {
-        currentLang = lang;
-        localStorage.setItem('gameLanguage', lang);
+    // 添加声音开关事件
+    document.getElementById('soundToggle').addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        localStorage.setItem('soundEnabled', soundEnabled);
+        updateSoundToggleButton();
         
-        // 更新所有带有 data-en 和 data-zh 属性的元素
-        document.querySelectorAll('[data-en][data-zh]').forEach(element => {
-            element.textContent = element.getAttribute(`data-${lang}`);
-        });
-        
-        // 更新语言切换按钮文本
-        langToggle.textContent = lang === 'en' ? '中文' : 'English';
-    }
+        // 如果开启声音，播放一个测试音效
+        if (soundEnabled) {
+            playMergeSound(2);
+        }
+    });
+
+    // 语言切换按钮点击事件
+    document.getElementById('langToggle').addEventListener('click', () => {
+        updateLanguage(currentLang === 'en' ? 'zh' : 'en');
+    });
     
     // 初始化语言
     updateLanguage(currentLang);
-    
-    // 语言切换按钮点击事件
-    langToggle.addEventListener('click', () => {
-        updateLanguage(currentLang === 'en' ? 'zh' : 'en');
-    });
 
     document.getElementById('newGameButton').addEventListener('click', newGame);
     document.getElementById('restart').addEventListener('click', newGame);
