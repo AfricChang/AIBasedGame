@@ -79,15 +79,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化音频
     initAudio();
     
+    // 阻止分数容器的点击事件
+    document.querySelector('.score-container').addEventListener('click', (e) => {
+        e.preventDefault();
+    });
+    document.querySelector('.best-score-container').addEventListener('click', (e) => {
+        e.preventDefault();
+    });
+    
     // 添加点击事件来初始化音频上下文
+    document.addEventListener('touchstart', () => {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }, { once: true });
+    
     document.addEventListener('click', () => {
         if (audioContext && audioContext.state === 'suspended') {
             audioContext.resume();
         }
     }, { once: true });
     
-    // 添加声音开关事件
-    document.getElementById('soundToggle').addEventListener('click', () => {
+    // 添加声音开关事件（同时支持触摸和点击）
+    const soundToggle = document.getElementById('soundToggle');
+    const toggleSound = (e) => {
+        e.preventDefault(); // 阻止默认行为
         soundEnabled = !soundEnabled;
         localStorage.setItem('soundEnabled', soundEnabled);
         updateSoundToggleButton();
@@ -96,18 +112,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (soundEnabled) {
             playMergeSound(2);
         }
-    });
+    };
+    
+    soundToggle.addEventListener('click', toggleSound);
+    soundToggle.addEventListener('touchend', toggleSound);
 
     // 语言切换按钮点击事件
-    document.getElementById('langToggle').addEventListener('click', () => {
+    const langToggle = document.getElementById('langToggle');
+    const toggleLang = (e) => {
+        e.preventDefault();
         updateLanguage(currentLang === 'en' ? 'zh' : 'en');
-    });
+    };
+    
+    langToggle.addEventListener('click', toggleLang);
+    langToggle.addEventListener('touchend', toggleLang);
     
     // 初始化语言
     updateLanguage(currentLang);
 
+    // 新游戏和重启按钮事件
     document.getElementById('newGameButton').addEventListener('click', newGame);
     document.getElementById('restart').addEventListener('click', newGame);
+    
+    // 键盘事件
     document.addEventListener('keydown', handleKeyPress);
     
     // 添加触摸事件支持

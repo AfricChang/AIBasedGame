@@ -40,9 +40,37 @@ h1 {
 
 .controls-section {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.control-box {
+    background: #8f7a66;
+    color: white;
+    padding: 10px 15px;
+    width: 110px;
+    height: 70px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: 15px;
+}
+
+.control-box:hover {
+    background: #7f6a56;
+    transform: scale(1.02);
+}
+
+.control-box.sound-off {
+    opacity: 0.8;
 }
 
 .score-container, .best-score-container {
@@ -51,17 +79,24 @@ h1 {
     border-radius: 6px;
     text-align: center;
     min-width: 100px;
+    cursor: default;
+}
+
+.score-container:hover, .best-score-container:hover {
+    transform: none;
+    background: #8f7a66;
 }
 
 .score-label {
     color: #eee4da;
     font-size: 13px;
     font-weight: bold;
+    margin-bottom: 5px;
 }
 
 #score, #bestScore {
     color: white;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
 }
 
@@ -78,29 +113,6 @@ h1 {
 
 #newGameButton:hover {
     background: #7f6a56;
-}
-
-.control-button {
-    background: #8f7a66;
-    color: white;
-    padding: 10px 20px;
-    font-size: 18px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.control-button:hover {
-    background: #7f6a56;
-}
-
-.control-button.sound-off {
-    opacity: 0.7;
-}
-
-#soundToggle {
-    min-width: 120px;
 }
 
 #grid-container {
@@ -316,18 +328,23 @@ footer {
     }
 
     .controls-section {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
+        gap: 8px;
     }
 
-    .score-container, .best-score-container {
-        padding: 8px 15px;
-        min-width: 80px;
+    .control-box {
+        width: 90px;
+        height: 60px;
+        padding: 8px 12px;
+        font-size: 16px;
     }
 
     #score, #bestScore {
-        font-size: 20px;
+        font-size: 18px;
+    }
+
+    .score-label {
+        font-size: 12px;
+        margin-bottom: 3px;
     }
 
     #grid-container {
