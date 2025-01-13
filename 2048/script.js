@@ -2,7 +2,59 @@ const board = Array.from({ length: 4 }, () => Array(4).fill(0));
 let score = 0;
 let bestScore = 0;
 
+// 添加音频上下文
+let audioContext = null;
+
+// 初始化音频上下文
+function initAudio() {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+        console.log('Web Audio API is not supported in this browser');
+    }
+}
+
+// 播放合并音效
+function playMergeSound(value) {
+    if (!audioContext) return;
+    
+    // 创建振荡器和增益节点
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // 根据数值调整频率
+    const baseFrequency = 220;
+    const multiplier = Math.log2(value) / 2;
+    oscillator.frequency.setValueAtTime(baseFrequency * multiplier, audioContext.currentTime);
+    
+    // 设置音色为正弦波
+    oscillator.type = 'sine';
+    
+    // 设置音量包络
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+    
+    // 连接节点
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // 开始播放并在短时间后停止
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.15);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // 初始化音频
+    initAudio();
+    
+    // 添加点击事件来初始化音频上下文
+    document.addEventListener('click', () => {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }, { once: true });
+    
     // 语言切换功能
     let currentLang = localStorage.getItem('gameLanguage') || 'en';
     const langToggle = document.getElementById('langToggle');
@@ -304,11 +356,15 @@ function compress(row) {
     
     for (let i = 0; i < newRow.length - 1; i++) {
         if (newRow[i] === newRow[i + 1]) {
-            newRow[i] *= 2;
-            score += newRow[i];
+            const mergedValue = newRow[i] * 2;
+            newRow[i] = mergedValue;
+            score += mergedValue;
             newRow[i + 1] = 0;
             merged = true;
             mergedPositions.add(i); // 记录发生合并的位置
+            
+            // 播放合并音效
+            playMergeSound(mergedValue);
         }
     }
     
