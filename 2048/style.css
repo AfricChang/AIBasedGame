@@ -112,6 +112,7 @@ h1 {
     font-weight: bold;
     color: #776e65;
     transition: transform 0.15s ease, background-color 0.15s ease;
+    position: relative;
 }
 
 /* Number tile colors */
@@ -150,6 +151,47 @@ h1 {
     color: #f9f6f2;
     font-size: 28px;
     box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556), inset 0 0 0 1px rgba(255, 255, 255, 0.33333);
+}
+
+/* 添加合并动画相关的样式 */
+@keyframes appear {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    50% {
+        opacity: 0.9;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.tile-new {
+    animation: appear 0.2s ease-in-out;
+}
+
+.tile-merged {
+    animation: pop 0.2s ease-in-out;
+}
+
+.tile-moving {
+    transition: transform 0.15s ease-in-out;
+    z-index: 2;
 }
 
 #gameover {
@@ -230,16 +272,6 @@ footer {
     color: #776e65;
     text-align: center;
     font-size: 16px;
-}
-
-/* Animation */
-@keyframes appear {
-    0% { opacity: 0; transform: scale(0); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
-.tile-new {
-    animation: appear 0.2s ease;
 }
 
 /* Responsive Design */

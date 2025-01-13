@@ -241,7 +241,7 @@ function newGame() {
 }
 
 function generateNewNumber() {
-    let emptyCells = [];
+    const emptyCells = [];
     for (let i = 0; i < 4; i++) {
         for (let j = 0; j < 4; j++) {
             if (board[i][j] === 0) {
@@ -250,8 +250,15 @@ function generateNewNumber() {
         }
     }
     if (emptyCells.length === 0) return;
+    
     const { x, y } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
     board[x][y] = Math.random() < 0.9 ? 2 : 4;
+    
+    // 标记新生成的数字
+    const cell = document.getElementById(`grid-cell-${x}-${y}`);
+    if (cell) {
+        cell.dataset.isNew = 'true';
+    }
 }
 
 function updateBoard() {
@@ -259,13 +266,73 @@ function updateBoard() {
         for (let j = 0; j < 4; j++) {
             const cell = document.getElementById(`grid-cell-${i}-${j}`);
             const value = board[i][j];
-            cell.textContent = value === 0 ? '' : value;
-            cell.className = 'grid-cell' + (value ? ` number-${value}` : '');
-            if (value === 0) {
+            
+            // 清除之前的动画类
+            cell.classList.remove('tile-new', 'tile-merged', 'tile-moving');
+            
+            if (value !== 0) {
+                cell.textContent = value;
+                cell.className = `grid-cell number-${value}`;
+                
+                // 为新生成的数字添加出现动画
+                if (cell.dataset.isNew === 'true') {
+                    cell.classList.add('tile-new');
+                    cell.dataset.isNew = 'false';
+                }
+                
+                // 为合并的数字添加合并动画
+                if (cell.dataset.merged === 'true') {
+                    cell.classList.add('tile-merged');
+                    cell.dataset.merged = 'false';
+                }
+            } else {
+                cell.textContent = '';
+                cell.className = 'grid-cell';
                 cell.style.backgroundColor = '';
             }
         }
     }
+}
+
+function compress(row) {
+    // 保存原始行数据用于比较
+    const originalRow = [...row];
+    
+    let newRow = row.filter(val => val !== 0);
+    let merged = false;
+    let mergedPositions = new Set(); // 记录合并位置
+    
+    for (let i = 0; i < newRow.length - 1; i++) {
+        if (newRow[i] === newRow[i + 1]) {
+            newRow[i] *= 2;
+            score += newRow[i];
+            newRow[i + 1] = 0;
+            merged = true;
+            mergedPositions.add(i); // 记录发生合并的位置
+        }
+    }
+    
+    newRow = newRow.filter(val => val !== 0);
+    while (newRow.length < 4) {
+        newRow.push(0);
+    }
+    
+    updateScore();
+    
+    // 标记合并的格子
+    if (merged) {
+        mergedPositions.forEach(pos => {
+            const cell = document.getElementById(`grid-cell-${row}-${pos}`);
+            if (cell) {
+                cell.dataset.merged = 'true';
+            }
+        });
+    }
+    
+    return {
+        row: newRow,
+        changed: merged || JSON.stringify(originalRow) !== JSON.stringify(newRow)
+    };
 }
 
 function handleKeyPress(event) {
@@ -299,36 +366,6 @@ function handleKeyPress(event) {
             document.getElementById('final-score').textContent = score;
         }
     }
-}
-
-function compress(row) {
-    // 保存原始行数据用于比较
-    const originalRow = [...row];
-    
-    let newRow = row.filter(val => val !== 0);
-    let merged = false;
-    
-    for (let i = 0; i < newRow.length - 1; i++) {
-        if (newRow[i] === newRow[i + 1]) {
-            newRow[i] *= 2;
-            score += newRow[i];
-            newRow[i + 1] = 0;
-            merged = true;
-        }
-    }
-    
-    newRow = newRow.filter(val => val !== 0);
-    while (newRow.length < 4) {
-        newRow.push(0);
-    }
-    
-    updateScore();
-    
-    // 检查是否发生了移动或合并
-    return {
-        row: newRow,
-        changed: merged || JSON.stringify(originalRow) !== JSON.stringify(newRow)
-    };
 }
 
 function moveLeft() {
