@@ -86,7 +86,8 @@ h1 {
     padding: 15px;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 106.25px);
+    grid-template-rows: repeat(4, 106.25px);
     gap: 15px;
     width: 500px;
     height: 500px;
@@ -102,15 +103,15 @@ h1 {
 .grid-cell {
     background: rgba(238, 228, 218, 0.35);
     border-radius: 3px;
-    width: 100%;
-    height: 100%;
+    width: 106.25px;
+    height: 106.25px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 36px;
     font-weight: bold;
     color: #776e65;
-    transition: all 0.15s ease;
+    transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 /* Number tile colors */
@@ -246,37 +247,79 @@ footer {
     body {
         padding: 10px;
     }
-    
+
     header {
-        padding: 10px;
+        margin-bottom: 20px;
     }
-    
+
     h1 {
         font-size: 48px;
     }
-    
+
+    .subtitle {
+        font-size: 16px;
+    }
+
     .controls-section {
         flex-wrap: wrap;
         justify-content: center;
-    }
-    
-    #grid-container {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1;
-        padding: 10px;
         gap: 10px;
     }
-    
+
+    .score-container, .best-score-container {
+        padding: 8px 15px;
+        min-width: 80px;
+    }
+
+    #score, #bestScore {
+        font-size: 20px;
+    }
+
+    #grid-container {
+        width: 300px;
+        height: 300px;
+        padding: 10px;
+        gap: 10px;
+        grid-template-columns: repeat(4, 62.5px);
+        grid-template-rows: repeat(4, 62.5px);
+    }
+
     .grid-cell {
+        width: 62.5px;
+        height: 62.5px;
         font-size: 28px;
     }
-    
+
     .number-128, .number-256, .number-512 {
         font-size: 24px;
     }
-    
+
     .number-1024, .number-2048 {
         font-size: 20px;
+    }
+}
+
+@media (max-width: 350px) {
+    #grid-container {
+        width: 280px;
+        height: 280px;
+        padding: 8px;
+        gap: 8px;
+        grid-template-columns: repeat(4, 58px);
+        grid-template-rows: repeat(4, 58px);
+    }
+
+    .grid-cell {
+        width: 58px;
+        height: 58px;
+        font-size: 24px;
+    }
+
+    .number-128, .number-256, .number-512 {
+        font-size: 20px;
+    }
+
+    .number-1024, .number-2048 {
+        font-size: 18px;
     }
 }
