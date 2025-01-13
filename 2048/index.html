@@ -10,21 +10,24 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="language-switch">
+        <button id="langToggle">中文</button>
+    </div>
     <header>
         <div class="title-section">
             <h1>2048</h1>
-            <p class="subtitle">Join the numbers and get to 2048!</p>
+            <p class="subtitle" data-en="Join the numbers and get to 2048!" data-zh="把数字加到2048！">Join the numbers and get to 2048!</p>
         </div>
         <div class="controls-section">
             <div class="score-container">
-                <div class="score-label">SCORE</div>
+                <div class="score-label" data-en="SCORE" data-zh="得分">SCORE</div>
                 <div id="score">0</div>
             </div>
             <div class="best-score-container">
-                <div class="score-label">BEST</div>
+                <div class="score-label" data-en="BEST" data-zh="最高分">BEST</div>
                 <div id="bestScore">0</div>
             </div>
-            <button id="newGameButton">New Game</button>
+            <button id="newGameButton" data-en="New Game" data-zh="新游戏">New Game</button>
         </div>
     </header>
     <div id="grid-container">
@@ -47,13 +50,13 @@
     </div>
     <div id="gameover">
         <div class="gameover-content">
-            <h2>Game Over!</h2>
-            <p>Your score: <span id="final-score">0</span></p>
-            <button id="restart">Try Again</button>
+            <h2 data-en="Game Over!" data-zh="游戏结束！">Game Over!</h2>
+            <p><span data-en="Your score: " data-zh="你的得分：">Your score: </span><span id="final-score">0</span></p>
+            <button id="restart" data-en="Try Again" data-zh="再试一次">Try Again</button>
         </div>
     </div>
     <footer>
-        <p>Use arrow keys or swipe to move tiles</p>
+        <p data-en="Use arrow keys or swipe to move tiles" data-zh="使用方向键或滑动来移动方块">Use arrow keys or swipe to move tiles</p>
     </footer>
     <script src="script.js"></script>
 </body>

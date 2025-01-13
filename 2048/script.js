@@ -3,6 +3,31 @@ let score = 0;
 let bestScore = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 语言切换功能
+    let currentLang = localStorage.getItem('gameLanguage') || 'en';
+    const langToggle = document.getElementById('langToggle');
+    
+    function updateLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('gameLanguage', lang);
+        
+        // 更新所有带有 data-en 和 data-zh 属性的元素
+        document.querySelectorAll('[data-en][data-zh]').forEach(element => {
+            element.textContent = element.getAttribute(`data-${lang}`);
+        });
+        
+        // 更新语言切换按钮文本
+        langToggle.textContent = lang === 'en' ? '中文' : 'English';
+    }
+    
+    // 初始化语言
+    updateLanguage(currentLang);
+    
+    // 语言切换按钮点击事件
+    langToggle.addEventListener('click', () => {
+        updateLanguage(currentLang === 'en' ? 'zh' : 'en');
+    });
+
     document.getElementById('newGameButton').addEventListener('click', newGame);
     document.getElementById('restart').addEventListener('click', newGame);
     document.addEventListener('keydown', handleKeyPress);
@@ -34,6 +59,105 @@ document.addEventListener('DOMContentLoaded', () => {
         const deltaX = touchEndX - touchStartX;
         const deltaY = touchEndY - touchStartY;
         const minSwipeDistance = 50; // 最小滑动距离
+
+        // 确定主要的滑动方向
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // 水平滑动
+            if (Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // 向右滑动
+                    const moved = moveRight();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                } else {
+                    // 向左滑动
+                    const moved = moveLeft();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                }
+            }
+        } else {
+            // 垂直滑动
+            if (Math.abs(deltaY) > minSwipeDistance) {
+                if (deltaY > 0) {
+                    // 向下滑动
+                    const moved = moveDown();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                } else {
+                    // 向上滑动
+                    const moved = moveUp();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 添加鼠标事件支持
+    let mouseStartX = 0;
+    let mouseStartY = 0;
+    let isMouseDown = false;
+    const gridContainer = document.getElementById('grid-container');
+
+    // 鼠标按下事件
+    gridContainer.addEventListener('mousedown', function(event) {
+        event.preventDefault();
+        isMouseDown = true;
+        mouseStartX = event.clientX;
+        mouseStartY = event.clientY;
+    });
+
+    // 鼠标移动事件
+    document.addEventListener('mousemove', function(event) {
+        if (!isMouseDown) return;
+        event.preventDefault();
+    });
+
+    // 鼠标松开事件
+    document.addEventListener('mouseup', function(event) {
+        if (!isMouseDown) return;
+        
+        const mouseEndX = event.clientX;
+        const mouseEndY = event.clientY;
+        
+        handleMouseSwipe(mouseStartX, mouseStartY, mouseEndX, mouseEndY);
+        isMouseDown = false;
+    });
+
+    // 鼠标离开游戏区域
+    document.addEventListener('mouseleave', function() {
+        isMouseDown = false;
+    });
+
+    function handleMouseSwipe(startX, startY, endX, endY) {
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+        const minSwipeDistance = 30; // 鼠标滑动的最小距离阈值
 
         // 确定主要的滑动方向
         if (Math.abs(deltaX) > Math.abs(deltaY)) {

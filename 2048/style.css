@@ -91,6 +91,12 @@ h1 {
     width: 500px;
     height: 500px;
     margin-bottom: 30px;
+    cursor: grab;
+    user-select: none;
+}
+
+#grid-container:active {
+    cursor: grabbing;
 }
 
 .grid-cell {
@@ -192,6 +198,28 @@ h1 {
 }
 
 #restart:hover {
+    background: #7f6a56;
+}
+
+.language-switch {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.language-switch button {
+    background: #8f7a66;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.language-switch button:hover {
     background: #7f6a56;
 }
 
