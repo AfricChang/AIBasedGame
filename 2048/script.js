@@ -6,6 +6,93 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('newGameButton').addEventListener('click', newGame);
     document.getElementById('restart').addEventListener('click', newGame);
     document.addEventListener('keydown', handleKeyPress);
+    
+    // 添加触摸事件支持
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', function(event) {
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+    }, false);
+
+    document.addEventListener('touchmove', function(event) {
+        // 防止页面滚动
+        event.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(event) {
+        touchEndX = event.changedTouches[0].clientX;
+        touchEndY = event.changedTouches[0].clientY;
+
+        handleSwipe();
+    }, false);
+
+    function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const minSwipeDistance = 50; // 最小滑动距离
+
+        // 确定主要的滑动方向
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // 水平滑动
+            if (Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // 向右滑动
+                    const moved = moveRight();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                } else {
+                    // 向左滑动
+                    const moved = moveLeft();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                }
+            }
+        } else {
+            // 垂直滑动
+            if (Math.abs(deltaY) > minSwipeDistance) {
+                if (deltaY > 0) {
+                    // 向下滑动
+                    const moved = moveDown();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                } else {
+                    // 向上滑动
+                    const moved = moveUp();
+                    if (moved) {
+                        generateNewNumber();
+                        updateBoard();
+                        if (isGameOver()) {
+                            document.getElementById('gameover').style.display = 'flex';
+                            document.getElementById('final-score').textContent = score;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // 从本地存储加载最高分
     const savedBestScore = localStorage.getItem('bestScore');
     if (savedBestScore) {
@@ -90,15 +177,71 @@ function handleKeyPress(event) {
     }
 }
 
+function compress(row) {
+    // 保存原始行数据用于比较
+    const originalRow = [...row];
+    
+    let newRow = row.filter(val => val !== 0);
+    let merged = false;
+    
+    for (let i = 0; i < newRow.length - 1; i++) {
+        if (newRow[i] === newRow[i + 1]) {
+            newRow[i] *= 2;
+            score += newRow[i];
+            newRow[i + 1] = 0;
+            merged = true;
+        }
+    }
+    
+    newRow = newRow.filter(val => val !== 0);
+    while (newRow.length < 4) {
+        newRow.push(0);
+    }
+    
+    updateScore();
+    
+    // 检查是否发生了移动或合并
+    return {
+        row: newRow,
+        changed: merged || JSON.stringify(originalRow) !== JSON.stringify(newRow)
+    };
+}
+
+function moveLeft() {
+    let moved = false;
+    for (let i = 0; i < 4; i++) {
+        const result = compress(board[i]);
+        if (result.changed) {
+            moved = true;
+        }
+        board[i] = result.row;
+    }
+    return moved;
+}
+
+function moveRight() {
+    let moved = false;
+    for (let i = 0; i < 4; i++) {
+        const reversed = board[i].slice().reverse();
+        const result = compress(reversed);
+        if (result.changed) {
+            moved = true;
+        }
+        board[i] = result.row.reverse();
+    }
+    return moved;
+}
+
 function moveUp() {
     let moved = false;
     for (let j = 0; j < 4; j++) {
-        let compressed = compress(board.map(row => row[j]));
-        if (compressed.some((val, i) => val !== board[i][j])) {
+        const column = board.map(row => row[j]);
+        const result = compress(column);
+        if (result.changed) {
             moved = true;
         }
         for (let i = 0; i < 4; i++) {
-            board[i][j] = compressed[i];
+            board[i][j] = result.row[i];
         }
     }
     return moved;
@@ -107,56 +250,17 @@ function moveUp() {
 function moveDown() {
     let moved = false;
     for (let j = 0; j < 4; j++) {
-        let compressed = compress(board.map(row => row[j]).reverse()).reverse();
-        if (compressed.some((val, i) => val !== board[i][j])) {
+        const column = board.map(row => row[j]).reverse();
+        const result = compress(column);
+        if (result.changed) {
             moved = true;
         }
+        const newColumn = result.row.reverse();
         for (let i = 0; i < 4; i++) {
-            board[i][j] = compressed[i];
+            board[i][j] = newColumn[i];
         }
     }
     return moved;
-}
-
-function moveLeft() {
-    let moved = false;
-    for (let i = 0; i < 4; i++) {
-        let compressed = compress(board[i]);
-        if (compressed.some((val, j) => val !== board[i][j])) {
-            moved = true;
-        }
-        board[i] = compressed;
-    }
-    return moved;
-}
-
-function moveRight() {
-    let moved = false;
-    for (let i = 0; i < 4; i++) {
-        let compressed = compress(board[i].reverse()).reverse();
-        if (compressed.some((val, j) => val !== board[i][j])) {
-            moved = true;
-        }
-        board[i] = compressed;
-    }
-    return moved;
-}
-
-function compress(row) {
-    let newRow = row.filter(val => val !== 0);
-    for (let i = 0; i < newRow.length - 1; i++) {
-        if (newRow[i] === newRow[i + 1]) {
-            newRow[i] *= 2;
-            score += newRow[i];
-            updateScore();
-            newRow[i + 1] = 0;
-        }
-    }
-    newRow = newRow.filter(val => val !== 0);
-    while (newRow.length < 4) {
-        newRow.push(0);
-    }
-    return newRow;
 }
 
 function updateScore() {
