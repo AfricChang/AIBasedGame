@@ -11,12 +11,21 @@ let gameStarted = false;
 let gameOver = false;
 let currentDifficulty = localStorage.getItem('difficulty') || 'normal';
 
+// 移动控制状态
+let rightPressed = false;
+let leftPressed = false;
+let isMobileControl = false;  // 用于区分是否是移动端控制
+
+// 速度设置
+const PADDLE_SPEED = 5;        // 键盘控制速度
+const MOBILE_PADDLE_SPEED = 2; // 移动端控制速度
+
 // 设置画布大小
 function resizeCanvas() {
     const container = canvas.parentElement;
     const maxWidth = 480;
     const width = Math.min(container.clientWidth - 40, maxWidth);
-    const height = width * (2/3);
+    const height = width * (3/4);  // 改为3/4的宽高比，使画面更高
     
     canvas.width = width;
     canvas.height = height;
@@ -30,32 +39,29 @@ function resizeCanvas() {
 // 游戏配置
 const difficultySettings = {
     easy: {
-        ballSpeed: 2,      // 从3降到2
+        ballSpeed: 2,
         paddleWidth: 100,
         lives: 5,
         description: '球速慢，挡板较宽，5条生命'
     },
     normal: {
-        ballSpeed: 2.5,    // 从4降到2.5
+        ballSpeed: 2.5,
         paddleWidth: 75,
         lives: 3,
         description: '中等速度，标准挡板，3条生命'
     },
     hard: {
-        ballSpeed: 3,      // 从5降到3
+        ballSpeed: 3,
         paddleWidth: 50,
         lives: 2,
         description: '球速较快，窄挡板，2条生命'
     }
 };
 
-// 挡板移动速度
-const PADDLE_SPEED = 5;    // 从7降到5
-
 // 球对象
 const ball = {
     x: canvas.width/2,
-    y: canvas.height-30,
+    y: canvas.height-50,  // 让球的起始位置离底部远一些
     dx: 4,
     dy: -4,
     radius: 8
@@ -74,7 +80,7 @@ const brickColumnCount = 8;
 const brickWidth = 50;
 const brickHeight = 20;
 const brickPadding = 10;
-const brickOffsetTop = 30;
+const brickOffsetTop = 50;     // 增加顶部偏移，让砖块离顶部更远一些
 const brickOffsetLeft = 30;
 
 // 砖块颜色
@@ -104,10 +110,6 @@ function initializeBricks() {
         }
     }
 }
-
-// 控制状态
-let rightPressed = false;
-let leftPressed = false;
 
 // 事件监听器
 document.addEventListener("keydown", keyDownHandler, false);
@@ -154,9 +156,11 @@ function showScreen(screenId) {
 function keyDownHandler(e) {
     if(e.key === "Right" || e.key === "ArrowRight") {
         rightPressed = true;
+        isMobileControl = false;
     }
     else if(e.key === "Left" || e.key === "ArrowLeft") {
         leftPressed = true;
+        isMobileControl = false;
     }
     else if(e.key === "p" || e.key === "P") {
         togglePause();
@@ -230,8 +234,27 @@ function drawBricks() {
 }
 
 function updateScore() {
-    document.getElementById('score').textContent = score;
-    document.getElementById('lives').textContent = lives;
+    // 获取分数和生命值的容器
+    const scoreSpan = document.getElementById('score');
+    const livesSpan = document.getElementById('lives');
+    
+    if (scoreSpan) {
+        scoreSpan.textContent = score;
+        // 更新分数文本
+        const scoreText = document.querySelector('.score');
+        if (scoreText) {
+            scoreText.innerHTML = `${t('score')}: <span id="score">${score}</span>`;
+        }
+    }
+    
+    if (livesSpan) {
+        livesSpan.textContent = lives;
+        // 更新生命值文本
+        const livesText = document.querySelector('.lives');
+        if (livesText) {
+            livesText.innerHTML = `${t('lives')}: <span id="lives">${lives}</span>`;
+        }
+    }
 }
 
 function collisionDetection() {
@@ -274,7 +297,7 @@ function resetGame() {
 
 function resetBallAndPaddle() {
     ball.x = canvas.width/2;
-    ball.y = canvas.height-30;
+    ball.y = canvas.height-50;  // 让球的起始位置离底部远一些
     paddle.x = (canvas.width-paddle.width)/2;
 }
 
@@ -333,7 +356,7 @@ function draw() {
             if (ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
                 // 根据球击中挡板的位置改变反弹角度，但减小角度变化
                 let hitPoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
-                ball.dx = hitPoint * 3; // 从5降到3，减小角度变化
+                ball.dx = hitPoint * 3;
                 ball.dy = -ball.dy;
             }
             else {
@@ -350,12 +373,14 @@ function draw() {
             }
         }
 
-        // 移动挡板，使用新的PADDLE_SPEED
+        // 移动挡板，区分移动端和键盘控制的速度
+        const currentSpeed = isMobileControl ? MOBILE_PADDLE_SPEED : PADDLE_SPEED;
+        
         if (rightPressed && paddle.x < canvas.width - paddle.width) {
-            paddle.x += PADDLE_SPEED;
+            paddle.x += currentSpeed;
         }
         else if (leftPressed && paddle.x > 0) {
-            paddle.x -= PADDLE_SPEED;
+            paddle.x -= currentSpeed;
         }
 
         // 移动球
@@ -368,7 +393,7 @@ function draw() {
         ctx.font = "30px Arial";
         ctx.fillStyle = "#FFF";
         ctx.textAlign = "center";
-        ctx.fillText("已暂停", canvas.width / 2, canvas.height / 2);
+        ctx.fillText(t('paused'), canvas.width / 2, canvas.height / 2);
     }
 
     requestAnimationFrame(draw);
@@ -419,10 +444,26 @@ const leftButton = document.getElementById('leftButton');
 const rightButton = document.getElementById('rightButton');
 
 if (leftButton && rightButton) {
-    leftButton.addEventListener('touchstart', () => leftPressed = true);
-    leftButton.addEventListener('touchend', () => leftPressed = false);
-    rightButton.addEventListener('touchstart', () => rightPressed = true);
-    rightButton.addEventListener('touchend', () => rightPressed = false);
+    leftButton.addEventListener('touchstart', () => {
+        leftPressed = true;
+        isMobileControl = true;
+    });
+    leftButton.addEventListener('touchend', () => {
+        leftPressed = false;
+        isMobileControl = false;
+    });
+    rightButton.addEventListener('touchstart', () => {
+        rightPressed = true;
+        isMobileControl = true;
+    });
+    rightButton.addEventListener('touchend', () => {
+        rightPressed = false;
+        isMobileControl = false;
+    });
+
+    // 防止移动端滑动时触发页面滚动
+    leftButton.addEventListener('touchmove', (e) => e.preventDefault());
+    rightButton.addEventListener('touchmove', (e) => e.preventDefault());
 }
 
 // 初始化
