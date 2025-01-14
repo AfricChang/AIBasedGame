@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>游戏集合</title>
+    <title>游戏集合 | Game Collection</title>
     <style>
         * {
             margin: 0;
@@ -27,13 +27,25 @@
         .container {
             max-width: 1200px;
             width: 100%;
+            position: relative;
         }
-        h1 {
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
             color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .lang-switch:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         .game-grid {
             display: grid;
@@ -114,34 +126,63 @@
 </head>
 <body>
     <div class="container">
-        <h1>经典游戏集合</h1>
+        <button class="lang-switch" onclick="toggleLanguage()">English</button>
+        <h1 data-en="Classic Game Collection" data-zh="经典游戏集合">经典游戏集合</h1>
         <div class="game-grid">
             <div class="game-card" onclick="location.href='2048/index.html'">
                 <div class="game-icon">🎮</div>
-                <h2 class="game-title">2048</h2>
-                <p class="game-description">经典数字益智游戏，通过合并相同数字来获得2048！</p>
+                <h2 class="game-title" data-en="2048" data-zh="2048">2048</h2>
+                <p class="game-description" data-en="Classic number puzzle game, merge tiles to get 2048!" data-zh="经典数字益智游戏，通过合并相同数字来获得2048！">经典数字益智游戏，通过合并相同数字来获得2048！</p>
             </div>
             <div class="game-card" onclick="location.href='Breakout/index.html'">
                 <div class="game-icon">🏓</div>
-                <h2 class="game-title">打砖块</h2>
-                <p class="game-description">经典街机游戏，控制挡板击碎所有砖块！</p>
+                <h2 class="game-title" data-en="Breakout" data-zh="打砖块">打砖块</h2>
+                <p class="game-description" data-en="Classic arcade game, control the paddle to break all bricks!" data-zh="经典街机游戏，控制挡板击碎所有砖块！">经典街机游戏，控制挡板击碎所有砖块！</p>
             </div>
             <div class="game-card" onclick="location.href='TicTacToe/index.html'">
                 <div class="game-icon">⭕</div>
-                <h2 class="game-title">井字棋</h2>
-                <p class="game-description">经典的三连棋游戏，考验策略与智慧！</p>
+                <h2 class="game-title" data-en="Tic Tac Toe" data-zh="井字棋">井字棋</h2>
+                <p class="game-description" data-en="Classic three-in-a-row game, test your strategy!" data-zh="经典的三连棋游戏，考验策略与智慧！">经典的三连棋游戏，考验策略与智慧！</p>
             </div>
-            <div class="game-card" onclick="location.href='wuziqi/index.html'">
+            <div class="game-card" onclick="location.href='Gomoku/index.html'">
                 <div class="game-icon">⚫</div>
-                <h2 class="game-title">五子棋</h2>
-                <p class="game-description">传统的五子连珠游戏，考验落子技巧！</p>
+                <h2 class="game-title" data-en="Gomoku" data-zh="五子棋">五子棋</h2>
+                <p class="game-description" data-en="Traditional five-in-a-row game, test your tactics!" data-zh="传统的五子连珠游戏，考验落子技巧！">传统的五子连珠游戏，考验落子技巧！</p>
             </div>
             <div class="game-card" onclick="location.href='zhiqi/index.html'">
                 <div class="game-icon">♟️</div>
-                <h2 class="game-title">直棋</h2>
-                <p class="game-description">古老的直棋游戏，体验博弈的乐趣！</p>
+                <h2 class="game-title" data-en="Zhiqi" data-zh="直棋">直棋</h2>
+                <p class="game-description" data-en="Ancient Zhiqi game, experience the joy of strategy! (Under Development)" data-zh="古老的直棋游戏，体验博弈的乐趣！（开发中）">古老的直棋游戏，体验博弈的乐趣！（开发中）</p>
             </div>
         </div>
     </div>
+    <script>
+        // Get saved language preference or default to Chinese
+        let currentLang = localStorage.getItem('gameCollectionLang') || 'zh';
+        
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateLanguage();
+            localStorage.setItem('gameCollectionLang', currentLang);
+        }
+        
+        function updateLanguage() {
+            // Update language switch button text
+            document.querySelector('.lang-switch').textContent = currentLang === 'zh' ? 'English' : '中文';
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-en]').forEach(elem => {
+                elem.textContent = elem.getAttribute(`data-${currentLang}`);
+            });
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = currentLang;
+        }
+        
+        // Initialize language on page load
+        if (currentLang === 'en') {
+            updateLanguage();
+        }
+    </script>
 </body>
 </html>
