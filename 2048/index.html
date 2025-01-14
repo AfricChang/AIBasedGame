@@ -8,8 +8,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>2048 Game</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../common/style.css">
 </head>
 <body>
+    <button class="back-button" onclick="confirmExit()">←</button>
     <div class="language-switch">
         <button id="langToggle">中文</button>
     </div>
@@ -60,5 +62,6 @@
         <p data-en="Use arrow keys or swipe to move tiles" data-zh="使用方向键或滑动来移动方块">Use arrow keys or swipe to move tiles</p>
     </footer>
     <script src="script.js"></script>
+    <script src="../common/navigation.js"></script>
 </body>
 </html>
