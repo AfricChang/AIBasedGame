@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>游戏集合</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
+        .game-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .game-card:active {
+            transform: scale(0.98);
+        }
+        .game-icon {
+            font-size: 2.8em;
+            margin-bottom: 12px;
+            color: white;
+        }
+        .game-title {
+            color: white;
+            font-size: 1.4em;
+            margin-bottom: 8px;
+        }
+        .game-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+            .game-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .game-card {
+                padding: 15px;
+                margin: 0 auto;
+                max-width: 400px;
+            }
+            .game-icon {
+                font-size: 2.5em;
+            }
+            .game-title {
+                font-size: 1.3em;
+            }
+            .game-description {
+                font-size: 0.9em;
+            }
+        }
+        @media (max-width: 320px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            .game-icon {
+                font-size: 2.2em;
+            }
+            .game-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>经典游戏集合</h1>
+        <div class="game-grid">
+            <div class="game-card" onclick="location.href='2048/index.html'">
+                <div class="game-icon">🎮</div>
+                <h2 class="game-title">2048</h2>
+                <p class="game-description">经典数字益智游戏，通过合并相同数字来获得2048！</p>
+            </div>
+            <div class="game-card" onclick="location.href='Breakout/index.html'">
+                <div class="game-icon">🏓</div>
+                <h2 class="game-title">打砖块</h2>
+                <p class="game-description">经典街机游戏，控制挡板击碎所有砖块！</p>
+            </div>
+            <div class="game-card" onclick="location.href='TicTacToe/index.html'">
+                <div class="game-icon">⭕</div>
+                <h2 class="game-title">井字棋</h2>
+                <p class="game-description">经典的三连棋游戏，考验策略与智慧！</p>
+            </div>
+            <div class="game-card" onclick="location.href='wuziqi/index.html'">
+                <div class="game-icon">⚫</div>
+                <h2 class="game-title">五子棋</h2>
+                <p class="game-description">传统的五子连珠游戏，考验落子技巧！</p>
+            </div>
+            <div class="game-card" onclick="location.href='zhiqi/index.html'">
+                <div class="game-icon">♟️</div>
+                <h2 class="game-title">直棋</h2>
+                <p class="game-description">古老的直棋游戏，体验博弈的乐趣！</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
