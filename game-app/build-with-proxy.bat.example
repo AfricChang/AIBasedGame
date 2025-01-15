@@ -1,0 +1,8 @@
+@echo off
+rem 代理配置模板
+rem 复制此文件为build-with-proxy.bat并设置你的代理
+
+set HTTP_PROXY=http://127.0.0.1:7890
+set HTTPS_PROXY=http://127.0.0.1:7890
+set JAVA_OPTS=-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890
+cordova build android

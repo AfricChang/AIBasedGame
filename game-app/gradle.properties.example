@@ -1,0 +1,14 @@
+# Gradle properties template
+# Copy this file to gradle.properties and fill in your values
+
+# Maven镜像配置
+MAVEN_REPO_MIRROR_URL=https://maven.aliyun.com/repository/public
+GOOGLE_REPO_MIRROR_URL=https://maven.aliyun.com/repository/google
+
+# HTTP代理配置（如果需要）
+#systemProp.http.proxyHost=127.0.0.1
+#systemProp.http.proxyPort=7890
+#systemProp.https.proxyHost=127.0.0.1
+#systemProp.https.proxyPort=7890
+#systemProp.http.nonProxyHosts=localhost|127.*|[::1]
+#systemProp.https.nonProxyHosts=localhost|127.*|[::1]
