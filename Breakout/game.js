@@ -61,7 +61,7 @@ const difficultySettings = {
 // 球对象
 const ball = {
     x: canvas.width/2,
-    y: canvas.height-50,  // 让球的起始位置离底部远一些
+    y: canvas.height,  // 让球的起始位置离底部更远，从50改为0
     dx: 4,
     dy: -4,
     radius: 8
@@ -80,7 +80,7 @@ const brickColumnCount = 8;
 const brickWidth = 50;
 const brickHeight = 20;
 const brickPadding = 10;
-const brickOffsetTop = 50;     // 增加顶部偏移，让砖块离顶部更远一些
+const brickOffsetTop = 0;     // 增加顶部偏移，从50改为0
 const brickOffsetLeft = 30;
 
 // 砖块颜色
@@ -297,7 +297,7 @@ function resetGame() {
 
 function resetBallAndPaddle() {
     ball.x = canvas.width/2;
-    ball.y = canvas.height-50;  // 让球的起始位置离底部远一些
+    ball.y = canvas.height;  // 让球的起始位置离底部更远，从50改为0
     paddle.x = (canvas.width-paddle.width)/2;
 }
 
