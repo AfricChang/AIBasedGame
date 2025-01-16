@@ -142,12 +142,29 @@
 
         @media (max-width: 768px) {
             body {
-                align-items: flex-start;
+                min-height: -webkit-fill-available;
+                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             }
             #gameContainer {
                 height: 85vh;
                 max-height: 600px;
-                margin: 10px;
+                margin: auto;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            .back-button {
+                position: fixed;
+                top: max(env(safe-area-inset-top), 10px);
+                left: max(env(safe-area-inset-left), 10px);
+                z-index: 1000;
+            }
+            #score {
+                position: fixed;
+                top: max(env(safe-area-inset-top), 10px);
+                right: max(env(safe-area-inset-right), 10px);
+                z-index: 1000;
             }
         }
 

@@ -78,7 +78,7 @@ class FlappyBird {
             ];
 
             // 添加数字图片
-            const numberImages = Array.from({length: 10}, (_, i) => ({
+            const numberImages = Array.from({ length: 10 }, (_, i) => ({
                 key: `number_${i}`,
                 path: `assets/images/${i}.png`
             }));
@@ -149,7 +149,7 @@ class FlappyBird {
         const container = document.getElementById('gameContainer');
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
-        
+
         // 设置画布尺寸
         this.canvas.width = containerWidth;
         this.canvas.height = containerHeight;
@@ -157,16 +157,16 @@ class FlappyBird {
         // 计算缩放比例
         const baseWidth = 400;
         const baseHeight = 600;
-        
+
         // 移动端使用不同的基准高度
         const isMobile = window.innerWidth <= 768;
         const mobileScale = isMobile ? 0.85 : 1; // 移动端缩小比例
-        
+
         this.scale = Math.min(
             containerWidth / baseWidth,
             (containerHeight / baseHeight) * mobileScale
         );
-        
+
         // 调整游戏元素大小
         this.bird.size = Math.round(30 * this.scale);
         this.pipeWidth = Math.round(52 * this.scale);
@@ -204,7 +204,7 @@ class FlappyBird {
 
             // 小鸟跳跃
             this.bird.velocity = this.bird.jump;
-            
+
             // 播放音效（如果存在）
             if (this.sounds && this.sounds.wing) {
                 this.sounds.wing.currentTime = 0;
@@ -308,7 +308,7 @@ class FlappyBird {
         }
 
         // 更新管道
-        if (this.pipes.length === 0 || 
+        if (this.pipes.length === 0 ||
             this.canvas.width - this.pipes[this.pipes.length - 1].x >= this.pipeSpacing) {
             this.pipes.push(this.createPipe());
         }
@@ -344,7 +344,7 @@ class FlappyBird {
         const pipeLeft = pipe.x;
 
         if (birdRight > pipeLeft && birdLeft < pipeRight) {
-            if (this.bird.y < pipe.height || 
+            if (this.bird.y < pipe.height ||
                 this.bird.y + this.bird.size > pipe.height + this.pipeGap) {
                 return true;
             }
@@ -367,25 +367,25 @@ class FlappyBird {
                 // 上管道
                 this.ctx.save();
                 this.ctx.scale(1, -1);
-                this.ctx.drawImage(this.images.pipe, 
-                    pipe.x, -pipe.height, 
+                this.ctx.drawImage(this.images.pipe,
+                    pipe.x, -pipe.height,
                     this.pipeWidth, pipe.height);
                 this.ctx.restore();
 
                 // 下管道
-                this.ctx.drawImage(this.images.pipe, 
-                    pipe.x, pipe.height + this.pipeGap, 
+                this.ctx.drawImage(this.images.pipe,
+                    pipe.x, pipe.height + this.pipeGap,
                     this.pipeWidth, this.canvas.height - (pipe.height + this.pipeGap));
             }
 
             // 绘制小鸟
             if (this.images.bird.yellow[this.bird.frame]) {
                 this.ctx.save();
-                this.ctx.translate(this.bird.x + this.bird.size/2, this.bird.y + this.bird.size/2);
+                this.ctx.translate(this.bird.x + this.bird.size / 2, this.bird.y + this.bird.size / 2);
                 this.ctx.rotate(Math.min(Math.max(this.bird.velocity * 0.05, -0.5), 0.5));
                 const currentBirdFrame = this.images.bird.yellow[this.bird.frame];
-                this.ctx.drawImage(currentBirdFrame, 
-                    -this.bird.size/2, -this.bird.size/2, 
+                this.ctx.drawImage(currentBirdFrame,
+                    -this.bird.size / 2, -this.bird.size / 2,
                     this.bird.size, this.bird.size);
                 this.ctx.restore();
             }
@@ -402,8 +402,8 @@ class FlappyBird {
                 for (const digit of scoreStr) {
                     const numberImg = this.images.numbers[parseInt(digit)];
                     if (numberImg) {
-                        this.ctx.drawImage(numberImg, 
-                            xPos, Math.round(50 * this.scale), 
+                        this.ctx.drawImage(numberImg,
+                            xPos, Math.round(50 * this.scale),
                             numberWidth, numberHeight);
                         xPos += numberWidth + spacing;
                     }
@@ -414,9 +414,9 @@ class FlappyBird {
             if (!this.gameStarted && this.images.message) {
                 const messageWidth = Math.round(184 * this.scale);
                 const messageHeight = Math.round(267 * this.scale);
-                this.ctx.drawImage(this.images.message, 
-                    Math.round((this.canvas.width - messageWidth) / 2), 
-                    Math.round((this.canvas.height - messageHeight) / 2), 
+                this.ctx.drawImage(this.images.message,
+                    Math.round((this.canvas.width - messageWidth) / 2),
+                    Math.round((this.canvas.height - messageHeight) / 2),
                     messageWidth, messageHeight);
             }
 
@@ -424,9 +424,9 @@ class FlappyBird {
             if (this.gameOver && this.images.gameOver) {
                 const gameOverWidth = Math.round(192 * this.scale);
                 const gameOverHeight = Math.round(42 * this.scale);
-                this.ctx.drawImage(this.images.gameOver, 
-                    Math.round((this.canvas.width - gameOverWidth) / 2), 
-                    Math.round((this.canvas.height - gameOverHeight) / 2 - 50 * this.scale), 
+                this.ctx.drawImage(this.images.gameOver,
+                    Math.round((this.canvas.width - gameOverWidth) / 2),
+                    Math.round((this.canvas.height - gameOverHeight) / 2 - 50 * this.scale),
                     gameOverWidth, gameOverHeight);
 
                 // 绘制分数面板和按钮
@@ -466,7 +466,7 @@ class FlappyBird {
         const buttonX = Math.round((this.canvas.width - buttonWidth) / 2);
         const buttonY = Math.round(this.canvas.height / 2 + 60 * this.scale);
         this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-        
+
         this.ctx.fillStyle = '#FFF';
         this.ctx.font = `bold ${Math.round(20 * this.scale)}px Arial`;
         this.ctx.fillText(
@@ -481,7 +481,7 @@ class FlappyBird {
         this.gameStarted = false;
         this.gameOver = false;
         this.score = 0;
-        
+
         // 重置小鸟位置和速度
         this.bird.y = this.canvas.height / 2;
         this.bird.velocity = 0;
@@ -512,7 +512,7 @@ class FlappyBird {
             localStorage.setItem('flappyBirdBestScore', this.bestScore);
         }
         this.updateScoreDisplay();
-        
+
         // 播放音效（如果存在）
         if (this.sounds && this.sounds.score) {
             this.sounds.score.currentTime = 0;
