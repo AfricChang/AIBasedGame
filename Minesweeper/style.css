@@ -8,30 +8,66 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     background-color: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .container {
+    width: 100%;
     max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
+    margin: 20px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .header {
     margin-bottom: 20px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0 0 20px 0;
+    color: #333;
 }
 
 .controls {
-    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
 }
 
-.controls select, .controls button {
-    padding: 8px 12px;
-    margin: 0 5px;
+.controls select, 
+.controls button {
+    padding: 8px 16px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.controls select:hover, 
+.controls button:hover {
+    border-color: var(--primary-color);
+}
+
+.controls button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+}
+
+.controls button:hover {
+    background-color: #1976D2;
 }
 
 .game-board {
@@ -39,6 +75,10 @@ body {
     justify-content: center;
     margin: 20px auto;
     gap: 2px;
+    background-color: #eee;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .cell {
@@ -120,41 +160,102 @@ body {
 /* Mobile Styles */
 @media (max-width: 600px) {
     :root {
-        --cell-size: 20px;
+        --cell-size: 24px;
     }
     
     body {
-        padding: 10px;
+        align-items: flex-start;
     }
     
     .container {
-        padding: 0 10px;
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
     }
     
     .controls {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
-        margin: 10px 0;
-    }
-    
-    .controls button,
-    .controls select {
-        width: 100%;
-        padding: 6px;
-        font-size: 12px;
     }
     
     .controls button:first-child {
         grid-column: 1 / -1;
     }
     
-    .status {
-        font-size: 14px;
-        margin-top: 10px;
-    }
-    
     .game-board {
         margin: 10px auto;
+        padding: 5px;
     }
+    
+    .status {
+        font-size: 14px;
+    }
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 90%;
+    width: 400px;
+}
+
+.modal-content h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+.stats {
+    margin: 20px 0;
+    font-size: 16px;
+}
+
+.stats p {
+    margin: 10px 0;
+}
+
+.modal .actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal .actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.modal .actions button:first-child {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.modal .actions button:last-child {
+    background-color: #757575;
+    color: white;
+}
+
+.modal .actions button:hover {
+    opacity: 0.9;
 }
