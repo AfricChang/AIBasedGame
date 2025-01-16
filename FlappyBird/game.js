@@ -3,6 +3,7 @@ class FlappyBird {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.score = 0;
+        this.bestScore = localStorage.getItem('flappyBirdBestScore') || 0;
         this.scoreElement = document.getElementById('score');
         this.backBtn = document.getElementById('backBtn');
 
@@ -22,8 +23,8 @@ class FlappyBird {
             x: this.canvas.width * 0.2,
             y: this.canvas.height / 2,
             velocity: 0,
-            gravity: 0.6,
-            jump: -10,
+            gravity: 0.25,  // 降低重力
+            jump: -6,      // 降低跳跃力度
             size: 30,
             frame: 0,
             animationSpeed: 0.1,
@@ -33,9 +34,10 @@ class FlappyBird {
         // 管道属性
         this.pipes = [];
         this.pipeWidth = 60;
-        this.pipeGap = 150;
-        this.pipeSpacing = 200;
+        this.pipeGap = 160;     // 增加管道垂直间距
+        this.pipeSpacing = 280; // 增加管道水平间距
         this.minPipeHeight = 50;
+        this.pipeSpeed = 2;     // 降低管道移动速度
 
         // 音效
         this.sounds = {
@@ -102,6 +104,25 @@ class FlappyBird {
         // 点击/触摸事件
         const jumpHandler = (e) => {
             e.preventDefault();
+            if (this.gameOver) {
+                // 检查点击是否在重新开始按钮区域内
+                const buttonX = (this.canvas.width - 200) / 2;
+                const buttonY = this.canvas.height / 2 + 60;
+                const buttonWidth = 200;
+                const buttonHeight = 40;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const clickX = e.type === 'click' ? e.clientX : e.touches[0].clientX;
+                const clickY = e.type === 'click' ? e.clientY : e.touches[0].clientY;
+                const x = clickX - rect.left;
+                const y = clickY - rect.top;
+                
+                if (x >= buttonX && x <= buttonX + buttonWidth &&
+                    y >= buttonY && y <= buttonY + buttonHeight) {
+                    this.resetGame();
+                }
+                return;
+            }
             if (!this.gameStarted) {
                 this.gameStarted = true;
             }
@@ -172,7 +193,7 @@ class FlappyBird {
 
         for (let i = this.pipes.length - 1; i >= 0; i--) {
             const pipe = this.pipes[i];
-            pipe.x -= 3;
+            pipe.x -= this.pipeSpeed;  // 使用新的管道速度
 
             // 检查碰撞
             if (this.checkCollision(pipe)) {
@@ -244,9 +265,9 @@ class FlappyBird {
         // 绘制分数
         const scoreStr = this.score.toString();
         let scoreWidth = 0;
-        const numberWidth = 24; // 数字图片的宽度
-        const numberHeight = 36; // 数字图片的高度
-        const spacing = 2; // 数字之间的间距
+        const numberWidth = 24;
+        const numberHeight = 36;
+        const spacing = 2;
 
         // 计算总宽度
         scoreWidth = scoreStr.length * (numberWidth + spacing) - spacing;
@@ -267,13 +288,72 @@ class FlappyBird {
                 184, 267);
         }
 
-        // 游戏结束提示
+        // 游戏结束界面
         if (this.gameOver) {
+            // 绘制游戏结束图片
             this.ctx.drawImage(this.images.gameOver, 
                 (this.canvas.width - 192) / 2, 
-                (this.canvas.height - 42) / 2, 
+                (this.canvas.height - 42) / 2 - 50, 
                 192, 42);
+
+            // 更新最高分
+            if (this.score > this.bestScore) {
+                this.bestScore = this.score;
+                localStorage.setItem('flappyBirdBestScore', this.bestScore);
+            }
+
+            // 绘制分数面板背景
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.fillRect(
+                (this.canvas.width - 200) / 2,
+                this.canvas.height / 2,
+                200,
+                50
+            );
+
+            // 绘制分数文本
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = '20px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(
+                `得分: ${this.score} | 最高分: ${this.bestScore}`,
+                this.canvas.width / 2,
+                this.canvas.height / 2 + 30
+            );
+
+            // 绘制重新开始按钮
+            this.ctx.fillStyle = '#4CAF50';
+            const buttonX = (this.canvas.width - 200) / 2;
+            const buttonY = this.canvas.height / 2 + 60;
+            this.ctx.fillRect(buttonX, buttonY, 200, 40);
+            
+            this.ctx.fillStyle = '#FFF';
+            this.ctx.font = 'bold 20px Arial';
+            this.ctx.fillText(
+                '重新开始',
+                this.canvas.width / 2,
+                this.canvas.height / 2 + 85
+            );
         }
+    }
+
+    resetGame() {
+        // 重置游戏状态
+        this.gameStarted = false;
+        this.gameOver = false;
+        this.score = 0;
+        this.scoreElement.textContent = `得分: ${this.score}`;
+        
+        // 重置小鸟位置和速度
+        this.bird.y = this.canvas.height / 2;
+        this.bird.velocity = 0;
+        
+        // 清空管道
+        this.pipes = [];
+        
+        // 播放重新开始音效
+        this.sounds.swoosh.currentTime = 0;
+        this.sounds.swoosh.play();
     }
 
     animate(currentTime) {
