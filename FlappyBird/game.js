@@ -156,19 +156,33 @@ class FlappyBird {
 
         // 计算缩放比例
         const baseWidth = 400;
-        const baseHeight = window.innerWidth <= 768 ? 600 : 400;
-        this.scale = Math.min(containerWidth / baseWidth, containerHeight / baseHeight);
+        const baseHeight = 600;
+        
+        // 移动端使用不同的基准高度
+        const isMobile = window.innerWidth <= 768;
+        const mobileScale = isMobile ? 0.85 : 1; // 移动端缩小比例
+        
+        this.scale = Math.min(
+            containerWidth / baseWidth,
+            (containerHeight / baseHeight) * mobileScale
+        );
         
         // 调整游戏元素大小
         this.bird.size = Math.round(30 * this.scale);
         this.pipeWidth = Math.round(52 * this.scale);
-        this.pipeGap = Math.round(120 * this.scale);
+        this.pipeGap = Math.round(170 * this.scale); // 增加管道垂直间距
         this.pipeSpacing = Math.round(220 * this.scale);
         this.minPipeHeight = Math.round(50 * this.scale);
 
         // 初始化或更新小鸟位置
         this.bird.x = Math.round(containerWidth * 0.2);
         this.bird.y = containerHeight / 2;
+
+        // 调整管道生成参数
+        if (isMobile) {
+            this.pipeGap = Math.round(160 * this.scale); // 移动端也保持较大的通道宽度
+            this.pipeSpacing = Math.round(200 * this.scale); // 减小管道水平间距
+        }
     }
 
     setupEventListeners() {
