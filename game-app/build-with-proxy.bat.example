@@ -1,8 +1,29 @@
 @echo off
-rem 代理配置模板
-rem 复制此文件为build-with-proxy.bat并设置你的代理
+rem Proxy configuration template
+rem Copy this file as build-with-proxy.bat and set your proxy
 
+echo Syncing game files...
+
+rem Ensure www directory exists
+if not exist "www" mkdir www
+
+rem Copy homepage
+xcopy /Y "..\index.html" "www\"
+
+rem Copy game files
+xcopy /Y /E /I "..\FlappyBird" "www\FlappyBird"
+xcopy /Y /E /I "..\Minesweeper" "www\Minesweeper"
+xcopy /Y /E /I "..\Snake" "www\Snake"
+xcopy /Y /E /I "..\TicTacToe" "www\TicTacToe"
+
+echo Game files sync completed
+
+rem Set proxy
 set HTTP_PROXY=http://127.0.0.1:7890
 set HTTPS_PROXY=http://127.0.0.1:7890
 set JAVA_OPTS=-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890
+
+rem Build Android app
+echo Starting Android app build...
 cordova build android
+echo Build completed
