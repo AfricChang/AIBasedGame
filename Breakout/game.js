@@ -25,7 +25,7 @@ function resizeCanvas() {
     const container = canvas.parentElement;
     const maxWidth = 480;
     const width = Math.min(container.clientWidth - 40, maxWidth);
-    const height = width * (3/4);  // 改为3/4的宽高比，使画面更高
+    const height = 600;  // 设置固定高度为600像素
     
     canvas.width = width;
     canvas.height = height;
@@ -61,7 +61,7 @@ const difficultySettings = {
 // 球对象
 const ball = {
     x: canvas.width/2,
-    y: canvas.height,  // 让球的起始位置离底部更远，从50改为0
+    y: canvas.height - 50,  // 让球的起始位置离底部50像素
     dx: 4,
     dy: -4,
     radius: 8
@@ -80,7 +80,7 @@ const brickColumnCount = 8;
 const brickWidth = 50;
 const brickHeight = 20;
 const brickPadding = 10;
-const brickOffsetTop = 0;     // 增加顶部偏移，从50改为0
+const brickOffsetTop = 50;     // 增加顶部偏移，使砖块区域下移
 const brickOffsetLeft = 30;
 
 // 砖块颜色
@@ -297,7 +297,7 @@ function resetGame() {
 
 function resetBallAndPaddle() {
     ball.x = canvas.width/2;
-    ball.y = canvas.height;  // 让球的起始位置离底部更远，从50改为0
+    ball.y = canvas.height - 50;  // 让球的起始位置离底部50像素
     paddle.x = (canvas.width-paddle.width)/2;
 }
 
