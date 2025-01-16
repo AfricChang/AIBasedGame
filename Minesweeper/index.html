@@ -22,6 +22,7 @@
                     <option value="zh">中文</option>
                 </select>
                 <button id="new-game" data-i18n="newGame">New Game</button>
+                <button id="show-instructions" data-i18n="instructions">How to Play</button>
             </div>
         </div>
         <div class="game-board"></div>
@@ -44,6 +45,26 @@
             <div class="actions">
                 <button id="play-again" data-i18n="playAgain">Play Again</button>
                 <button id="main-menu" data-i18n="mainMenu">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
+            <h2 data-i18n="instructions">How to Play</h2>
+            <div class="instructions-text">
+                <div class="pc-instructions" data-i18n="instructionsPC">
+                    • Left click: Reveal a cell
+                    • Right click: Place/Remove a flag
+                </div>
+                <div class="mobile-instructions" data-i18n="instructionsMobile">
+                    • Tap: Reveal a cell
+                    • Long press: Place/Remove a flag
+                </div>
+            </div>
+            <div class="actions">
+                <button id="close-instructions" data-i18n="close">Close</button>
             </div>
         </div>
     </div>

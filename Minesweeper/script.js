@@ -23,7 +23,11 @@ class Minesweeper {
                 time: "Time",
                 win: "You Win!",
                 lose: "Game Over",
-                restart: "Restart"
+                restart: "Restart",
+                instructions: "How to Play",
+                instructionsPC: "• Left click: Reveal a cell\n• Right click: Place/Remove a flag",
+                instructionsMobile: "• Tap: Reveal a cell\n• Long press: Place/Remove a flag",
+                close: "Close"
             },
             zh: {
                 title: "扫雷游戏",
@@ -35,7 +39,11 @@ class Minesweeper {
                 time: "时间",
                 win: "你赢了！",
                 lose: "游戏结束",
-                restart: "重新开始"
+                restart: "重新开始",
+                instructions: "游戏说明",
+                instructionsPC: "• 鼠标左键：揭开方块\n• 鼠标右键：放置/移除旗帜",
+                instructionsMobile: "• 点击：揭开方块\n• 长按：放置/移除旗帜",
+                close: "关闭"
             }
         };
 
@@ -56,6 +64,22 @@ class Minesweeper {
         });
         document.getElementById('language').addEventListener('change', (e) => {
             this.setLanguage(e.target.value);
+        });
+
+        // 添加游戏说明事件监听
+        const instructionsModal = document.getElementById('instructions-modal');
+        document.getElementById('show-instructions').addEventListener('click', () => {
+            instructionsModal.style.display = 'flex';
+        });
+        document.getElementById('close-instructions').addEventListener('click', () => {
+            instructionsModal.style.display = 'none';
+        });
+        
+        // 点击模态框外部关闭
+        instructionsModal.addEventListener('click', (e) => {
+            if (e.target === instructionsModal) {
+                instructionsModal.style.display = 'none';
+            }
         });
     }
 
@@ -123,10 +147,41 @@ class Minesweeper {
                 cell.dataset.row = row;
                 cell.dataset.col = col;
                 
+                // 添加点击事件
                 cell.addEventListener('click', () => this.handleCellClick(row, col));
+                
+                // 添加右键点击事件
                 cell.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     this.toggleFlag(row, col);
+                });
+                
+                // 添加触摸事件
+                let longPressTimer;
+                let isMoved = false;
+                
+                cell.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isMoved = false;
+                    longPressTimer = setTimeout(() => {
+                        if (!isMoved) {
+                            this.toggleFlag(row, col);
+                        }
+                    }, 500);
+                });
+                
+                cell.addEventListener('touchmove', () => {
+                    isMoved = true;
+                    clearTimeout(longPressTimer);
+                });
+                
+                cell.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(longPressTimer);
+                    if (!isMoved) {
+                        // 如果没有移动且不是长按，则视为点击
+                        this.handleCellClick(row, col);
+                    }
                 });
                 
                 boardElement.appendChild(cell);
