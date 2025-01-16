@@ -175,56 +175,64 @@ body {
 /* Mobile Styles */
 @media (max-width: 600px) {
     :root {
-        --cell-size: 24px;
+        --cell-size: 20px;
     }
     
     body {
         align-items: flex-start;
+        padding: 0;
     }
     
     .container {
         margin: 0;
+        padding: 10px;
         border-radius: 0;
         min-height: 100vh;
+        overflow-x: auto;
+    }
+    
+    .game-board {
+        margin: 10px auto;
+        padding: 5px;
+        min-width: fit-content;
     }
     
     .controls {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
+        margin: 10px 0;
     }
     
     .controls button:first-child {
         grid-column: 1 / -1;
     }
     
-    .game-board {
-        margin: 10px auto;
-        padding: 5px;
-    }
-    
     .status {
         font-size: 14px;
     }
+
+    /* 困难模式的特殊处理 */
+    .game-board[style*="repeat(16,"] {
+        --cell-size: 18px;
+        transform-origin: top center;
+    }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 600px) and (orientation: landscape) {
+    .container {
+        padding: 5px;
+    }
     
-    .pc-instructions {
-        display: none;
+    .header {
+        margin-bottom: 10px;
     }
-}
-
-@media (min-width: 601px) {
-    .mobile-instructions {
-        display: none;
+    
+    .header h1 {
+        font-size: 24px;
+        margin: 0 0 10px 0;
     }
-}
-
-#show-instructions {
-    background-color: var(--success-color);
-    color: white;
-}
-
-#show-instructions:hover {
-    background-color: #388E3C;
 }
 
 /* Modal Styles */
@@ -292,4 +300,19 @@ body {
 
 .modal .actions button:hover {
     opacity: 0.9;
+}
+
+#show-instructions {
+    background-color: var(--success-color);
+    color: white;
+}
+
+#show-instructions:hover {
+    background-color: #388E3C;
+}
+
+@media (min-width: 601px) {
+    .mobile-instructions {
+        display: none;
+    }
 }
