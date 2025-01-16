@@ -123,11 +123,15 @@ body {
     background-color: rgba(255, 255, 255, 0.8);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    align-items: center;
 }
 
 .status span {
     font-weight: bold;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .actions {
@@ -170,6 +174,21 @@ body {
 
 .instructions-text div {
     margin-bottom: 10px;
+}
+
+.language-btn {
+    background-color: #607D8B !important;
+    color: white !important;
+    font-weight: bold;
+    min-width: 80px;
+}
+
+.language-btn:hover {
+    background-color: #455A64 !important;
+}
+
+.language-btn.zh {
+    background-color: #455A64 !important;
 }
 
 /* Mobile Styles */

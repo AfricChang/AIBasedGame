@@ -27,7 +27,11 @@ class Minesweeper {
                 instructions: "How to Play",
                 instructionsPC: "• Left click: Reveal a cell\n• Right click: Place/Remove a flag",
                 instructionsMobile: "• Tap: Reveal a cell\n• Long press: Place/Remove a flag",
-                close: "Close"
+                close: "Close",
+                minesLeft: "Mines: ",
+                playAgain: "Play Again",
+                mainMenu: "Main Menu",
+                backToMenu: "← Back to Menu"
             },
             zh: {
                 title: "扫雷游戏",
@@ -43,7 +47,11 @@ class Minesweeper {
                 instructions: "游戏说明",
                 instructionsPC: "• 鼠标左键：揭开方块\n• 鼠标右键：放置/移除旗帜",
                 instructionsMobile: "• 点击：揭开方块\n• 长按：放置/移除旗帜",
-                close: "关闭"
+                close: "关闭",
+                minesLeft: "剩余雷数: ",
+                playAgain: "再玩一次",
+                mainMenu: "主菜单",
+                backToMenu: "← 返回主菜单"
             }
         };
 
@@ -52,8 +60,14 @@ class Minesweeper {
 
     init() {
         this.setupEventListeners();
-        this.setLanguage('en');
+        this.loadLanguage();
         this.startNewGame();
+    }
+
+    loadLanguage() {
+        const savedLang = localStorage.getItem('minesweeper-language') || 'en';
+        this.setLanguage(savedLang);
+        document.getElementById('language-toggle').classList.toggle('zh', savedLang === 'zh');
     }
 
     setupEventListeners() {
@@ -62,8 +76,13 @@ class Minesweeper {
             this.difficulty = e.target.value;
             this.startNewGame();
         });
-        document.getElementById('language').addEventListener('change', (e) => {
-            this.setLanguage(e.target.value);
+
+        // 语言切换按钮
+        document.getElementById('language-toggle').addEventListener('click', () => {
+            const newLang = this.language === 'en' ? 'zh' : 'en';
+            this.setLanguage(newLang);
+            localStorage.setItem('minesweeper-language', newLang);
+            document.getElementById('language-toggle').classList.toggle('zh', newLang === 'zh');
         });
 
         // 添加游戏说明事件监听
@@ -102,6 +121,7 @@ class Minesweeper {
         this.setDifficulty();
         this.generateBoard();
         this.renderBoard();
+        this.updateMinesCount();
     }
 
     setDifficulty() {
@@ -239,9 +259,12 @@ class Minesweeper {
         };
         
         document.getElementById('main-menu').onclick = () => {
-            modal.style.display = 'none';
-            this.setLanguage(this.language); // Refresh language
+            window.location.href = '../index.html';
         };
+
+        // Update button text
+        document.getElementById('play-again').textContent = this.i18n[this.language].playAgain;
+        document.getElementById('main-menu').textContent = this.i18n[this.language].mainMenu;
     }
 
     placeMines(safeRow, safeCol) {
@@ -319,7 +342,7 @@ class Minesweeper {
         const cellElement = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         cellElement.classList.toggle('flagged');
         
-        document.getElementById('flag-count').textContent = this.flags;
+        this.updateMinesCount();
     }
 
     revealAllMines() {
@@ -354,6 +377,10 @@ class Minesweeper {
 
     updateTimer() {
         document.getElementById('timer').textContent = this.time;
+    }
+
+    updateMinesCount() {
+        document.getElementById('mines-count').textContent = this.mines - this.flags;
     }
 }
 

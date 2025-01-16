@@ -11,16 +11,13 @@
         <div class="header">
             <h1 data-i18n="title">Minesweeper</h1>
             <div class="controls">
-                <button onclick="window.location.href='../index.html'" style="margin-right: 10px;">← 返回主菜单</button>
+                <button onclick="window.location.href='../index.html'" data-i18n="backToMenu" style="margin-right: 10px;">← Back to Menu</button>
                 <select id="difficulty">
                     <option value="easy" data-i18n="easy">Easy</option>
                     <option value="medium" data-i18n="medium" selected>Medium</option>
                     <option value="hard" data-i18n="hard">Hard</option>
                 </select>
-                <select id="language">
-                    <option value="en">English</option>
-                    <option value="zh">中文</option>
-                </select>
+                <button id="language-toggle" class="language-btn">EN / 中</button>
                 <button id="new-game" data-i18n="newGame">New Game</button>
                 <button id="show-instructions" data-i18n="instructions">How to Play</button>
             </div>
@@ -30,6 +27,7 @@
             <div class="status">
                 <span id="timer">0s</span>
                 <span id="flag-count">0</span>
+                <span><span data-i18n="minesLeft">Mines: </span><span id="mines-count">0</span></span>
             </div>
         </div>
     </div>
@@ -43,8 +41,8 @@
                 <p><span data-i18n="flags">Flags:</span> <span id="final-flags">0</span></p>
             </div>
             <div class="actions">
-                <button id="play-again" data-i18n="playAgain">Play Again</button>
-                <button id="main-menu" data-i18n="mainMenu">Main Menu</button>
+                <button id="play-again" data-i18n="playAgain">再玩一次</button>
+                <button id="main-menu" data-i18n="mainMenu">返回主菜单</button>
             </div>
         </div>
     </div>
