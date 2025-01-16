@@ -3,9 +3,17 @@ class FlappyBird {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.score = 0;
-        this.bestScore = localStorage.getItem('flappyBirdBestScore') || 0;
+        this.bestScore = parseInt(localStorage.getItem('flappyBirdBestScore')) || 0;
         this.scoreElement = document.getElementById('score');
+        this.currentScoreElement = this.scoreElement.querySelector('.current-score');
+        this.bestScoreElement = this.scoreElement.querySelector('.best-score');
         this.backBtn = document.getElementById('backBtn');
+        this.dialogOverlay = document.getElementById('dialogOverlay');
+        this.dialogConfirm = document.getElementById('dialogConfirm');
+        this.dialogCancel = document.getElementById('dialogCancel');
+
+        // 初始化显示最高分
+        this.updateScoreDisplay();
 
         // 设置画布大小
         this.resizeCanvas();
@@ -61,18 +69,28 @@ class FlappyBird {
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
         
-        // 保持16:9的宽高比
-        const aspectRatio = 16/9;
-        let width = containerWidth;
-        let height = containerWidth / aspectRatio;
+        // 设置画布尺寸
+        this.canvas.width = containerWidth;
+        this.canvas.height = containerHeight;
 
-        if (height > containerHeight) {
-            height = containerHeight;
-            width = height * aspectRatio;
+        // 根据屏幕大小调整游戏元素比例
+        const scale = Math.min(containerWidth / 400, containerHeight / 600);
+        
+        // 调整游戏元素大小
+        this.bird.size = 30 * scale;
+        this.pipeWidth = 60 * scale;
+        this.pipeGap = 160 * scale;
+        this.pipeSpacing = 280 * scale;
+
+        // 重新定位小鸟的X坐标
+        this.bird.x = containerWidth * 0.2;
+
+        // 如果是移动设备，调整管道高度范围
+        if (window.innerWidth <= 768) {
+            this.minPipeHeight = 40 * scale;
+        } else {
+            this.minPipeHeight = 50 * scale;
         }
-
-        this.canvas.width = width;
-        this.canvas.height = height;
     }
 
     loadResources() {
@@ -101,6 +119,29 @@ class FlappyBird {
     }
 
     setupEventListeners() {
+        // 返回按钮和对话框逻辑
+        this.backBtn.addEventListener('click', () => {
+            // 暂停游戏
+            this.gameStarted = false;
+            // 显示对话框
+            this.dialogOverlay.style.display = 'flex';
+        });
+
+        // 确认返回
+        this.dialogConfirm.addEventListener('click', () => {
+            window.location.href = '../index.html';
+        });
+
+        // 取消返回
+        this.dialogCancel.addEventListener('click', () => {
+            // 隐藏对话框
+            this.dialogOverlay.style.display = 'none';
+            // 如果游戏之前在运行，则继续运行
+            if (!this.gameOver) {
+                this.gameStarted = true;
+            }
+        });
+
         // 点击/触摸事件
         const jumpHandler = (e) => {
             e.preventDefault();
@@ -140,13 +181,6 @@ class FlappyBird {
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 jumpHandler(e);
-            }
-        });
-
-        // 返回按钮
-        this.backBtn.addEventListener('click', () => {
-            if (confirm('确定要返回主菜单吗？')) {
-                window.location.href = '../index.html';
             }
         });
     }
@@ -205,9 +239,7 @@ class FlappyBird {
             // 计分
             if (!pipe.scored && pipe.x + this.pipeWidth < this.bird.x) {
                 pipe.scored = true;
-                this.score++;
-                this.scoreElement.textContent = `得分: ${this.score}`;
-                this.sounds.score.play();
+                this.updateScore();
             }
 
             // 移除屏幕外的管道
@@ -233,6 +265,9 @@ class FlappyBird {
     }
 
     draw() {
+        // 计算缩放比例
+        const scale = Math.min(this.canvas.width / 400, this.canvas.height / 600);
+
         // 绘制背景
         this.ctx.drawImage(this.images.background, 0, 0, this.canvas.width, this.canvas.height);
 
@@ -265,9 +300,9 @@ class FlappyBird {
         // 绘制分数
         const scoreStr = this.score.toString();
         let scoreWidth = 0;
-        const numberWidth = 24;
-        const numberHeight = 36;
-        const spacing = 2;
+        const numberWidth = 24 * scale;
+        const numberHeight = 36 * scale;
+        const spacing = 2 * scale;
 
         // 计算总宽度
         scoreWidth = scoreStr.length * (numberWidth + spacing) - spacing;
@@ -276,63 +311,65 @@ class FlappyBird {
         let xPos = (this.canvas.width - scoreWidth) / 2;
         for (const digit of scoreStr) {
             const numberImg = this.images.numbers[parseInt(digit)];
-            this.ctx.drawImage(numberImg, xPos, 50, numberWidth, numberHeight);
+            this.ctx.drawImage(numberImg, xPos, 50 * scale, numberWidth, numberHeight);
             xPos += numberWidth + spacing;
         }
 
         // 游戏开始提示
         if (!this.gameStarted) {
+            const messageWidth = 184 * scale;
+            const messageHeight = 267 * scale;
             this.ctx.drawImage(this.images.message, 
-                (this.canvas.width - 184) / 2, 
-                (this.canvas.height - 267) / 2, 
-                184, 267);
+                (this.canvas.width - messageWidth) / 2, 
+                (this.canvas.height - messageHeight) / 2, 
+                messageWidth, messageHeight);
         }
 
         // 游戏结束界面
         if (this.gameOver) {
             // 绘制游戏结束图片
+            const gameOverWidth = 192 * scale;
+            const gameOverHeight = 42 * scale;
             this.ctx.drawImage(this.images.gameOver, 
-                (this.canvas.width - 192) / 2, 
-                (this.canvas.height - 42) / 2 - 50, 
-                192, 42);
-
-            // 更新最高分
-            if (this.score > this.bestScore) {
-                this.bestScore = this.score;
-                localStorage.setItem('flappyBirdBestScore', this.bestScore);
-            }
+                (this.canvas.width - gameOverWidth) / 2, 
+                (this.canvas.height - gameOverHeight) / 2 - 50 * scale, 
+                gameOverWidth, gameOverHeight);
 
             // 绘制分数面板背景
+            const panelWidth = 200 * scale;
+            const panelHeight = 50 * scale;
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             this.ctx.fillRect(
-                (this.canvas.width - 200) / 2,
+                (this.canvas.width - panelWidth) / 2,
                 this.canvas.height / 2,
-                200,
-                50
+                panelWidth,
+                panelHeight
             );
 
             // 绘制分数文本
             this.ctx.fillStyle = '#000';
-            this.ctx.font = '20px Arial';
+            this.ctx.font = `${20 * scale}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.fillText(
                 `得分: ${this.score} | 最高分: ${this.bestScore}`,
                 this.canvas.width / 2,
-                this.canvas.height / 2 + 30
+                this.canvas.height / 2 + 30 * scale
             );
 
             // 绘制重新开始按钮
+            const buttonWidth = 200 * scale;
+            const buttonHeight = 40 * scale;
             this.ctx.fillStyle = '#4CAF50';
-            const buttonX = (this.canvas.width - 200) / 2;
-            const buttonY = this.canvas.height / 2 + 60;
-            this.ctx.fillRect(buttonX, buttonY, 200, 40);
+            const buttonX = (this.canvas.width - buttonWidth) / 2;
+            const buttonY = this.canvas.height / 2 + 60 * scale;
+            this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
             
             this.ctx.fillStyle = '#FFF';
-            this.ctx.font = 'bold 20px Arial';
+            this.ctx.font = `bold ${20 * scale}px Arial`;
             this.ctx.fillText(
                 '重新开始',
                 this.canvas.width / 2,
-                this.canvas.height / 2 + 85
+                this.canvas.height / 2 + 85 * scale
             );
         }
     }
@@ -342,7 +379,7 @@ class FlappyBird {
         this.gameStarted = false;
         this.gameOver = false;
         this.score = 0;
-        this.scoreElement.textContent = `得分: ${this.score}`;
+        this.updateScoreDisplay();
         
         // 重置小鸟位置和速度
         this.bird.y = this.canvas.height / 2;
@@ -354,6 +391,24 @@ class FlappyBird {
         // 播放重新开始音效
         this.sounds.swoosh.currentTime = 0;
         this.sounds.swoosh.play();
+    }
+
+    updateScoreDisplay() {
+        this.currentScoreElement.textContent = `得分: ${this.score}`;
+        this.bestScoreElement.textContent = `最高分: ${this.bestScore}`;
+    }
+
+    updateScore() {
+        this.score++;
+        if (this.score > this.bestScore) {
+            this.bestScore = this.score;
+            localStorage.setItem('flappyBirdBestScore', this.bestScore);
+            // 播放特殊音效当破纪录时
+            this.sounds.swoosh.currentTime = 0;
+            this.sounds.swoosh.play();
+        }
+        this.updateScoreDisplay();
+        this.sounds.score.play();
     }
 
     animate(currentTime) {
