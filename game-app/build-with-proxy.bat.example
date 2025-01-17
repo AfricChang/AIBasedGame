@@ -7,14 +7,18 @@ echo Syncing game files...
 rem Ensure www directory exists
 if not exist "www" mkdir www
 
-rem Copy homepage
-xcopy /Y "..\index.html" "www\"
+rem Copy all directories from parent folder except game-app itself
+for /D %%d in ("../*") do (
+    if /I not "%%~nxd"=="game-app" if /I not "%%~nxd"==".git" (
+        echo Copying directory: %%~nxd
+        xcopy /Y /E /I "..\%%~nxd" "www\%%~nxd"
+    )
+)
 
-rem Copy game files
-xcopy /Y /E /I "..\FlappyBird" "www\FlappyBird"
-xcopy /Y /E /I "..\Minesweeper" "www\Minesweeper"
-xcopy /Y /E /I "..\Snake" "www\Snake"
-xcopy /Y /E /I "..\TicTacToe" "www\TicTacToe"
+rem Copy root files
+xcopy /Y "..\index.html" "www\"
+xcopy /Y "..\README.md" "www\"
+xcopy /Y "..\LICENSE" "www\"
 
 echo Game files sync completed
 
@@ -24,6 +28,6 @@ set HTTPS_PROXY=http://127.0.0.1:7890
 set JAVA_OPTS=-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890
 
 rem Build Android app
-echo Starting Android app build...
+echo Starting Android app debug build...
 cordova build android
 echo Build completed

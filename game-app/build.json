@@ -1,15 +1,10 @@
 {
     "android": {
         "release": {
-            "keystore": "C:/Users/AfricChang/.android/debug.keystore",
-            "storePassword": "android",
-            "alias": "androiddebugkey",
-            "password": "android",
-            "keystoreType": "jks"
-        },
-        "gradle": {
-            "gradleVersion": "8.7",
-            "gradleDistributionPath": "E:/Android/gradle/gradle-8.7"
+            "keystore": "game-app-release.keystore",
+            "storePassword": "game-app-store",
+            "alias": "game-app",
+            "password": "game-app-key"
         }
     }
 }
