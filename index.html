@@ -65,6 +65,10 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             user-select: none;
             -webkit-user-select: none;
+            height: 200px; /* 固定卡片高度 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         .game-card:active {
             transform: scale(0.98);
@@ -73,53 +77,50 @@
             font-size: 2.8em;
             margin-bottom: 12px;
             color: white;
+            flex-shrink: 0;
         }
         .game-title {
             color: white;
             font-size: 1.4em;
             margin-bottom: 8px;
+            flex-shrink: 0;
         }
         .game-description {
             color: rgba(255, 255, 255, 0.8);
             font-size: 0.95em;
             line-height: 1.4;
+            /* 确保描述文字不会超出容器 */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
         }
         @media (max-width: 768px) {
             body {
                 padding: 10px;
             }
-            h1 {
-                font-size: 2em;
-                margin-bottom: 20px;
-            }
             .game-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
+                max-width: 400px;
+                margin: 0 auto;
             }
             .game-card {
+                height: 180px; /* 移动端稍微降低卡片高度 */
                 padding: 15px;
-                margin: 0 auto;
-                max-width: 400px;
             }
             .game-icon {
-                font-size: 2.5em;
-            }
-            .game-title {
-                font-size: 1.3em;
-            }
-            .game-description {
-                font-size: 0.9em;
-            }
-        }
-        @media (max-width: 320px) {
-            h1 {
-                font-size: 1.8em;
-            }
-            .game-icon {
-                font-size: 2.2em;
+                font-size: 2.4em;
+                margin-bottom: 8px;
             }
             .game-title {
                 font-size: 1.2em;
+                margin-bottom: 6px;
+            }
+            .game-description {
+                font-size: 0.9em;
             }
         }
     </style>
@@ -133,6 +134,16 @@
                 <div class="game-icon">🎮</div>
                 <h2 class="game-title" data-en="2048" data-zh="2048">2048</h2>
                 <p class="game-description" data-en="Classic number puzzle game, merge tiles to get 2048!" data-zh="经典数字益智游戏，通过合并相同数字来获得2048！">经典数字益智游戏，通过合并相同数字来获得2048！</p>
+            </div>
+            <div class="game-card" onclick="location.href='Minesweeper/index.html'">
+                <div class="game-icon">💣</div>
+                <h2 class="game-title" data-en="Minesweeper" data-zh="扫雷">扫雷</h2>
+                <p class="game-description" data-en="Classic mine-finding game, test your logical thinking!" data-zh="经典的扫雷游戏，考验你的逻辑思维！">经典的扫雷游戏，考验你的逻辑思维！</p>
+            </div>
+            <div class="game-card" onclick="location.href='FlappyBird/index.html'">
+                <div class="game-icon">🐦</div>
+                <h2 class="game-title" data-en="Flappy Bird" data-zh="飞翔的小鸟">飞翔的小鸟</h2>
+                <p class="game-description" data-en="Guide the bird through pipes, test your reflexes!" data-zh="指引小鸟穿过管道，考验你的反应能力！">指引小鸟穿过管道，考验你的反应能力！</p>
             </div>
             <div class="game-card" onclick="location.href='Breakout/index.html'">
                 <div class="game-icon">🏓</div>
@@ -152,17 +163,7 @@
             <div class="game-card" onclick="location.href='zhiqi/index.html'">
                 <div class="game-icon">♟️</div>
                 <h2 class="game-title" data-en="Zhiqi" data-zh="直棋">直棋</h2>
-                <p class="game-description" data-en="Ancient Zhiqi game, experience the joy of strategy! (Under Development)" data-zh="古老的直棋游戏，体验博弈的乐趣！（开发中）">古老的直棋游戏，体验博弈的乐趣！（开发中）</p>
-            </div>
-            <div class="game-card" onclick="location.href='Minesweeper/index.html'">
-                <div class="game-icon">💣</div>
-                <h2 class="game-title" data-en="Minesweeper" data-zh="扫雷">扫雷</h2>
-                <p class="game-description" data-en="Classic minesweeper game, test your logic and luck!" data-zh="经典扫雷游戏，考验你的逻辑与运气！">经典扫雷游戏，考验你的逻辑与运气！</p>
-            </div>
-            <div class="game-card" onclick="window.location.href='FlappyBird/index.html'">
-                <div class="game-icon">🐦</div>
-                <div class="game-title" data-en="Flappy Bird" data-zh="飞翔的小鸟">飞翔的小鸟</div>
-                <div class="game-description" data-en="Classic tap-to-fly game. Guide the bird through pipes and set high scores!" data-zh="经典的点击飞行游戏。控制小鸟穿过管道，创造高分！">经典的点击飞行游戏。控制小鸟穿过管道，创造高分！</div>
+                <p class="game-description" data-en="A unique chess variant with simple rules but deep strategy!" data-zh="规则简单但策略丰富的棋类游戏变体！">规则简单但策略丰富的棋类游戏变体！</p>
             </div>
         </div>
     </div>
