@@ -216,11 +216,15 @@ class JumpGame {
 
         // 添加地板
         const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
+        const groundMaterial = new THREE.ShadowMaterial({ 
+            opacity: 0.3,
+            depthWrite: false
+        });
         this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
         this.ground.rotation.x = -Math.PI / 2;
         this.ground.position.y = -0.1;
         this.ground.receiveShadow = true;
+        this.ground.renderOrder = 0; // 确保地板在最底层渲染
         this.scene.add(this.ground);
 
         // 创建角色
@@ -248,6 +252,8 @@ class JumpGame {
         const bodyGeometry = new THREE.BoxGeometry(0.7, 0.7, 0.7);
         const bodyMaterial = new THREE.MeshPhongMaterial({ 
             color: 0x333333,
+            transparent: false,
+            opacity: 1,
             shininess: 30
         });
         this.character = new THREE.Mesh(bodyGeometry, bodyMaterial);
@@ -256,7 +262,11 @@ class JumpGame {
         
         // 眼睛
         const eyeGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-        const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const eyeMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0xffffff,
+            transparent: false,
+            opacity: 1
+        });
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         leftEye.position.set(-0.15, 0.1, 0.3);
@@ -277,11 +287,13 @@ class JumpGame {
         const shadowMaterial = new THREE.MeshBasicMaterial({
             color: 0x000000,
             transparent: true,
-            opacity: 0.2
+            opacity: 0.3,
+            depthWrite: false
         });
         this.characterShadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
         this.characterShadow.rotation.x = -Math.PI / 2;
         this.characterShadow.position.y = this.config.blockHeight + 0.01;
+        this.characterShadow.renderOrder = 1; // 确保阴影在其他物体之后渲染
         this.scene.add(this.characterShadow);
     }
 
@@ -300,12 +312,12 @@ class JumpGame {
         );
 
         const materials = [
-            new THREE.MeshPhongMaterial({ color: color, shininess: 30 }), // right
-            new THREE.MeshPhongMaterial({ color: color, shininess: 30 }), // left
-            new THREE.MeshPhongMaterial({ color: color * 1.2, shininess: 30 }), // top
-            new THREE.MeshPhongMaterial({ color: color * 0.8, shininess: 30 }), // bottom
-            new THREE.MeshPhongMaterial({ color: color, shininess: 30 }), // front
-            new THREE.MeshPhongMaterial({ color: color, shininess: 30 }), // back
+            new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // right
+            new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // left
+            new THREE.MeshPhongMaterial({ color: color * 1.2, transparent: false, opacity: 1, shininess: 30 }), // top
+            new THREE.MeshPhongMaterial({ color: color * 0.8, transparent: false, opacity: 1, shininess: 30 }), // bottom
+            new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // front
+            new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // back
         ];
 
         const block = new THREE.Mesh(geometry, materials);
@@ -319,8 +331,8 @@ class JumpGame {
             edges,
             new THREE.LineBasicMaterial({ 
                 color: 0xffffff,
-                transparent: true,
-                opacity: 0.5
+                transparent: false,
+                opacity: 1
             })
         );
         blockGroup.add(line);
@@ -330,11 +342,13 @@ class JumpGame {
         const circleMaterial = new THREE.MeshBasicMaterial({ 
             color: 0xffffff,
             transparent: true,
-            opacity: 0.2
+            opacity: 0.3,
+            depthWrite: false
         });
         const circle = new THREE.Mesh(circleGeometry, circleMaterial);
         circle.rotation.x = -Math.PI / 2;
         circle.position.y = this.config.blockHeight / 2 + 0.01;
+        circle.renderOrder = 2; // 确保圆形在最上层渲染
         blockGroup.add(circle);
 
         this.scene.add(blockGroup);
