@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>跳一跳</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <button class="back-button"></button>
+            <div class="scores">
+                <div class="score">得分: 0</div>
+                <div class="high-score">最高分: 0</div>
+            </div>
+        </div>
+        <div class="instruction">按住屏幕蓄力，松开跳跃</div>
+        <div class="game-over" style="display: none;">
+            <div class="game-over-content">
+                <h2>游戏结束</h2>
+                <div class="final-score">得分: <span>0</span></div>
+                <div class="final-high-score">最高分: <span>0</span></div>
+                <div class="game-over-buttons">
+                    <button class="restart-button">重新开始</button>
+                    <button class="menu-button">返回主菜单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="../common/dialog.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
