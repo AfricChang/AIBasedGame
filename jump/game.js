@@ -204,18 +204,15 @@ class JumpGame {
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 20, 10);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.camera.near = 0.1;
-        directionalLight.shadow.camera.far = 100;
-        directionalLight.shadow.camera.left = -20;
-        directionalLight.shadow.camera.right = 20;
-        directionalLight.shadow.camera.top = 20;
-        directionalLight.shadow.camera.bottom = -20;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-        this.scene.add(directionalLight);
+        // 使用点光源替代平行光
+        this.pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        this.pointLight.position.set(0, 20, 0);
+        this.pointLight.castShadow = true;
+        this.pointLight.shadow.mapSize.width = 2048;
+        this.pointLight.shadow.mapSize.height = 2048;
+        this.pointLight.shadow.camera.near = 0.1;
+        this.pointLight.shadow.camera.far = 100;
+        this.scene.add(this.pointLight);
 
         // 添加地板
         const groundGeometry = new THREE.PlaneGeometry(100, 100);
@@ -616,6 +613,13 @@ class JumpGame {
     update() {
         requestAnimationFrame(() => this.update());
         this.updatePowerBar();
+        
+        // 更新点光源位置，让它跟随角色但稍微偏移
+        if (this.pointLight && this.characterGroup) {
+            this.pointLight.position.x = this.characterGroup.position.x + 5;
+            this.pointLight.position.z = this.characterGroup.position.z + 5;
+            this.pointLight.position.y = 20;
+        }
         
         // 更新角色阴影位置
         if (this.characterShadow) {
