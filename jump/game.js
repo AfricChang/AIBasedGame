@@ -2,6 +2,7 @@ class AudioManager {
     constructor() {
         this.sounds = {};
         this.currentLoopSound = null;
+        this.initialized = false;
         this.init();
     }
 
@@ -29,37 +30,72 @@ class AudioManager {
         // 为循环音效添加结束事件
         if (name === 'scale_intro') {
             audio.addEventListener('ended', () => {
-                this.playLoop('scale_loop');
+                if (this.initialized) {
+                    this.playLoop('scale_loop');
+                }
             });
         }
     }
 
-    play(name) {
-        const sound = this.sounds[name];
-        if (sound) {
-            // 重置音频并播放
-            sound.currentTime = 0;
-            sound.play().catch(error => {
-                console.log('Audio play failed:', error);
-            });
+    // 初始化音频（在用户第一次交互时调用）
+    async initializeAudio() {
+        if (this.initialized) return true;
+        
+        try {
+            // 创建一个非常短的静音音频上下文
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            oscillator.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.001);
+            
+            this.initialized = true;
+            return true;
+        } catch (error) {
+            console.log('Audio context initialization failed, will retry on next interaction');
+            return false;
         }
     }
 
-    playLoop(name) {
+    async play(name) {
+        if (!this.initialized) {
+            await this.initializeAudio();
+        }
+
         const sound = this.sounds[name];
-        if (sound) {
-            // 停止当前循环音效
-            if (this.currentLoopSound) {
-                this.currentLoopSound.pause();
-                this.currentLoopSound.currentTime = 0;
+        if (sound && this.initialized) {
+            try {
+                sound.currentTime = 0;
+                await sound.play();
+            } catch (error) {
+                // 静默失败，因为这可能是由于浏览器策略导致的
+                this.initialized = false;
             }
+        }
+    }
 
-            // 设置新的循环音效
-            sound.loop = true;
-            this.currentLoopSound = sound;
-            sound.play().catch(error => {
-                console.log('Audio loop play failed:', error);
-            });
+    async playLoop(name) {
+        if (!this.initialized) {
+            await this.initializeAudio();
+        }
+
+        const sound = this.sounds[name];
+        if (sound && this.initialized) {
+            try {
+                // 停止当前循环音效
+                if (this.currentLoopSound) {
+                    this.currentLoopSound.pause();
+                    this.currentLoopSound.currentTime = 0;
+                }
+
+                // 设置新的循环音效
+                sound.loop = true;
+                this.currentLoopSound = sound;
+                await sound.play();
+            } catch (error) {
+                // 静默失败，因为这可能是由于浏览器策略导致的
+                this.initialized = false;
+            }
         }
     }
 
@@ -79,8 +115,8 @@ class JumpGame {
             blockSize: 4,
             blockHeight: 2,
             minDistance: 4.5,
-            maxDistance: 12,  // 增加最大距离
-            jumpForce: 1,    // 增加跳跃力度
+            maxDistance: 12,
+            jumpForce: 1,
             maxHoldTime: 1500,
             cameraHeight: 18,
             cameraAngle: -Math.PI / 4,
@@ -93,6 +129,24 @@ class JumpGame {
             ]
         };
 
+        // 检测是否为移动设备
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // 根据设备类型和屏幕尺寸调整参数
+        if (this.isMobile) {
+            // 移动设备上调整相机参数
+            this.config.cameraDistance = 18; // 增加相机距离
+            this.config.cameraHeight = 20; // 增加相机高度
+            this.config.cameraAngle = -Math.PI / 3.8; // 调整俯视角度
+            this.config.maxDistance = 10; // 减小最大距离
+        } else {
+            // PC设备保持原有参数
+            this.config.cameraDistance = 15;
+            this.config.cameraHeight = 18;
+            this.config.cameraAngle = -Math.PI / 4;
+            this.config.maxDistance = 12;
+        }
+
         this.state = {
             score: 0,
             highScore: parseInt(localStorage.getItem('jumpHighScore')) || 0,
@@ -100,11 +154,11 @@ class JumpGame {
             holdStartTime: 0,
             gameOver: false,
             blocks: [],
-            currentBlockIndex: 0,  // 当前所在方块的索引
+            currentBlockIndex: 0,
             jumping: false,
             perfectLanding: false,
-            perfectCombo: 0,  // 连续Perfect次数
-            baseScore: 2  // Perfect的基础得分
+            perfectCombo: 0,
+            baseScore: 2
         };
 
         this.init();
@@ -112,28 +166,30 @@ class JumpGame {
         this.setupEvents();
         this.animate();
 
-        // 初始化音频管理器
         this.audioManager = new AudioManager();
     }
 
     init() {
         // 初始化场景
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.Fog(0x7F7F7F, 20, 40);  // 添加雾效果
+        this.scene.fog = new THREE.Fog(0x7F7F7F, 20, 40);
 
         // 创建相机
         this.camera = new THREE.PerspectiveCamera(
-            45,
+            this.isMobile ? 50 : 45, // 移动端增加视野角度
             window.innerWidth / window.innerHeight,
             0.1,
             1000
         );
         
-        // 设置相机位置和固定视角
-        this.camera.position.set(-12, this.config.cameraHeight, 12);
+        // 根据设备类型设置相机位置
+        this.camera.position.set(
+            -this.config.cameraDistance,
+            this.config.cameraHeight,
+            this.config.cameraDistance
+        );
         this.camera.lookAt(0, 0, 0);
-        // 固定相机的x轴旋转（俯视角度）
-        this.camera.rotation.x = -Math.PI / 4;
+        this.camera.rotation.x = this.config.cameraAngle;
         
         // 创建渲染器
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -309,24 +365,24 @@ class JumpGame {
 
     getNextBlockPosition(lastBlock) {
         const distance = this.getRandomDistance();
-        // 随机选择方向：X轴或Y轴
-        const direction = Math.random() < 0.5 ? 'x' : 'y';
+        // 移动端进一步降低X轴生成概率
+        const direction = Math.random() < (this.isMobile ? 0.2 : 0.3) ? 'x' : 'y';
         
-        // 计算相机视野范围（基于角色位置）
-        const viewRangeX = 15; // 相机视野范围
+        // 根据设备类型调整视野范围
+        const viewRangeX = this.isMobile ? 12 : 15;
         const viewRangeZ = 15;
         
         const newPosition = new THREE.Vector3();
         if (direction === 'x') {
-            // 确保X方向的新方块不会超出相机视野
-            const maxDistance = Math.min(distance, viewRangeX);
+            // 移动端留出更多余量
+            const margin = this.isMobile ? 6 : 4;
+            const maxDistance = Math.min(distance, viewRangeX - margin);
             newPosition.set(
                 lastBlock.position.x + maxDistance,
                 lastBlock.position.y,
                 lastBlock.position.z
             );
         } else {
-            // 确保Z方向的新方块不会超出相机视野
             const maxDistance = Math.min(distance, viewRangeZ);
             newPosition.set(
                 lastBlock.position.x,
@@ -340,9 +396,10 @@ class JumpGame {
         const distanceFromCharacterX = Math.abs(newPosition.x - characterPos.x);
         const distanceFromCharacterZ = Math.abs(newPosition.z - characterPos.z);
         
-        // 如果生成的位置超出视野，调整到合适的范围内
-        if (distanceFromCharacterX > viewRangeX) {
-            newPosition.x = characterPos.x + (newPosition.x > characterPos.x ? viewRangeX : -viewRangeX);
+        // 移动端留出更多余量
+        const margin = this.isMobile ? 6 : 4;
+        if (distanceFromCharacterX > viewRangeX - margin) {
+            newPosition.x = characterPos.x + (newPosition.x > characterPos.x ? viewRangeX - margin : -(viewRangeX - margin));
         }
         if (distanceFromCharacterZ > viewRangeZ) {
             newPosition.z = characterPos.z + (newPosition.z > characterPos.z ? viewRangeZ : -viewRangeZ);
@@ -370,30 +427,57 @@ class JumpGame {
         // 获取游戏容器
         const container = document.querySelector('.game-container');
         
-        // 将事件绑定到游戏容器而不是document
+        // 鼠标事件
         container.addEventListener('mousedown', (e) => {
-            // 如果点击的是返回按钮，不触发蓄力
-            if (e.target.classList.contains('back-button')) return;
+            // 如果点击的是按钮，不触发蓄力
+            if (e.target.tagName === 'BUTTON' || 
+                e.target.closest('.game-over-content') ||
+                e.target.closest('.header')) {
+                return;
+            }
             this.startJump(e);
         });
+        
         container.addEventListener('mouseup', (e) => {
-            // 如果点击的是返回按钮，不触发跳跃
-            if (e.target.classList.contains('back-button')) return;
+            // 如果点击的是按钮，不触发跳跃
+            if (e.target.tagName === 'BUTTON' || 
+                e.target.closest('.game-over-content') ||
+                e.target.closest('.header')) {
+                return;
+            }
             this.endJump(e);
         });
+        
+        // 触摸事件
         container.addEventListener('touchstart', (e) => {
-            // 如果点击的是返回按钮，不触发蓄力
-            if (e.target.classList.contains('back-button')) return;
+            // 如果点击的是按钮，不触发蓄力
+            if (e.target.tagName === 'BUTTON' || 
+                e.target.closest('.game-over-content') ||
+                e.target.closest('.header')) {
+                return;
+            }
+            e.preventDefault(); // 阻止默认行为
             this.startJump(e);
         });
+        
         container.addEventListener('touchend', (e) => {
-            // 如果点击的是返回按钮，不触发跳跃
-            if (e.target.classList.contains('back-button')) return;
+            // 如果点击的是按钮，不触发跳跃
+            if (e.target.tagName === 'BUTTON' || 
+                e.target.closest('.game-over-content') ||
+                e.target.closest('.header')) {
+                return;
+            }
+            e.preventDefault(); // 阻止默认行为
             this.endJump(e);
         });
         
         // 返回按钮事件
-        document.querySelector('.back-button').addEventListener('click', (e) => {
+        const backButton = document.querySelector('.back-button');
+        const newBackButton = backButton.cloneNode(true);
+        backButton.parentNode.replaceChild(newBackButton, backButton);
+        
+        newBackButton.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             showConfirmDialog({
                 title: '退出游戏',
@@ -410,6 +494,9 @@ class JumpGame {
     startJump(event) {
         event.preventDefault();
         if (!this.state.gameOver && !this.state.jumping) {
+            // 初始化音频（在用户第一次交互时）
+            this.audioManager.initializeAudio();
+            
             this.state.isHolding = true;
             this.state.holdStartTime = Date.now();
             document.querySelector('.instruction').style.opacity = '0';
@@ -681,22 +768,32 @@ class JumpGame {
         const restartButton = gameOverDialog.querySelector('.restart-button');
         const menuButton = gameOverDialog.querySelector('.menu-button');
         
-        restartButton.onclick = () => {
+        // 移除之前的事件监听器
+        const newRestartButton = restartButton.cloneNode(true);
+        const newMenuButton = menuButton.cloneNode(true);
+        restartButton.parentNode.replaceChild(newRestartButton, restartButton);
+        menuButton.parentNode.replaceChild(newMenuButton, menuButton);
+        
+        // 添加新的事件监听器
+        newRestartButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             gameOverDialog.classList.remove('active');
             setTimeout(() => {
                 gameOverDialog.style.display = 'none';
                 this.resetGame();
             }, 300);
-        };
+        });
         
-        menuButton.onclick = () => {
+        newMenuButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             gameOverDialog.classList.remove('active');
             setTimeout(() => {
                 gameOverDialog.style.display = 'none';
-                // 返回外部主菜单
                 window.location.href = '../index.html';
             }, 300);
-        };
+        });
     }
 
     resetGame() {
@@ -734,9 +831,13 @@ class JumpGame {
         this.characterShadow.scale.setScalar(1);
         
         // 重置相机位置
-        this.camera.position.set(-12, this.config.cameraHeight, 12);
+        this.camera.position.set(
+            -this.config.cameraDistance,
+            this.config.cameraHeight,
+            this.config.cameraDistance
+        );
         this.camera.lookAt(0, 0, 0);
-        this.camera.rotation.x = -Math.PI / 4;
+        this.camera.rotation.x = this.config.cameraAngle;
         
         // 重新初始化方块
         this.createInitialBlocks();
@@ -787,8 +888,8 @@ class JumpGame {
 
     adjustCamera() {
         // 计算相机目标位置，保持与角色的相对位置不变
-        const targetX = this.characterGroup.position.x - 12;
-        const targetZ = this.characterGroup.position.z + 12;
+        const targetX = this.characterGroup.position.x - this.config.cameraDistance;
+        const targetZ = this.characterGroup.position.z + this.config.cameraDistance;
         
         // 使用GSAP实现平滑平移
         gsap.to(this.camera.position, {
