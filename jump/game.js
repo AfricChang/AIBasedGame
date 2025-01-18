@@ -172,7 +172,8 @@ class JumpGame {
     init() {
         // 初始化场景
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.Fog(0x7F7F7F, 20, 40);
+        // 移除雾效果
+        // this.scene.fog = new THREE.Fog(0x7F7F7F, 20, 40);
 
         // 创建相机
         this.camera = new THREE.PerspectiveCamera(
