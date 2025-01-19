@@ -223,7 +223,7 @@ class JumpGame {
         });
         this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
         this.ground.rotation.x = -Math.PI / 2;
-        this.ground.position.y = -0.1;
+        //this.ground.position.y = -0.1;
         this.ground.receiveShadow = true;
         this.ground.renderOrder = 0; // 确保地板在最底层渲染
         this.scene.add(this.ground);
@@ -257,6 +257,8 @@ class JumpGame {
             opacity: 1,
             shininess: 30
         });
+        const matrix = new THREE.Matrix4().makeTranslation(0, 0.35, 0);
+        bodyGeometry.applyMatrix4(matrix);
         this.character = new THREE.Mesh(bodyGeometry, bodyMaterial);
         this.character.castShadow = true;
         this.character.receiveShadow = true;
@@ -270,8 +272,8 @@ class JumpGame {
         });
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.15, 0.1, 0.3);
-        rightEye.position.set(0.15, 0.1, 0.3);
+        leftEye.position.set(-0.15, 0.6, 0.3);
+        rightEye.position.set(0.15, 0.6, 0.3);
         
         // 添加到角色组
         this.characterGroup.add(this.character);
@@ -279,7 +281,8 @@ class JumpGame {
         this.characterGroup.add(rightEye);
         
         // 设置角色在方块上的位置，减小高度偏移
-        this.character.position.y = -0.35; // 将角色下移，使其底部贴合方块
+        //this.character.position.y = -0.35; // 将角色下移，使其底部贴合方块
+
         this.characterGroup.position.y = this.config.blockHeight;
         this.scene.add(this.characterGroup);
         
@@ -293,9 +296,24 @@ class JumpGame {
         });
         this.characterShadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
         this.characterShadow.rotation.x = -Math.PI / 2;
-        this.characterShadow.position.y = this.config.blockHeight + 0.01;
+        this.characterShadow.position.y = this.config.blockHeight;
         this.characterShadow.renderOrder = 1; // 确保阴影在其他物体之后渲染
         this.scene.add(this.characterShadow);
+    }
+
+    createPerfectLandingCircle() {
+        const perfectCircleGeometry = new THREE.CircleGeometry(this.config.perfectRadius, 32);
+        const perfectCircleMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.6,
+            depthWrite: false
+        });
+        const perfectCircle = new THREE.Mesh(perfectCircleGeometry, perfectCircleMaterial);
+        perfectCircle.rotation.x = -Math.PI / 2;
+        perfectCircle.position.y = this.config.blockHeight + 0.02;
+        perfectCircle.renderOrder = 3;
+        return perfectCircle;
     }
 
     createBlock(position) {
@@ -314,7 +332,7 @@ class JumpGame {
             this.config.blockHeight,
             blockSizeX
         );
-
+        geometry.translate(0, this.config.blockHeight / 2, 0);
         const materials = [
             new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // right
             new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // left
@@ -329,31 +347,9 @@ class JumpGame {
         block.receiveShadow = true;
         blockGroup.add(block);
 
-        // 添加描边
-        const edges = new THREE.EdgesGeometry(geometry);
-        const line = new THREE.LineSegments(
-            edges,
-            new THREE.LineBasicMaterial({ 
-                color: 0xffffff,
-                transparent: false,
-                opacity: 1
-            })
-        );
-        blockGroup.add(line);
-
-        // 添加顶部圆形, 半径改为 this.config.perfectRadius
-        const circleGeometry = new THREE.CircleGeometry(this.config.perfectRadius, 32);
-        const circleMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.3,
-            depthWrite: false
-        });
-        const circle = new THREE.Mesh(circleGeometry, circleMaterial);
-        circle.rotation.x = -Math.PI / 2;
-        circle.position.y = this.config.blockHeight / 2 + 0.01;
-        circle.renderOrder = 2; // 确保圆形在最上层渲染
-        blockGroup.add(circle);
+        // 添加完美落地区域小圆
+        const perfectCircle = this.createPerfectLandingCircle();
+        blockGroup.add(perfectCircle);
 
         this.scene.add(blockGroup);
         return blockGroup;
@@ -376,7 +372,7 @@ class JumpGame {
             this.config.blockHeight, // 高度
             32 // 圆周分段数
         );
-
+        geometry.translate(0, this.config.blockHeight / 2, 0);
         const materials = [
             new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // 侧面
             new THREE.MeshPhongMaterial({ color: color * 1.2, transparent: false, opacity: 1, shininess: 30 }), // 顶部
@@ -388,32 +384,8 @@ class JumpGame {
         cylinder.receiveShadow = true;
         blockGroup.add(cylinder);
 
-        // 添加顶部圆形
-        const circleGeometry = new THREE.CircleGeometry(radius, 32);
-        const circleMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.3,
-            depthWrite: false
-        });
-        const circle = new THREE.Mesh(circleGeometry, circleMaterial);
-        circle.rotation.x = -Math.PI / 2;
-        circle.position.y = this.config.blockHeight / 2 + 0.01;
-        circle.renderOrder = 2; // 确保圆形在最上层渲染
-        blockGroup.add(circle);
-
         // 添加完美落地区域小圆
-        const perfectCircleGeometry = new THREE.CircleGeometry(this.config.perfectRadius, 32);
-        const perfectCircleMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.6, // 稍微提高不透明度，使其更明显
-            depthWrite: false
-        });
-        const perfectCircle = new THREE.Mesh(perfectCircleGeometry, perfectCircleMaterial);
-        perfectCircle.rotation.x = -Math.PI / 2;
-        perfectCircle.position.y = this.config.blockHeight / 2 + 0.02; // 稍微高于大圆，避免 Z-fighting
-        perfectCircle.renderOrder = 3; // 确保小圆在大圆之上渲染
+        const perfectCircle = this.createPerfectLandingCircle();
         blockGroup.add(perfectCircle);
 
         this.scene.add(blockGroup);
