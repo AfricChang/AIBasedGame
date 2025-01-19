@@ -431,10 +431,9 @@ class JumpGame {
         const firstBlock = this.createBlock(new THREE.Vector3(0, 0, 0));
         this.state.blocks.push(firstBlock);
 
-        // 创建第二个方块
+        // 创建第二个方块，生成圆柱的概率为 80%
         const position = this.getNextBlockPosition(firstBlock);
-        // 调整概率，使生成圆柱的概率约为 70%
-        const secondBlock = Math.random() < 0.7 ? this.createCylinderBlock(position) : this.createBlock(position);
+        const secondBlock = Math.random() < 0.8 ? this.createCylinderBlock(position) : this.createBlock(position);
         this.state.blocks.push(secondBlock);
         
         // 重置当前方块索引
@@ -786,7 +785,7 @@ class JumpGame {
                 // 生成新方块
                 const lastBlock = this.state.blocks[this.state.blocks.length - 1];
                 const newPosition = this.getNextBlockPosition(lastBlock);
-                const newBlock = this.createBlock(newPosition);
+                const newBlock = this.generateNextBlock(newPosition);
                 this.state.blocks.push(newBlock);
                 
                 // 移动相机
@@ -1000,13 +999,11 @@ class JumpGame {
         });
     }
 
-    generateNextBlock() {
-        // ... existing code ...
-
-        // 调整概率，使生成圆柱的概率约为 70%
-        const nextBlock = Math.random() < 0.7 ? this.createCylinderBlock(position) : this.createBlock(position);
-
-        // ... existing code ...
+    generateNextBlock(position) {
+        var d = Math.random() ;
+        // 生成后续方块，生成圆柱的概率为 60%
+        const nextBlock = d < 0.6 ? this.createCylinderBlock(position) : this.createBlock(position);
+        return nextBlock ;
     }
 }
 
