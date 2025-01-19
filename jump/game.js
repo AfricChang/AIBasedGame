@@ -545,27 +545,35 @@ class JumpGame {
         const currentBlock = this.state.blocks[this.state.currentBlockIndex];
         const nextBlock = this.state.blocks[this.state.currentBlockIndex + 1];
         
-        // 计算跳跃方向
+        // 计算角色底部中心点的位置
+        const characterBottomCenter = this.characterGroup.position.clone();
+        characterBottomCenter.y -= this.character.geometry.parameters.height / 2; // 减去角色高度的一半
+        
+        // 计算下一个方块的中心点位置
+        const nextBlockCenter = nextBlock.position.clone();
+        nextBlockCenter.y += nextBlock.children[0].geometry.parameters.height / 2; // 加上方块高度的一半
+        
+        // 计算跳跃方向，从角色底部中心点指向下一个方块的中心点
         const direction = new THREE.Vector3();
-        direction.subVectors(nextBlock.position, currentBlock.position).normalize();
+        direction.subVectors(nextBlockCenter, characterBottomCenter).normalize();
         
         // 计算角色朝向
         const angle = Math.atan2(direction.z, direction.x);
         this.characterGroup.rotation.y = -angle; // 负角度是因为THREE.js的坐标系统
         
-        // 计算跳跃力度
-        const holdTime = Date.now() - this.state.holdStartTime;
-        const normalizedHoldTime = Math.min(holdTime / this.config.maxHoldTime, 1);
-        const jumpPower = normalizedHoldTime * this.config.jumpForce;
-        
-        // 计算跳跃的水平和垂直速度
-        const horizontalSpeed = jumpPower * 15;
-        const verticalSpeed = jumpPower * 10;
-        
-        this.state.jumping = true;
-        
-        // 使用GSAP创建跳跃动画
-        const jumpDuration = 0.6;
+           // 计算跳跃力度
+           const holdTime = Date.now() - this.state.holdStartTime;
+           const normalizedHoldTime = Math.min(holdTime / this.config.maxHoldTime, 1);
+           const jumpPower = normalizedHoldTime * this.config.jumpForce;
+           
+           // 计算跳跃的水平和垂直速度
+           const horizontalSpeed = jumpPower * 15;
+           const verticalSpeed = jumpPower * 10;
+           
+           this.state.jumping = true;
+           
+           // 使用GSAP创建跳跃动画
+           const jumpDuration = 0.6;
         
         // 水平移动（同时处理X和Z方向）
         gsap.to(this.characterGroup.position, {
