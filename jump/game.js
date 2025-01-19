@@ -304,11 +304,14 @@ class JumpGame {
         // 随机选择颜色
         const color = this.config.colors[Math.floor(Math.random() * this.config.colors.length)];
 
+        // 随机生成宽度和深度，保留一位小数
+        const blockSizeX = parseFloat((2 + Math.random() * (4 - 2)).toFixed(1));
+
         // 主体方块
         const geometry = new THREE.BoxGeometry(
-            this.config.blockSize,
+            blockSizeX,
             this.config.blockHeight,
-            this.config.blockSize
+            blockSizeX
         );
 
         const materials = [
@@ -338,7 +341,7 @@ class JumpGame {
         blockGroup.add(line);
 
         // 添加顶部圆形
-        const circleGeometry = new THREE.CircleGeometry(0.8, 32);
+        const circleGeometry = new THREE.CircleGeometry(Math.min(blockSizeX, blockSizeX) / 2 * 0.8, 32);
         const circleMaterial = new THREE.MeshBasicMaterial({ 
             color: 0xffffff,
             transparent: true,
@@ -663,10 +666,10 @@ class JumpGame {
             const block = this.state.blocks[i];
             
             // 计算方块的左右边界和前后边界
-            const blockLeftEdge = block.position.x - this.config.blockSize / 2;
-            const blockRightEdge = block.position.x + this.config.blockSize / 2;
-            const blockFrontEdge = block.position.z - this.config.blockSize / 2;
-            const blockBackEdge = block.position.z + this.config.blockSize / 2;
+            const blockLeftEdge = block.position.x - block.children[0].geometry.parameters.width / 2;
+            const blockRightEdge = block.position.x + block.children[0].geometry.parameters.width / 2;
+            const blockFrontEdge = block.position.z - block.children[0].geometry.parameters.depth / 2;
+            const blockBackEdge = block.position.z + block.children[0].geometry.parameters.depth / 2;
             
             // 检查角色是否在方块的边界之内
             const onBlockX = characterPosition.x >= blockLeftEdge && 
