@@ -1,6 +1,6 @@
 # Classic Games Collection
 
-A collection of five classic browser-based games built with HTML5, CSS3, and JavaScript. All games are mobile-friendly and can be played directly in your web browser without any installation. This project was generated using Windsurf Cline Cursor, an advanced AI-powered development tool.
+A collection of eight classic browser-based games built with HTML5, CSS3, and JavaScript. All games are mobile-friendly and can be played directly in your web browser without any installation. This project was generated using Windsurf Cline Cursor, an advanced AI-powered development tool.
 
 ## Games Included
 
@@ -24,10 +24,31 @@ A collection of five classic browser-based games built with HTML5, CSS3, and Jav
    - Two-player strategy game
    - Classic black and white stones
 
-5. **Zhiqi**
+5. **Zhiqi(under development...)**
    - Ancient Chinese board game
    - Strategic gameplay
    - Traditional rules
+
+6. **Jump Jump**
+   - 3D jumping arcade game
+   - Press-and-release power control
+   - Perfect landing bonus system
+   - Progressive combo system
+   - Mobile-friendly with touch controls
+
+7. **Flappy Bird**
+   - Classic arcade-style flying game
+   - Tap control mechanism
+   - Obstacle avoidance gameplay
+   - Score tracking system
+   - Retro pixel art style
+
+8. **Minesweeper**
+   - Classic puzzle game
+   - Left-click to reveal cells
+   - Right-click to flag mines
+   - Multiple difficulty levels
+   - Timer and mine counter
 
 ## Features
 
