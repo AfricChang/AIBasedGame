@@ -126,7 +126,8 @@ class JumpGame {
                 0xE6A23C, // 黄色
                 0xF56C6C, // 红色
                 0x909399  // 灰色
-            ]
+            ],
+            perfectRadius: 0.3 // 新增配置：完美落地区域半径
         };
 
         // 检测是否为移动设备
@@ -340,8 +341,8 @@ class JumpGame {
         );
         blockGroup.add(line);
 
-        // 添加顶部圆形
-        const circleGeometry = new THREE.CircleGeometry(Math.min(blockSizeX, blockSizeX) / 2 * 0.8, 32);
+        // 添加顶部圆形, 半径改为 this.config.perfectRadius
+        const circleGeometry = new THREE.CircleGeometry(this.config.perfectRadius, 32);
         const circleMaterial = new THREE.MeshBasicMaterial({ 
             color: 0xffffff,
             transparent: true,
@@ -353,6 +354,67 @@ class JumpGame {
         circle.position.y = this.config.blockHeight / 2 + 0.01;
         circle.renderOrder = 2; // 确保圆形在最上层渲染
         blockGroup.add(circle);
+
+        this.scene.add(blockGroup);
+        return blockGroup;
+    }
+
+    createCylinderBlock(position) {
+        const blockGroup = new THREE.Group();
+        blockGroup.position.copy(position);
+
+        // 随机选择颜色
+        const color = this.config.colors[Math.floor(Math.random() * this.config.colors.length)];
+
+        // 随机生成半径，保留一位小数
+        const radius = parseFloat((1 + Math.random() * (2 - 1)).toFixed(1));
+
+        // 主体圆柱
+        const geometry = new THREE.CylinderGeometry(
+            radius, // 顶部半径
+            radius, // 底部半径
+            this.config.blockHeight, // 高度
+            32 // 圆周分段数
+        );
+
+        const materials = [
+            new THREE.MeshPhongMaterial({ color: color, transparent: false, opacity: 1, shininess: 30 }), // 侧面
+            new THREE.MeshPhongMaterial({ color: color * 1.2, transparent: false, opacity: 1, shininess: 30 }), // 顶部
+            new THREE.MeshPhongMaterial({ color: color * 0.8, transparent: false, opacity: 1, shininess: 30 }) // 底部
+        ];
+
+        const cylinder = new THREE.Mesh(geometry, materials);
+        cylinder.castShadow = true;
+        cylinder.receiveShadow = true;
+        blockGroup.add(cylinder);
+
+        // 添加顶部圆形
+        const circleGeometry = new THREE.CircleGeometry(radius, 32);
+        const circleMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.3,
+            depthWrite: false
+        });
+        const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+        circle.rotation.x = -Math.PI / 2;
+        circle.position.y = this.config.blockHeight / 2 + 0.01;
+        circle.renderOrder = 2; // 确保圆形在最上层渲染
+        blockGroup.add(circle);
+
+        // 添加完美落地区域小圆
+        const perfectCircleGeometry = new THREE.CircleGeometry(this.config.perfectRadius, 32);
+        const perfectCircleMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.6, // 稍微提高不透明度，使其更明显
+            depthWrite: false
+        });
+        const perfectCircle = new THREE.Mesh(perfectCircleGeometry, perfectCircleMaterial);
+        perfectCircle.rotation.x = -Math.PI / 2;
+        perfectCircle.position.y = this.config.blockHeight / 2 + 0.02; // 稍微高于大圆，避免 Z-fighting
+        perfectCircle.renderOrder = 3; // 确保小圆在大圆之上渲染
+        blockGroup.add(perfectCircle);
 
         this.scene.add(blockGroup);
         return blockGroup;
@@ -371,7 +433,8 @@ class JumpGame {
 
         // 创建第二个方块
         const position = this.getNextBlockPosition(firstBlock);
-        const secondBlock = this.createBlock(position);
+        // 调整概率，使生成圆柱的概率约为 70%
+        const secondBlock = Math.random() < 0.7 ? this.createCylinderBlock(position) : this.createBlock(position);
         this.state.blocks.push(secondBlock);
         
         // 重置当前方块索引
@@ -657,30 +720,37 @@ class JumpGame {
 
     checkLanding() {
         const characterPosition = this.characterGroup.position;
-        
-        // 检查是否在任何一个方块上
         let landedBlock = null;
         let landedBlockIndex = -1;
 
         for (let i = 0; i < this.state.blocks.length; i++) {
             const block = this.state.blocks[i];
-            
-            // 计算方块的左右边界和前后边界
-            const blockLeftEdge = block.position.x - block.children[0].geometry.parameters.width / 2;
-            const blockRightEdge = block.position.x + block.children[0].geometry.parameters.width / 2;
-            const blockFrontEdge = block.position.z - block.children[0].geometry.parameters.depth / 2;
-            const blockBackEdge = block.position.z + block.children[0].geometry.parameters.depth / 2;
-            
-            // 检查角色是否在方块的边界之内
-            const onBlockX = characterPosition.x >= blockLeftEdge && 
-                           characterPosition.x <= blockRightEdge;
-            const onBlockZ = characterPosition.z >= blockFrontEdge && 
-                           characterPosition.z <= blockBackEdge;
-            
-            if (onBlockX && onBlockZ) {
-                landedBlock = block;
-                landedBlockIndex = i;
-                break;
+            const blockType = block.children[0].geometry.type;
+
+            if (blockType === 'BoxGeometry') {
+                // 方块的碰撞检测
+                const halfWidth = block.children[0].geometry.parameters.width / 2;
+                const halfDepth = block.children[0].geometry.parameters.depth / 2;
+                const dx = Math.abs(characterPosition.x - block.position.x);
+                const dz = Math.abs(characterPosition.z - block.position.z);
+
+                if (dx <= halfWidth && dz <= halfDepth) {
+                    landedBlock = block;
+                    landedBlockIndex = i;
+                    break;
+                }
+            } else if (blockType === 'CylinderGeometry') {
+                // 圆柱的碰撞检测
+                const radius = block.children[0].geometry.parameters.radiusTop;
+                const dx = characterPosition.x - block.position.x;
+                const dz = characterPosition.z - block.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+
+                if (distance <= radius) {
+                    landedBlock = block;
+                    landedBlockIndex = i;
+                    break;
+                }
             }
         }
 
@@ -928,6 +998,15 @@ class JumpGame {
             duration: 0.5,
             ease: "power2.out"
         });
+    }
+
+    generateNextBlock() {
+        // ... existing code ...
+
+        // 调整概率，使生成圆柱的概率约为 70%
+        const nextBlock = Math.random() < 0.7 ? this.createCylinderBlock(position) : this.createBlock(position);
+
+        // ... existing code ...
     }
 }
 
