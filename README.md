@@ -1,49 +1,56 @@
 # Classic Games Collection
 
-A collection of eight classic browser-based games built with HTML5, CSS3, and JavaScript. All games are mobile-friendly and can be played directly in your web browser without any installation. This project was generated using Windsurf Cline Cursor, an advanced AI-powered development tool.
+A collection of nine classic browser-based games built with HTML5, CSS3, and JavaScript. All games are mobile-friendly and can be played directly in your web browser without any installation. This project was generated using Windsurf Cline Cursor, an advanced AI-powered development tool.
 
 ## Games Included
 
-1. **2048**
+1. **Big Watermelon**
+   - Popular fruit merging puzzle game
+   - Physics-based gameplay mechanics
+   - Merge same fruits to create bigger ones
+   - Score tracking and high score system
+   - Smooth animations and sound effects
+
+2. **2048**
    - Classic sliding puzzle game
    - Merge tiles to reach 2048
    - Touch and keyboard controls supported
 
-2. **Breakout**
+3. **Breakout**
    - Classic arcade brick breaker game
    - Control the paddle to break all bricks
    - Progressive difficulty levels
 
-3. **Tic Tac Toe**
+4. **Tic Tac Toe**
    - Classic X's and O's game
    - Two-player mode
    - Simple and intuitive interface
 
-4. **Wuziqi (Gomoku)**
+5. **Wuziqi (Gomoku)**
    - Traditional Five-in-a-Row game
    - Two-player strategy game
    - Classic black and white stones
 
-5. **Zhiqi(under development...)**
+6. **Zhiqi(under development...)**
    - Ancient Chinese board game
    - Strategic gameplay
    - Traditional rules
 
-6. **Jump Jump**
+7. **Jump Jump**
    - 3D jumping arcade game
    - Press-and-release power control
    - Perfect landing bonus system
    - Progressive combo system
    - Mobile-friendly with touch controls
 
-7. **Flappy Bird**
+8. **Flappy Bird**
    - Classic arcade-style flying game
    - Tap control mechanism
    - Obstacle avoidance gameplay
    - Score tracking system
    - Retro pixel art style
 
-8. **Minesweeper**
+9. **Minesweeper**
    - Classic puzzle game
    - Left-click to reveal cells
    - Right-click to flag mines

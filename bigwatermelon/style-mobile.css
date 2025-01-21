@@ -1,0 +1,278 @@
+html {
+    -ms-touch-action: none;
+    background: #FFF8DC;
+    height: 100%;
+}
+
+body, canvas, div {
+    display: block;
+    outline: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -khtml-user-select: none;
+}
+
+body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    cursor: default;
+    color: #888;
+    background-color: #FFF8DC;
+    text-align: center;
+    font-family: Helvetica, Verdana, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.game-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #FFF8DC;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#GameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    background-color: #FFF8DC;
+}
+
+#splash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #171717;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.progress-bar {
+    background-color: #1a1a1a;
+    position: absolute;
+    left: 25%;
+    top: 80%;
+    height: 15px;
+    padding: 5px;
+    width: 50%;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
+}
+
+.progress-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    transition: width .4s ease-in-out;
+    background-color: #34c2e3;
+}
+
+.stripes span {
+    background-size: 30px 30px;
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, .15) 25%,
+            transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .15) 50%,
+            rgba(255, 255, 255, .15) 75%,
+            transparent 75%, transparent);
+    animation: animate-stripes 1s linear infinite;
+}
+
+@keyframes animate-stripes {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 60px 0;
+    }
+}
+
+#loadingText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: #333;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+@media screen and (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+    #loadingText {
+        font-size: 16px;
+        padding: 15px 30px;
+    }
+}
+
+/* 禁用文本选择 */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+a:link,
+a:visited {
+    color: #666;
+}
+
+a:active,
+a:hover {
+    color: #666;
+}
+
+p.header {
+    font-size: small;
+}
+
+p.footer {
+    font-size: x-small;
+}
+
+.back-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 99, 71, 0.8);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.back-button:hover {
+    background: rgba(255, 99, 71, 1);
+}
+
+.confirm-dialog {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 248, 220, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    text-align: center;
+    min-width: 280px;
+}
+
+.confirm-dialog p {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.confirm-dialog-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.confirm-dialog-buttons button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.confirm-dialog-buttons button:first-child {
+    background: #FF6347;
+    color: white;
+}
+
+.confirm-dialog-buttons button:last-child {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.confirm-dialog-buttons button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.score-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+}
+
+.score-box {
+    background: rgba(255, 248, 220, 0.9);
+    padding: 10px 15px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    min-width: 100px;
+}
+
+.score-label {
+    font-size: 14px;
+    color: #776e65;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.score-value {
+    font-size: 20px;
+    color: #FF6347;
+    font-weight: bold;
+}

@@ -1,0 +1,188 @@
+/* 游戏整体样式 */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #ffddb4;
+    font-family: "Microsoft YaHei", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    touch-action: none;
+    user-select: none;
+}
+
+.game-container {
+    position: relative;
+    width: 375px;
+    height: 667px;
+    margin: auto;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    background-color: #FFE4C4;
+}
+
+/* 游戏画布样式 */
+.game-canvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.game-canvas canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* 游戏信息显示区域 */
+.game-info {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    text-align: center;
+    width: 100%;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #8B4513;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.score, .best {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 5px 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    font-size: 18px;
+    color: #8B4513;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 加载界面 */
+.loading-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #FFE4C4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-gif {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 20px;
+}
+
+#loadingText {
+    font-size: 18px;
+    color: #8B4513;
+}
+
+/* 游戏结束界面 */
+.game-over {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3;
+}
+
+.game-over-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.game-over h2 {
+    color: #ff6b6b;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+#restartBtn {
+    background-color: #4cd964;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#restartBtn:hover {
+    background-color: #3cbd53;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+#restartBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 合并动画效果 */
+@keyframes merge-flash {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.merge-flash {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    pointer-events: none;
+    animation: merge-flash 0.3s ease-out forwards;
+    z-index: 2;
+}
+
+/* 水果合并时的缩放动画 */
+@keyframes pop {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.pop {
+    animation: pop 0.3s ease-out;
+}
