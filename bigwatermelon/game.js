@@ -5,7 +5,11 @@ class Game {
             this.canvas = document.getElementById('GameCanvas');
             this.ctx = this.canvas.getContext('2d');
             this.score = 0;
-            this.bestScore = parseInt(localStorage.getItem('watermelon_best_score')) || 0;
+            // 从localStorage读取最高分
+            const savedBestScore = localStorage.getItem('watermelon_best_score');
+            this.bestScore = savedBestScore ? parseInt(savedBestScore) : 0;
+            // 显示最高分
+            document.getElementById('bestScore').textContent = this.bestScore;
             this.isGameOver = false;
             this.fruits = [];
             this.nextFruit = null;
@@ -372,8 +376,8 @@ class Game {
         // 更新最高分
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
-            localStorage.setItem('watermelon_best_score', this.bestScore);
             document.getElementById('bestScore').textContent = this.bestScore;
+            localStorage.setItem('watermelon_best_score', this.bestScore.toString());
         }
 
         const newBody = Matter.Bodies.circle(
