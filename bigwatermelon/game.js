@@ -22,7 +22,7 @@ class Game {
             
             // 添加音量控制按钮
             this.addVolumeControl();
-
+            
             // 设置画布大小
             this.updateCanvasSize();
             // 监听窗口大小变化
@@ -32,19 +32,23 @@ class Game {
             // 初始化物理引擎
             this.engine = Matter.Engine.create({
                 enableSleeping: true,
-                constraintIterations: 2,
-                positionIterations: 6,
-                velocityIterations: 4
+                constraintIterations: 10,  // 增加约束迭代次数
+                positionIterations: 20,   // 增加位置迭代次数
+                velocityIterations: 20,   // 增加速度迭代次数
+                timing: {
+                    timeScale: 0.6,       // 降低时间缩放
+                    sleepThreshold: 0.5   // 提高睡眠阈值
+                }
             });
             
             // 调整重力以适应屏幕高度
-            this.engine.world.gravity.y = Math.max(1, Math.min(2, this.canvas.height / 400));
+            this.engine.world.gravity.y = Math.max(0.8, Math.min(1.5, this.canvas.height / 400));
             
             // 创建边界
             const wallOptions = {
                 isStatic: true,
-                friction: 0.3,
-                restitution: 0.2,
+                friction: 0.8,  // 增加摩擦力
+                restitution: 0.1,  // 降低弹性
             };
 
             // 计算边界位置
@@ -121,6 +125,33 @@ class Game {
                 loadingText.textContent = '加载失败，请刷新页面重试';
             }
         }
+    }
+
+    addVolumeControl() {
+        const volumeContainer = document.createElement('div');
+        volumeContainer.style.position = 'fixed';
+        volumeContainer.style.bottom = '20px';
+        volumeContainer.style.right = '20px';
+        volumeContainer.style.zIndex = '1000';
+        
+        const volumeButton = document.createElement('button');
+        volumeButton.innerText = this.audio.isMuted ? '🔇' : '🔊';
+        volumeButton.style.background = 'rgba(255, 255, 255, 0.8)';
+        volumeButton.style.border = 'none';
+        volumeButton.style.borderRadius = '50%';
+        volumeButton.style.width = '40px';
+        volumeButton.style.height = '40px';
+        volumeButton.style.cursor = 'pointer';
+        volumeButton.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.2)';
+        volumeButton.style.transition = 'all 0.3s';
+        
+        volumeButton.addEventListener('click', () => {
+            this.audio.toggleMute();
+            volumeButton.innerText = this.audio.isMuted ? '🔇' : '🔊';
+        });
+        
+        volumeContainer.appendChild(volumeButton);
+        document.body.appendChild(volumeContainer);
     }
 
     updateCanvasSize() {
@@ -319,8 +350,8 @@ class Game {
             {
                 density: fruit.density,
                 friction: 0.1,
-                frictionAir: 0.001,
-                restitution: 0.3,
+                frictionAir: 0.01,
+                restitution: 0.15,
                 label: 'fruit_' + currentFruit.type,
                 collisionFilter: {
                     group: 0,
@@ -386,9 +417,9 @@ class Game {
             newFruit.radius,
             {
                 density: newFruit.density,
-                friction: 0.1,
-                frictionAir: 0.001,
-                restitution: 0.3,
+                friction: 0.05,
+                frictionAir: 0.005,
+                restitution: 0.2,
                 label: 'fruit_' + newType,
                 collisionFilter: {
                     group: 0,
@@ -452,6 +483,22 @@ class Game {
         animate();
     }
 
+    restart() {
+        // 仅重置游戏状态，不清除已有水果
+        this.score = 0;
+        this.isGameOver = false;
+        this.isDragging = false;
+        this.dropDelay = false;
+
+        // 更新分数显示
+        document.getElementById('score').textContent = this.score;
+        
+        // 如果当前没有下一个水果，创建一个
+        if (!this.nextFruit) {
+            this.createNextFruit();
+        }
+    }
+
     checkGameOver() {
         if (this.isGameOver) return;
         
@@ -467,145 +514,36 @@ class Game {
     }
 
     draw() {
+        // 确保canvas上下文存在
+        if (!this.ctx) return;
+
+        // 清除画布
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // 绘制所有水果
         this.fruits.forEach(fruit => {
-            const fruitType = this.fruitTypes[fruit.type];
-            const pos = fruit.body.position;
-            
-            // 绘制阴影
+            const type = this.fruitTypes[fruit.type];
             this.ctx.beginPath();
-            this.ctx.arc(pos.x + 2, pos.y + 2, fruitType.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            this.ctx.arc(fruit.body.position.x, fruit.body.position.y, type.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = type.color;
             this.ctx.fill();
-            
-            // 绘制水果
-            this.ctx.beginPath();
-            this.ctx.arc(pos.x, pos.y, fruitType.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = fruitType.color;
-            this.ctx.fill();
-            
-            // 绘制边框
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            this.ctx.lineWidth = 2;
             this.ctx.stroke();
-            
-            // 绘制水果名字
-            this.ctx.font = 'bold ' + (fruitType.radius * 0.6) + 'px Arial';
-            this.ctx.fillStyle = '#FFFFFF';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText(fruitType.name, pos.x, pos.y + fruitType.radius * 0.2);
         });
 
-        // 绘制下一个水果
+        // 绘制下一个水果的预览
         if (this.nextFruit) {
-            const fruit = this.fruitTypes[this.nextFruit.type];
-            this.ctx.save();
-            
-            // 绘制水果阴影
+            const type = this.fruitTypes[this.nextFruit.type];
             this.ctx.beginPath();
-            this.ctx.arc(this.nextFruit.position.x + 2, this.nextFruit.position.y + 2, fruit.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            this.ctx.arc(this.nextFruit.position.x, this.nextFruit.position.y, type.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = type.color + '80'; // 添加透明度
             this.ctx.fill();
-            
-            // 绘制水果
-            this.ctx.beginPath();
-            this.ctx.arc(this.nextFruit.position.x, this.nextFruit.position.y, fruit.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = fruit.color;
-            this.ctx.fill();
-            
-            // 绘制水果边框
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            this.ctx.lineWidth = 2;
             this.ctx.stroke();
-            
-            // 绘制水果名字
-            this.ctx.font = 'bold ' + (fruit.radius * 0.6) + 'px Arial';
-            this.ctx.fillStyle = '#FFFFFF';
-            this.ctx.fillText(fruit.name, this.nextFruit.position.x, this.nextFruit.position.y + fruit.radius * 0.2);
-            
-            this.ctx.restore();
         }
 
-        // 检查游戏是否结束
-        if (this.isGameOver) {
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            this.ctx.fillStyle = '#FFFFFF';
-            this.ctx.font = 'bold 48px Arial';
-            this.ctx.fillText('游戏结束', this.canvas.width / 2, this.canvas.height / 2 - 50);
-            
-            this.ctx.font = 'bold 32px Arial';
-            this.ctx.fillText(`最终得分: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
-            
-            this.ctx.font = '24px Arial';
-            this.ctx.fillText('点击屏幕重新开始', this.canvas.width / 2, this.canvas.height / 2 + 60);
-        }
+        // 检查游戏结束
+        this.checkGameOver();
 
+        // 请求下一帧
         requestAnimationFrame(() => this.draw());
     }
-
-    gameLoop() {
-        if (!this.isGameOver) {
-            this.isGameOver = this.checkGameOver();
-        }
-
-        // 继续游戏循环
-        requestAnimationFrame(() => this.gameLoop());
-    }
-
-    restart() {
-        // 移除碰撞检测
-        if (this.collisionHandler) {
-            Matter.Events.off(this.engine, 'collisionStart', this.collisionHandler);
-        }
-
-        // 清空物理世界
-        Matter.World.clear(this.engine.world);
-        Matter.Engine.clear(this.engine);
-
-        // 重置游戏状态
-        this.isGameOver = false;
-        this.score = 0;
-        document.getElementById('score').textContent = '0';
-        
-        // 显示最高分
-        document.getElementById('bestScore').textContent = this.bestScore;
-
-        // 清除所有水果
-        for (let fruit of this.fruits) {
-            Matter.World.remove(this.engine.world, fruit.body);
-        }
-        this.fruits = [];
-        
-        // 创建新的水果
-        this.createNextFruit();
-    }
-
-    addVolumeControl() {
-        const volumeBtn = document.createElement('button');
-        volumeBtn.innerHTML = '🔊';
-        volumeBtn.style.position = 'absolute';
-        volumeBtn.style.top = '10px';
-        volumeBtn.style.right = '10px';
-        volumeBtn.style.padding = '10px';
-        volumeBtn.style.fontSize = '20px';
-        volumeBtn.style.background = 'rgba(255, 255, 255, 0.7)';
-        volumeBtn.style.border = 'none';
-        volumeBtn.style.borderRadius = '50%';
-        volumeBtn.style.cursor = 'pointer';
-        volumeBtn.style.zIndex = '1000';
-        
-        volumeBtn.addEventListener('click', () => {
-            const isMuted = this.audio.toggleMute();
-            volumeBtn.innerHTML = isMuted ? '🔇' : '🔊';
-        });
-        
-        document.querySelector('.game-container').appendChild(volumeBtn);
-    }
 }
-
-// 导出Game类
-window.Game = Game;
