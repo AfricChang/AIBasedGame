@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>贪吃蛇游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../common/style.css">
+</head>
+<body>
+    <button class="back-button" onclick="confirmExit()">←</button>
+    <div class="confirm-dialog" id="exitDialog">
+        <p>确定要退出游戏吗？</p>
+        <div class="confirm-dialog-buttons">
+            <button onclick="window.location.href='../index.html'">确定</button>
+            <button onclick="hideExitDialog()">取消</button>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div id="gameScore">
+            <div id="score">得分: 0</div>
+            <div id="bestScore">最高分: 0</div>
+        </div>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
+        <div class="controls">
+            <button id="startBtn">开始游戏</button>
+            <button id="up" class="control-btn" onclick="changeDirectionByButton('up')">↑</button>
+            <div class="controls-middle">
+                <button id="left" class="control-btn" onclick="changeDirectionByButton('left')">←</button>
+                <button id="right" class="control-btn" onclick="changeDirectionByButton('right')">→</button>
+            </div>
+            <button id="down" class="control-btn" onclick="changeDirectionByButton('down')">↓</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束面板 -->
+    <div class="game-over" style="display: none;">
+        <div class="game-over-content">
+            <h2>游戏结束</h2>
+            <div class="score-info">
+                <div class="final-score">本局得分: <span>0</span></div>
+                <div class="final-best">最高记录: <span>0</span></div>
+            </div>
+            <div class="game-over-buttons">
+                <button class="retry-btn">再试一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../common/dialog.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

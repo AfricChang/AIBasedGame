@@ -57,6 +57,14 @@ A collection of nine classic browser-based games built with HTML5, CSS3, and Jav
    - Multiple difficulty levels
    - Timer and mine counter
 
+10. **Snake**
+    - Classic snake game
+    - Arrow key controls
+    - Collect food to grow longer
+    - Avoid hitting walls and yourself
+    - Progressive difficulty
+    - Score tracking system
+
 ## Features
 
 - Responsive design for all screen sizes
