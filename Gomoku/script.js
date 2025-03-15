@@ -1361,29 +1361,62 @@ function showConfirmDialog(message, confirmCallback) {
     const yesButton = document.getElementById('confirm-yes');
     const noButton = document.getElementById('confirm-no');
 
+    // 设置消息内容
     messageElement.textContent = message;
-    dialog.style.display = 'block';
-
+    
+    // 确保对话框正确显示
+    dialog.style.display = 'flex';
+    dialog.style.alignItems = 'center';
+    dialog.style.justifyContent = 'center';
+    
+    // 清除可能的内联样式
+    const dialogContent = dialog.querySelector('.dialog-content');
+    dialogContent.style.position = 'relative';
+    dialogContent.style.left = '';
+    dialogContent.style.top = '';
+    dialogContent.style.transform = '';
+    
     // 阻止对话框内容区域的点击事件冒泡
-    dialog.querySelector('.dialog-content').addEventListener('click', (e) => {
+    dialogContent.addEventListener('click', (e) => {
         e.stopPropagation();
     });
 
+    // 处理响应的函数
     const handleResponse = (confirmed) => {
         dialog.style.display = 'none';
         if (confirmed && confirmCallback) {
             confirmCallback();
         }
-        // 移除旧的事件监听器
+        
+        // 移除事件监听器
         yesButton.removeEventListener('click', yesHandler);
         noButton.removeEventListener('click', noHandler);
+        dialog.removeEventListener('click', dialogClickHandler);
     };
 
+    // 事件处理函数
     const yesHandler = () => handleResponse(true);
     const noHandler = () => handleResponse(false);
+    const dialogClickHandler = (e) => {
+        if (e.target === dialog) {
+            handleResponse(false);
+        }
+    };
 
+    // 绑定事件
     yesButton.addEventListener('click', yesHandler);
     noButton.addEventListener('click', noHandler);
+    dialog.addEventListener('click', dialogClickHandler);
+    
+    // 调试信息
+    console.log('对话框已显示', {
+        dialogDisplay: dialog.style.display,
+        dialogContentStyles: {
+            position: dialogContent.style.position,
+            width: dialogContent.style.width,
+            maxWidth: dialogContent.style.maxWidth
+        }
+    });
 }
 
 // 响应窗口大小变化

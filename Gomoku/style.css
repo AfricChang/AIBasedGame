@@ -232,6 +232,7 @@ h1 {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   max-width: 90%;
   width: 300px;
+  position: relative;
   transform: scale(0.9);
   animation: scaleIn 0.3s forwards;
 }
