@@ -173,18 +173,22 @@ function initGame() {
     boardElement.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
     boardElement.style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
     
-    // 创建棋盘单元格
+    // 清除所有子元素
     boardElement.innerHTML = '';
-    gameBoard = [];
+    
+    // 重置游戏数据
+    gameBoard = Array(boardSize).fill(null).map(() => Array(boardSize).fill(null));
+    currentPlayer = 'black';
+    gameOver = false;
+    hideWinnerMessage();
     
     // 根据屏幕大小调整棋盘
     const viewportWidth = Math.min(window.innerWidth, window.innerHeight) * 0.9;
     const cellSize = Math.floor(viewportWidth / boardSize);
     
+    // 创建新的棋盘单元格
     for (let i = 0; i < boardSize; i++) {
-        gameBoard[i] = [];
         for (let j = 0; j < boardSize; j++) {
-            gameBoard[i][j] = null;
             const cell = document.createElement('div');
             cell.className = 'board-cell';
             cell.style.width = `${cellSize}px`;
@@ -196,12 +200,7 @@ function initGame() {
         }
     }
     
-    // 重置游戏状态
-    currentPlayer = 'black';
-    gameOver = false;
-    hideWinnerMessage();
-    
-    // 设置难度监听
+    // 设置难度选择器
     setupDifficultySelector();
 }
 
@@ -211,6 +210,9 @@ function handleCellClick(event) {
     
     const row = parseInt(event.target.dataset.row);
     const col = parseInt(event.target.dataset.col);
+    
+    // 确保row和col是有效数字
+    if (isNaN(row) || isNaN(col)) return;
     
     // 如果单元格已经有棋子，返回
     if (gameBoard[row][col] !== null) return;
@@ -234,10 +236,11 @@ function handleCellClick(event) {
     currentPlayer = 'white';
     aiThinking = true;
     
-    // 延迟一下让界面更新
-    setTimeout(() => {
+    // 延迟一下让界面更新，使用命名的超时器便于取消
+    window.aiMoveTimeout = setTimeout(() => {
         makeAIMove();
         aiThinking = false;
+        window.aiMoveTimeout = null;
     }, 300);
 }
 
@@ -331,7 +334,88 @@ function hideWinnerMessage() {
 
 // 重置游戏
 function resetGame() {
+    // 清除计时器，避免多次调用的问题
+    if (window.aiMoveTimeout) {
+        clearTimeout(window.aiMoveTimeout);
+        window.aiMoveTimeout = null;
+    }
+    
+    // 重置AI思考状态
+    aiThinking = false;
+    
+    // 完全初始化游戏
     initGame();
+    
+    // 确保菜单状态正确
+    updateDifficultyDisplay();
+    
+    console.log("游戏已重置");
+}
+
+// 更新难度显示
+function updateDifficultyDisplay() {
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    menuItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.difficulty === difficulty) {
+            item.classList.add('active');
+        }
+    });
+}
+
+// 设置难度选择器
+function setupDifficultySelector() {
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    menuItems.forEach(item => {
+        // 清除之前的所有事件监听器
+        const clonedItem = item.cloneNode(true);
+        item.parentNode.replaceChild(clonedItem, item);
+        
+        // 设置当前难度为active
+        if (clonedItem.dataset.difficulty === difficulty) {
+            clonedItem.classList.add('active');
+        }
+        
+        // 添加新的点击事件
+        clonedItem.addEventListener('click', function() {
+            // 更新难度
+            difficulty = this.dataset.difficulty;
+            
+            // 更新active状态
+            updateDifficultyDisplay();
+            
+            // 重置游戏
+            if (!isBoardEmpty()) {
+                showConfirmDialog(`已选择${getDifficultyName(difficulty)}难度，是否重新开始游戏？`, () => {
+                    resetGame();
+                });
+            } else {
+                resetGame();
+            }
+        });
+    });
+}
+
+// 获取难度名称
+function getDifficultyName(diff) {
+    switch(diff) {
+        case 'easy': return '简单';
+        case 'normal': return '普通';
+        case 'hard': return '困难';
+        default: return '普通';
+    }
+}
+
+// 检查棋盘是否为空
+function isBoardEmpty() {
+    if (!gameBoard || gameBoard.length === 0) return true;
+    
+    return gameBoard.every(row => {
+        if (!row) return true;
+        return row.every(cell => cell === null);
+    });
 }
 
 // 检查位置是否在棋盘内
@@ -1270,34 +1354,6 @@ function countStones() {
     return count;
 }
 
-// 设置难度选择器
-function setupDifficultySelector() {
-    const menuItems = document.querySelectorAll('.menu-item');
-    
-    menuItems.forEach(item => {
-        // 清除之前的active
-        item.classList.remove('active');
-        
-        // 设置当前难度为active
-        if (item.dataset.difficulty === difficulty) {
-            item.classList.add('active');
-        }
-        
-        // 添加点击事件
-        item.addEventListener('click', function() {
-            // 更新难度
-            difficulty = this.dataset.difficulty;
-            
-            // 更新active状态
-            menuItems.forEach(mi => mi.classList.remove('active'));
-            this.classList.add('active');
-            
-            // 重置游戏
-            resetGame();
-        });
-    });
-}
-
 // 显示确认对话框
 function showConfirmDialog(message, confirmCallback) {
     const dialog = document.getElementById('confirm-dialog');
@@ -1372,6 +1428,46 @@ window.addEventListener('resize', function() {
     }
 });
 
-// 初始化游戏
-window.onload = initGame;
+// 添加事件监听
+document.addEventListener('DOMContentLoaded', function() {
+    // 确保重置按钮事件监听只绑定一次
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) {
+        // 移除所有已有的事件监听器
+        const clonedBtn = resetBtn.cloneNode(true);
+        resetBtn.parentNode.replaceChild(clonedBtn, resetBtn);
+        
+        // 添加新的事件监听器
+        clonedBtn.addEventListener('click', function() {
+            if (!isBoardEmpty()) {
+                showConfirmDialog('确定要重新开始游戏吗？', resetGame);
+            } else {
+                resetGame();
+            }
+        });
+    }
+    
+    // 初始化游戏
+    initGame();
+});
+
+// 移除旧的事件监听器并更新为新的DOMContentLoaded事件
+const oldResetListener = document.getElementById('reset-btn').onclick;
+if (oldResetListener) {
+    document.getElementById('reset-btn').removeEventListener('click', oldResetListener);
+}
+
+// 更新window.onload以避免多次初始化
+const oldOnload = window.onload;
+window.onload = function() {
+    if (oldOnload && typeof oldOnload === 'function') {
+        oldOnload();
+    }
+    
+    // 确保只初始化一次
+    if (!window.gameInitialized) {
+        initGame();
+        window.gameInitialized = true;
+    }
+};
 
