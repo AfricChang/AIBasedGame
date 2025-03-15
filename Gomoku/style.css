@@ -1,257 +1,327 @@
-/* 菜单样式 */
-.menu-container {
-    position: absolute;
-    top: 20px;
-    right: 20px;  /* 改为右上角 */
-    z-index: 100;
+:root {
+  --primary-color: #4a6fa5;
+  --secondary-color: #f9f9f9;
+  --board-bg: #e6c687;
+  --text-color: #333;
+  --white-stone: #f5f5f5;
+  --black-stone: #333;
+  --hover-color: rgba(255, 255, 255, 0.3);
+  --shadow-color: rgba(0, 0, 0, 0.2);
 }
 
-.menu-icon {
-    font-size: 30px;
-    font-weight: bold;
-    cursor: pointer;
-    color: #333;
-    padding: 5px;
-}
-
-.menu-options {
-    display: none;
-    position: absolute;
-    top: 40px;
-    right: 0;  /* 改为右上角 */
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    min-width: 100px;
-}
-
-.menu-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    color: #333;
-}
-
-.menu-item:hover {
-    background-color: #f0f0f0;
-}
-
-/* 基础样式 */
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
-    background-color: #f0f0f0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-sizing: border-box;
+  font-family: 'Microsoft YaHei', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+h1 {
+  margin: 15px 0;
+  color: var(--primary-color);
+  text-shadow: 1px 1px 3px var(--shadow-color);
+  font-size: 1.8rem;
 }
 
 #game-board {
-    display: grid;
-    grid-template-columns: repeat(15, 1fr);
-    grid-template-rows: repeat(15, 1fr);
-    gap: 1px;
-    width: min(85vw, 85vh, min(100vw, 100vh) - 60px);
-    height: min(85vw, 85vh, min(100vw, 100vh) - 60px);
-    min-width: 300px;
-    min-height: 300px;
-    aspect-ratio: 1/1;
-    background-color: #d2b48c;
-    padding: 5px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    margin-bottom: 30px;
-    overflow: hidden;
+  display: grid;
+  background: var(--board-bg);
+  border-radius: 5px;
+  box-shadow: 0 8px 30px var(--shadow-color);
+  position: relative;
+  margin: 20px auto;
+  max-width: 90vw;
+  max-height: 90vw;
 }
 
-.cell {
-    aspect-ratio: 1/1;
-    width: 100%;
-    height: 100%;
-    background-color: #f5deb3;
-    border: 1px solid #d2b48c;
-    cursor: pointer;
-    position: relative;
-    box-sizing: border-box;
+.board-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
 }
 
-.cell.black::after,
-.cell.white::after {
-    content: '';
-    position: absolute;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    box-sizing: border-box;
+.board-cell:hover {
+  background-color: var(--hover-color);
+  cursor: pointer;
 }
 
-/* 响应式调整 */
-@media screen and (max-width: 1200px) {
-    #game-board {
-        width: min(95vmin, 95vh);
-        height: min(95vmin, 95vh);
-    }
+.stone {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: 0 3px 5px var(--shadow-color);
+  transform: scale(0);
+  animation: placeStone 0.3s forwards;
 }
 
-@media screen and (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-    
-    #game-board {
-        width: min(98vmin, 98vh);
-        height: min(98vmin, 98vh);
-        padding: 5px;
-    }
-    
-    h1 {
-        font-size: 24px;
-        margin: 10px 0;
-    }
-    
-    #reset-btn {
-        padding: 8px 16px;
-        font-size: 14px;
-        margin-top: 10px;
-    }
+@keyframes placeStone {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
-@media screen and (max-width: 480px) {
-    #game-board {
-        width: 100vmin;
-        height: 100vmin;
-        padding: 2px;
-    }
-    
-    h1 {
-        font-size: 20px;
-    }
-    
-    #reset-btn {
-        padding: 6px 12px;
-        font-size: 12px;
-    }
+.black {
+  background: radial-gradient(circle at 30% 30%, #555, var(--black-stone));
 }
 
-.cell {
-    width: 100%;
-    height: 100%;
-    background-color: #f5deb3;
-    border: 1px solid #d2b48c;
-    cursor: pointer;
-    position: relative;
-}
-
-.cell.black::after,
-.cell.white::after {
-    content: '';
-    position: absolute;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.cell.black::after {
-    background-color: black;
-}
-
-.cell.white::after {
-    background-color: white;
-}
-
-#reset-btn {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
+.white {
+  background: radial-gradient(circle at 30% 30%, #fff, var(--white-stone));
 }
 
 #winner-message {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: red;
-    font-size: 36px;
-    font-weight: bold;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 20px 40px;
-    border-radius: 10px;
-    z-index: 10;
-    display: none;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 15px 0;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.5s ease;
+  color: white;
+}
+
+#winner-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#winner-message.black-win {
+  background-color: #333;
+}
+
+#winner-message.white-win {
+  background-color: #4a6fa5;
+  color: white;
+}
+
+#reset-btn {
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+  box-shadow: 0 3px 5px var(--shadow-color);
 }
 
 #reset-btn:hover {
-    background-color: #45a049;
+  background-color: #3a5a85;
+  transform: translateY(-2px);
 }
 
-/* 对话框样式 */
+#reset-btn:active {
+  transform: translateY(0);
+}
+
+.back-button {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  font-size: 1.5rem;
+  padding: 5px 15px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 3px 5px var(--shadow-color);
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #3a5a85;
+}
+
+.menu-container {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+}
+
+.menu-icon {
+  cursor: pointer;
+  font-size: 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 5px var(--shadow-color);
+  transition: all 0.3s ease;
+}
+
+.menu-icon:hover {
+  background-color: #3a5a85;
+}
+
+.menu-options {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 5px 15px var(--shadow-color);
+  display: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.menu-container:hover .menu-options {
+  display: block;
+}
+
+.menu-item {
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+}
+
+.menu-item.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
 .dialog {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
 }
 
 .dialog-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    min-width: 300px;
-    text-align: center;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-width: 90%;
+  width: 300px;
+  transform: scale(0.9);
+  animation: scaleIn 0.3s forwards;
+}
+
+@keyframes scaleIn {
+  to {
+    transform: scale(1);
+  }
 }
 
 .dialog-buttons {
-    margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .dialog-buttons button {
-    padding: 8px 16px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
 }
 
 #confirm-yes {
-    background-color: #4CAF50;
-    color: white;
+  background-color: var(--primary-color);
+  color: white;
 }
 
 #confirm-no {
-    background-color: #f44336;
-    color: white;
+  background-color: #e0e0e0;
+  color: var(--text-color);
 }
 
-#confirm-yes:hover {
-    background-color: #45a049;
+.dialog-buttons button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
 }
 
-#confirm-no:hover {
-    background-color: #e53935;
+/* 移动设备适配 */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.5rem;
+    margin: 10px 0;
+  }
+  
+  #game-board {
+    margin: 10px auto;
+  }
+  
+  .back-button, .menu-icon {
+    font-size: 1.2rem;
+    padding: 5px 10px;
+  }
+  
+  #reset-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+  
+  #winner-message {
+    font-size: 1.2rem;
+    padding: 8px 16px;
+  }
+  
+  .stone {
+    width: 85%;
+    height: 85%;
+  }
+}
+
+/* 小屏设备适配 */
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+  
+  h1 {
+    font-size: 1.3rem;
+  }
+  
+  .menu-item {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+  
+  #game-board {
+    max-width: 95vw;
+    max-height: 95vw;
+  }
 }
