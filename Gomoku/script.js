@@ -263,7 +263,7 @@ function checkWin(row, col, player) {
         [1, 1],  // 对角线
         [1, -1]  // 反对角线
     ];
-    
+
     for (const [dx, dy] of directions) {
         let count = 1;  // 当前位置已经有一个棋子
         
@@ -272,7 +272,7 @@ function checkWin(row, col, player) {
             const newRow = row + dx * i;
             const newCol = col + dy * i;
             if (isValidPosition(newRow, newCol) && gameBoard[newRow][newCol] === player) {
-                count++;
+            count++;
             } else {
                 break;
             }
@@ -283,7 +283,7 @@ function checkWin(row, col, player) {
             const newRow = row - dx * i;
             const newCol = col - dy * i;
             if (isValidPosition(newRow, newCol) && gameBoard[newRow][newCol] === player) {
-                count++;
+            count++;
             } else {
                 break;
             }
@@ -1375,7 +1375,7 @@ function showConfirmDialog(message, confirmCallback) {
     dialogContent.style.left = '';
     dialogContent.style.top = '';
     dialogContent.style.transform = '';
-    
+
     // 阻止对话框内容区域的点击事件冒泡
     dialogContent.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1478,9 +1478,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetGame();
             }
         });
-    }
-    
-    // 初始化游戏
+}
+
+// 初始化游戏
     initGame();
 });
 
