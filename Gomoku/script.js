@@ -2,7 +2,7 @@ const boardSize = 15;
 let gameBoard = [];
 let currentPlayer = 'black';
 let gameOver = false;
-let difficulty = 'normal'; // 默认难度
+let difficulty = 'hard'; // 默认难度
 let aiThinking = false;
 
 // 菜单交互
@@ -47,13 +47,13 @@ document.querySelectorAll('.menu-item').forEach(item => {
 function getAIDifficultyMultiplier() {
     switch (difficulty) {
         case 'easy':
-            return 0.5; // 降低AI评分权重
+            return 2.0; // 进一步提升评分权重
         case 'normal':
-            return 1;
+            return 3.0; // 大幅提升评分权重
         case 'hard':
-            return 2; // 提高AI评分权重
+            return 4.0; // 大幅提升评分权重
         default:
-            return 1;
+            return 3.0;
     }
 }
 
@@ -466,33 +466,80 @@ function makeAIMove() {
     currentPlayer = 'black';
 }
 
-// 简单难度AI (随机放置)
+// 简单难度AI
 function getEasyAIMove() {
-    // 70%概率随机下，30%概率有策略地下
-    if (Math.random() < 0.7) {
-        return getRandomMove();
-    } else {
-        // 尝试找到基本的防守位置
-        return findBasicDefensiveMove();
+    // 一步获胜的情况 - 简单模式总是直接获胜
+    let move = findWinningMove('white');
+    if (move) return move;
+    
+    // 防止玩家一步获胜的情况 - 提高到95%的概率会阻止
+    if (Math.random() < 0.95) {
+        move = findWinningMove('black');
+        if (move) return move;
     }
+    
+    // 首先尝试找到强攻击位置
+    if (Math.random() < 0.6) { // 60%的概率主动进攻
+        move = findOffensiveThreatMove('white', 0.5);
+        if (move) return move;
+    }
+    
+    // 总是检查对手的威胁，阻挡形成三子连线的威胁
+    if (Math.random() < 0.85) { // 85%概率进行防守
+        move = findDefensiveMoveAgainstThree('black');
+        if (move) return move;
+    }
+    
+    // 使用浅层搜索，深度为2
+    if (Math.random() < 0.7) { // 70%的概率使用搜索
+        move = findBestMoveWithIterativeDeepening('white', 2);
+        if (move) return move;
+    }
+    
+    // 尝试形成基本威胁
+    move = findEnhancedThreatMove('white');
+    if (move) return move;
+    
+    // 或者在中心区域寻找位置
+    move = findCentralMove();
+    if (move) return move;
+    
+    // 寻找较好的位置
+    return findEnhancedGoodMove() || findGoodMove() || getRandomMove();
 }
 
 // 普通难度AI
 function getNormalAIMove() {
-    // 优先考虑进攻，然后防守
+    // 优先考虑进攻和防守
     let move = findWinningMove('white');
     if (move) return move;
     
-    // 防止玩家下一步获胜
+    // 防止玩家下一步获胜 - 普通模式总是会阻止
     move = findWinningMove('black');
     if (move) return move;
     
-    // 寻找有利位置
-    move = findGoodMove();
+    // 进攻型搜索 - 寻找威胁位置
+    move = findOffensiveThreatMove('white', 1.0);
     if (move) return move;
     
-    // 随机放置
-    return getRandomMove();
+    // 防御型搜索 - 阻止玩家形成威胁
+    move = findOffensiveThreatMove('black', 1.0);
+    if (move) return move;
+    
+    // 提高搜索深度到4-5
+    move = findBestMoveWithIterativeDeepening('white', 5);
+    if (move) return move;
+    
+    // 使用VCT搜索
+    move = findVCTMove('white', 3);
+    if (move) return move;
+    
+    // 寻找有利位置
+    move = findEnhancedGoodMove();
+    if (move) return move;
+    
+    // 基于评分的搜索
+    return findBestScoringMove('white');
 }
 
 // 困难难度AI
@@ -1478,9 +1525,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetGame();
             }
         });
-}
+    }
 
-// 初始化游戏
+    // 初始化游戏
     initGame();
 });
 
@@ -1503,4 +1550,123 @@ window.onload = function() {
         window.gameInitialized = true;
     }
 };
+
+// 在中心区域寻找位置 (简单模式辅助)
+function findCentralMove() {
+    const center = Math.floor(boardSize / 2);
+    const radius = 3; // 中心区域半径
+    
+    // 定义中心区域的位置
+    const centralPositions = [];
+    for (let i = center - radius; i <= center + radius; i++) {
+        for (let j = center - radius; j <= center + radius; j++) {
+            if (isValidPosition(i, j) && gameBoard[i][j] === null) {
+                // 计算到中心的距离
+                const distance = Math.sqrt(Math.pow(i - center, 2) + Math.pow(j - center, 2));
+                centralPositions.push({
+                    row: i,
+                    col: j,
+                    distance: distance
+                });
+            }
+        }
+    }
+    
+    // 按到中心的距离排序
+    centralPositions.sort((a, b) => a.distance - b.distance);
+    
+    // 返回中心区域的随机位置 (偏好更靠近中心的位置)
+    if (centralPositions.length > 0) {
+        // 选择前一半位置中的随机一个
+        const topHalf = Math.max(1, Math.floor(centralPositions.length / 2));
+        const randomIndex = Math.floor(Math.random() * topHalf);
+        return {
+            row: centralPositions[randomIndex].row,
+            col: centralPositions[randomIndex].col
+        };
+    }
+    
+    return null;
+}
+
+// 增强型威胁识别函数
+function findEnhancedThreatMove(player) {
+    const emptyCells = getEmptyCells();
+    let bestMove = null;
+    let bestScore = -1;
+    
+    for (const move of emptyCells) {
+        // 临时放置棋子
+        gameBoard[move.row][move.col] = player;
+        
+        // 评估此位置的威胁程度
+        let threatScore = 0;
+        
+        // 检查是否形成活三或冲四
+        const pattern = evaluatePositionPatterns(move.row, move.col, player);
+        if (pattern >= PATTERN_SCORES.THREE_OPEN) {
+            threatScore += pattern * 2; // 加倍威胁评分
+        }
+        
+        // 检查此位置是否可以防止对手的威胁
+        const opponent = player === 'white' ? 'black' : 'white';
+        gameBoard[move.row][move.col] = null; // 临时移除我方棋子
+        gameBoard[move.row][move.col] = opponent; // 放置对手棋子
+        
+        const defenseValue = evaluatePositionPatterns(move.row, move.col, opponent);
+        if (defenseValue >= PATTERN_SCORES.THREE_BLOCKED) {
+            threatScore += defenseValue; // 加入防守评分
+        }
+        
+        // 恢复为原始状态
+        gameBoard[move.row][move.col] = null;
+        
+        // 如果是高分威胁，立即返回
+        if (threatScore > PATTERN_SCORES.THREE_OPEN * 2) {
+            return move;
+        }
+        
+        // 否则记录最高分
+        if (threatScore > bestScore) {
+            bestScore = threatScore;
+            bestMove = move;
+        }
+    }
+    
+    return bestMove;
+}
+
+// 专门检查和阻止对手形成三子连线的函数
+function findDefensiveMoveAgainstThree(opponent) {
+    // 检查对手潜在的活三和冲四
+    const emptyCells = getEmptyCells();
+    let bestMove = null;
+    let bestScore = -1;
+    
+    for (const move of emptyCells) {
+        // 测试如果对手在这个位置下棋会怎样
+        gameBoard[move.row][move.col] = opponent;
+        
+        // 评估此位置对对手的价值
+        const threatLevel = evaluatePositionPatterns(move.row, move.col, opponent);
+        
+        // 撤销测试
+        gameBoard[move.row][move.col] = null;
+        
+        // 如果对手能形成强威胁，我们应该阻止
+        if (threatLevel >= PATTERN_SCORES.THREE_BLOCKED) {
+            if (threatLevel > bestScore) {
+                bestScore = threatLevel;
+                bestMove = move;
+            }
+        }
+    }
+    
+    // 只有当找到显著威胁时才返回防守位置
+    if (bestScore >= PATTERN_SCORES.THREE_BLOCKED) {
+        return bestMove;
+    }
+    
+    return null;
+}
 

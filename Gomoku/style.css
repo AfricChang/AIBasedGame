@@ -211,6 +211,24 @@ h1 {
   color: white;
 }
 
+/* 为专家模式添加特殊样式 */
+.menu-item[data-difficulty="expert"] {
+  background-color: #2d3436;
+  color: #fd79a8;
+}
+
+.menu-item[data-difficulty="expert"]:hover {
+  background-color: #2d3436;
+  color: #ffffff;
+}
+
+.menu-item[data-difficulty="expert"].active {
+  background-color: #2c2c54;
+  color: #ff5252;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(255, 82, 82, 0.5);
+}
+
 .dialog {
   display: none;
   position: fixed;
