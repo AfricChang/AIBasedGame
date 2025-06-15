@@ -1,0 +1,261 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.screen.active {
+    display: flex;
+}
+
+#gameScreen {
+    padding: 0;
+    justify-content: flex-start;
+}
+
+.game-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 14px;
+}
+
+.score {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+.high-score {
+    color: #FFD700;
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+.health-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.health-container {
+    width: 100px;
+    height: 15px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ff6666);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 100%;
+}
+
+.bullets-info {
+    color: #00BFFF;
+    font-weight: bold;
+}
+
+.pause-btn, .sound-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.pause-btn:hover, .sound-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.sound-btn {
+    font-size: 16px;
+    padding: 5px 8px;
+}
+
+#gameCanvas {
+    background: linear-gradient(180deg, #000428, #004e92);
+    display: block;
+    touch-action: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+h3 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    max-width: 300px;
+}
+
+.game-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    min-width: 150px;
+}
+
+.game-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.game-btn:active {
+    transform: translateY(0);
+}
+
+.instructions {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    max-width: 350px;
+}
+
+.instructions ul {
+    text-align: left;
+    list-style-position: inside;
+}
+
+.instructions li {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+/* ????? */
+@media (max-width: 768px) {
+    .game-header {
+        font-size: 12px;
+        padding: 8px;
+    }
+    
+    .health-container {
+        width: 80px;
+        height: 12px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    h2 {
+        font-size: 1.5em;
+    }
+    
+    .game-btn {
+        padding: 12px 25px;
+        font-size: 14px;
+        min-width: 120px;
+    }
+    
+    .instructions {
+        max-width: 90%;
+        padding: 15px;
+    }
+    
+    .instructions li {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-header {
+        font-size: 11px;
+        padding: 5px;
+    }
+    
+    .health-container {
+        width: 60px;
+        height: 10px;
+    }
+    
+    .pause-btn {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+}
+
+/* ??????? */
+.game-container {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ????? */
+html, body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打飞机游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 游戏界面 -->
+        <div id="gameScreen" class="screen active">
+            <div class="game-header">
+                <div class="score">分数: <span id="score">0</span></div>
+                <div class="high-score">最高分: <span id="currentHighScore">0</span></div>
+                <div class="health-bar">
+                    <div class="health-label">生命值:</div>
+                    <div class="health-container">
+                        <div id="healthBar" class="health-fill"></div>
+                    </div>
+                </div>
+                <div class="bullets-info">弹道: <span id="bulletCount">1</span></div>
+                <button id="soundBtn" class="sound-btn">🔊</button>
+                <button id="pauseBtn" class="pause-btn">暂停</button>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <!-- 开始界面 -->
+        <div id="startScreen" class="screen">
+            <h1>打飞机游戏</h1>
+            <p>移动飞机躲避敌人，收集道具增强火力！</p>
+            <button id="startBtn" class="game-btn">开始游戏</button>
+            <div class="instructions">
+                <h3>游戏说明:</h3>
+                <ul>
+                    <li>触摸或鼠标移动控制飞机</li>
+                    <li>收集蓝色道具增加弹道</li>
+                    <li>收集红色道具恢复生命值</li>
+                    <li>避免撞击敌机</li>
+                    <li>点击暂停按钮可暂停游戏</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 暂停界面 -->
+        <div id="pauseScreen" class="screen">
+            <h2>游戏暂停</h2>
+            <button id="resumeBtn" class="game-btn">继续游戏</button>
+            <button id="restartBtn" class="game-btn">重新开始</button>
+            <button id="backToMenuBtn" class="game-btn">返回主菜单</button>
+        </div>
+
+        <!-- 游戏结束界面 -->
+        <div id="gameOverScreen" class="screen">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="finalScore">0</span></p>
+            <p>最高分数: <span id="highScore">0</span></p>
+            <button id="playAgainBtn" class="game-btn">再玩一次</button>
+            <button id="menuBtn" class="game-btn">返回主菜单</button>
+        </div>
+    </div>
+
+    <script src="audio.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

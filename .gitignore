@@ -89,3 +89,4 @@ game-app/*.log
 game-app/logs/
 game-app/dist/
 game-app/www/
+/WebClient
