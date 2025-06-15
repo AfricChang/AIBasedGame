@@ -1380,15 +1380,44 @@ class Wingman {
      * 绘制僚机
      */
     draw(ctx) {
-        // 绘制僚机主体（蓝色，区别于玩家）
-        ctx.fillStyle = '#0088ff';
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        const halfWidth = this.width / 2;
+        const halfHeight = this.height / 2;
         
-        // 绘制僚机标识
+        // 绘制僚机机身（流线型设计）
+        ctx.fillStyle = '#00aaff';
+        ctx.beginPath();
+        // 机头（尖锐的三角形）
+        ctx.moveTo(this.x, this.y - halfHeight);
+        ctx.lineTo(this.x - halfWidth * 0.6, this.y);
+        ctx.lineTo(this.x - halfWidth * 0.4, this.y + halfHeight * 0.8);
+        ctx.lineTo(this.x + halfWidth * 0.4, this.y + halfHeight * 0.8);
+        ctx.lineTo(this.x + halfWidth * 0.6, this.y);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 绘制机翼
+        ctx.fillStyle = '#0088dd';
+        // 左翼
+        ctx.fillRect(this.x - halfWidth, this.y - 2, halfWidth * 0.8, 4);
+        // 右翼
+        ctx.fillRect(this.x + halfWidth * 0.2, this.y - 2, halfWidth * 0.8, 4);
+        
+        // 绘制引擎光效
+        ctx.fillStyle = '#44ddff';
+        ctx.fillRect(this.x - 3, this.y + halfHeight * 0.6, 2, 6);
+        ctx.fillRect(this.x + 1, this.y + halfHeight * 0.6, 2, 6);
+        
+        // 绘制驾驶舱
         ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - halfHeight * 0.3, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 绘制僚机标识（小而精致）
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '8px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('W', this.x, this.y + 4);
+        ctx.fillText('◆', this.x, this.y + 2);
     }
 }
 
