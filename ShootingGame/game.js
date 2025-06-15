@@ -24,6 +24,12 @@ class ShootingGame {
         this.wingmen = []; // 僚机数组
         this.consecutiveBulletPowerUps = 0; // 连续获得弹道道具的计数
         this.maxWingmen = 2; // 最多2个僚机（左右各一个）
+        this.totalBulletPowerUps = 0; // 总共获得的弹道道具数量
+        this.missiles = []; // 导弹数组
+        this.unlockedMissiles = 0; // 已解锁的导弹数量
+        this.maxMissiles = 2; // 最多解锁2个导弹
+        this.missileTimer = 0; // 导弹发射计时器
+        this.missileInterval = 3000; // 导弹发射间隔（3秒）
         
         // 游戏对象数组
         this.player = null;
@@ -190,6 +196,10 @@ class ShootingGame {
         // 重置僚机系统
         this.wingmen = [];
         this.consecutiveBulletPowerUps = 0;
+        this.totalBulletPowerUps = 0;
+        this.missiles = [];
+        this.unlockedMissiles = 0;
+        this.missileTimer = 0;
         
         // 清空游戏对象
         this.bullets = [];
@@ -261,6 +271,8 @@ class ShootingGame {
         document.getElementById('score').textContent = this.score;
         document.getElementById('currentHighScore').textContent = this.getHighScore();
         document.getElementById('bulletCount').textContent = this.bulletCount;
+        document.getElementById('totalBulletCount').textContent = this.totalBulletPowerUps;
+        document.getElementById('missileCount').textContent = this.unlockedMissiles;
         
         const healthBar = document.getElementById('healthBar');
         const healthPercent = (this.health / this.maxHealth) * 100;
@@ -404,6 +416,16 @@ class ShootingGame {
         this.updateParticles();
         this.updateObstacles();
         this.updateWingmen();
+        this.updateMissiles();
+        
+        // 更新导弹发射计时器
+        if (this.unlockedMissiles > 0 && this.wingmen.length > 0) {
+            this.missileTimer += deltaTime;
+            if (this.missileTimer >= this.missileInterval) {
+                this.launchMissile();
+                this.missileTimer = 0;
+            }
+        }
         
         // 碰撞检测
         this.checkCollisions();
@@ -679,11 +701,25 @@ class ShootingGame {
                     
                     // 无论弹道是否已满，都计算连续获得的弹道道具
                     this.consecutiveBulletPowerUps++;
+                    this.totalBulletPowerUps++; // 增加总弹道道具计数
                     
                     // 检查是否可以解锁僚机：当前弹道>=3且连续获得3个弹道道具
                     if (this.bulletCount >= 3 && this.consecutiveBulletPowerUps >= 3 && this.wingmen.length < this.maxWingmen) {
                         this.unlockWingman();
                         this.consecutiveBulletPowerUps = 0; // 重置计数器，为下一个僚机重新计数
+                    }
+                    
+                    // 检查是否可以解锁导弹：12个和24个弹道道具各解锁一个导弹
+                    if ((this.totalBulletPowerUps === 12 || this.totalBulletPowerUps === 24) && this.unlockedMissiles < this.maxMissiles) {
+                        this.unlockedMissiles++;
+                        // 创建解锁导弹的特效
+                        for (let i = 0; i < 20; i++) {
+                            this.particles.push(new Particle(
+                                this.canvas.width / 2 + (Math.random() - 0.5) * 100,
+                                this.canvas.height / 2 + (Math.random() - 0.5) * 100,
+                                '#FFD700'
+                            ));
+                        }
                     }
                 } else if (powerUp.type === 'health') {
                     this.health = Math.min(this.maxHealth, this.health + 30);
@@ -767,6 +803,99 @@ class ShootingGame {
     }
     
     /**
+     * 发射导弹
+     */
+    launchMissile() {
+        if (this.wingmen.length > 0) {
+            // 随机选择一个僚机发射导弹
+            const wingman = this.wingmen[Math.floor(Math.random() * this.wingmen.length)];
+            
+            // 寻找最近的敌机作为目标
+            let target = null;
+            let minDistance = Infinity;
+            
+            this.enemies.forEach(enemy => {
+                const distance = Math.sqrt(
+                    Math.pow(enemy.x - wingman.x, 2) + Math.pow(enemy.y - wingman.y, 2)
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    target = enemy;
+                }
+            });
+            
+            // 如果找到目标，发射导弹
+            if (target) {
+                const missile = new Missile(wingman.x, wingman.y, target);
+                this.missiles.push(missile);
+                
+                // 创建发射特效
+                this.createParticles(wingman.x, wingman.y, '#ff6600', 8);
+            }
+        }
+    }
+    
+    /**
+     * 更新导弹
+     */
+    updateMissiles() {
+        for (let i = this.missiles.length - 1; i >= 0; i--) {
+            const missile = this.missiles[i];
+            missile.update();
+            
+            // 检查导弹是否到达目标或超出边界
+            if (missile.hasReachedTarget() || missile.y < 0 || missile.y > this.canvas.height ||
+                missile.x < 0 || missile.x > this.canvas.width) {
+                
+                // 导弹爆炸
+                this.explodeMissile(missile.x, missile.y);
+                this.missiles.splice(i, 1);
+            }
+        }
+    }
+    
+    /**
+     * 导弹爆炸效果
+     */
+    explodeMissile(x, y) {
+        const explosionRadius = 120; // 爆炸半径
+        
+        // 创建爆炸粒子效果
+        this.createParticles(x, y, '#ff4400', 35);
+        this.createParticles(x, y, '#ffaa00', 25);
+        this.createParticles(x, y, '#ffffff', 20);
+        this.createParticles(x, y, '#ff0000', 15);
+        
+        // 摧毁爆炸范围内的敌机
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+            const distance = Math.sqrt(
+                Math.pow(enemy.x - x, 2) + Math.pow(enemy.y - y, 2)
+            );
+            
+            if (distance <= explosionRadius) {
+                this.createParticles(enemy.x, enemy.y, '#ff0000', 8);
+                this.enemies.splice(i, 1);
+                this.score += 10;
+            }
+        }
+        
+        // 摧毁爆炸范围内的障碍物
+        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            const obstacle = this.obstacles[i];
+            const distance = Math.sqrt(
+                Math.pow(obstacle.x - x, 2) + Math.pow(obstacle.y - y, 2)
+            );
+            
+            if (distance <= explosionRadius) {
+                this.createParticles(obstacle.x, obstacle.y, '#888888', 12);
+                this.obstacles.splice(i, 1);
+                this.score += 5;
+            }
+        }
+    }
+    
+    /**
      * 渲染游戏
      */
     render() {
@@ -784,6 +913,7 @@ class ShootingGame {
         
         this.wingmen.forEach(wingman => wingman.draw(this.ctx));
         this.bullets.forEach(bullet => bullet.draw(this.ctx));
+        this.missiles.forEach(missile => missile.draw(this.ctx));
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
         this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));
         this.obstacles.forEach(obstacle => obstacle.draw(this.ctx));
@@ -1418,6 +1548,137 @@ class Wingman {
         ctx.font = '8px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('◆', this.x, this.y + 2);
+    }
+}
+
+/**
+ * 导弹类
+ */
+class Missile {
+    constructor(x, y, target) {
+        this.x = x;
+        this.y = y;
+        this.target = target; // 目标敌机
+        this.targetX = target.x; // 记录目标初始位置
+        this.targetY = target.y;
+        this.speed = 8;
+        this.width = 10;
+        this.height = 30;
+        this.trail = []; // 尾迹效果
+        this.maxTrailLength = 8;
+        
+        // 计算朝向目标的方向
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        this.velocityX = (dx / distance) * this.speed;
+        this.velocityY = (dy / distance) * this.speed;
+    }
+    
+    /**
+     * 更新导弹位置
+     */
+    update() {
+        // 添加当前位置到尾迹
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > this.maxTrailLength) {
+            this.trail.shift();
+        }
+        
+        // 如果目标还存在，更新追踪方向
+        if (this.target && this.target.x !== undefined) {
+            const dx = this.target.x - this.x;
+            const dy = this.target.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 0) {
+                // 轻微调整方向以追踪目标
+                const targetVelX = (dx / distance) * this.speed;
+                const targetVelY = (dy / distance) * this.speed;
+                
+                // 平滑转向
+                this.velocityX += (targetVelX - this.velocityX) * 0.1;
+                this.velocityY += (targetVelY - this.velocityY) * 0.1;
+            }
+        }
+        
+        // 更新位置
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+    }
+    
+    /**
+     * 检查是否到达目标
+     */
+    hasReachedTarget() {
+        if (!this.target || this.target.x === undefined) {
+            return false;
+        }
+        
+        const distance = Math.sqrt(
+            Math.pow(this.target.x - this.x, 2) + Math.pow(this.target.y - this.y, 2)
+        );
+        
+        return distance < 30; // 接近目标30像素时引爆
+    }
+    
+    /**
+     * 绘制导弹
+     */
+    draw(ctx) {
+        // 绘制尾迹
+        for (let i = 0; i < this.trail.length; i++) {
+            const alpha = (i + 1) / this.trail.length;
+            const point = this.trail[i];
+            
+            ctx.fillStyle = `rgba(255, 100, 0, ${alpha * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 2 * alpha, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // 绘制导弹主体
+        const halfWidth = this.width / 2;
+        const halfHeight = this.height / 2;
+        
+        // 计算导弹朝向角度
+        const angle = Math.atan2(this.velocityY, this.velocityX) + Math.PI / 2;
+        
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(angle);
+        
+        // 导弹主体（红色）
+        ctx.fillStyle = '#ff3300';
+        ctx.fillRect(-halfWidth, -halfHeight, this.width, this.height);
+        
+        // 导弹头部（更亮的红色）
+        ctx.fillStyle = '#ff6600';
+        ctx.beginPath();
+        ctx.moveTo(0, -halfHeight);
+        ctx.lineTo(-halfWidth * 0.7, -halfHeight + 6);
+        ctx.lineTo(halfWidth * 0.7, -halfHeight + 6);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 导弹尾部推进器光效
+        ctx.fillStyle = '#00aaff';
+        ctx.fillRect(-2, halfHeight - 4, 4, 8);
+        
+        ctx.restore();
+        
+        // 绘制导弹光晕效果
+        ctx.fillStyle = 'rgba(255, 100, 0, 0.4)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 额外的外层光晕
+        ctx.fillStyle = 'rgba(255, 50, 0, 0.2)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 18, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
