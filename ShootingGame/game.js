@@ -20,6 +20,11 @@ class ShootingGame {
         this.bulletSpeedMultiplier = 1; // 弹道速度倍数
         this.maxBulletSpeedMultiplier = 2.5; // 最大弹道速度倍数限制
         
+        // 僚机系统
+        this.wingmen = []; // 僚机数组
+        this.consecutiveBulletPowerUps = 0; // 连续获得弹道道具的计数
+        this.maxWingmen = 2; // 最多2个僚机（左右各一个）
+        
         // 游戏对象数组
         this.player = null;
         this.bullets = [];
@@ -181,6 +186,10 @@ class ShootingGame {
         this.health = this.maxHealth;
         this.bulletCount = 1;
         this.bulletSpeedMultiplier = 1; // 重置弹道速度倍数
+        
+        // 重置僚机系统
+        this.wingmen = [];
+        this.consecutiveBulletPowerUps = 0;
         
         // 清空游戏对象
         this.bullets = [];
@@ -394,6 +403,7 @@ class ShootingGame {
         this.updatePowerUps();
         this.updateParticles();
         this.updateObstacles();
+        this.updateWingmen();
         
         // 碰撞检测
         this.checkCollisions();
@@ -473,6 +483,13 @@ class ShootingGame {
             const x = startX + i * bulletSpacing;
             this.bullets.push(new Bullet(x, this.player.y - this.player.height / 2, false, this.bulletSpeedMultiplier));
         }
+        
+        // 僚机也会射击
+        this.wingmen.forEach(wingman => {
+            if (wingman.canShoot()) {
+                this.bullets.push(new Bullet(wingman.x, wingman.y - wingman.height / 2, false, this.bulletSpeedMultiplier));
+            }
+        });
         
         // 播放射击音效
         this.audioManager.playShoot();
@@ -654,10 +671,23 @@ class ShootingGame {
                 const powerUp = this.powerUps[i];
                 this.createParticles(powerUp.x, powerUp.y, powerUp.type === 'bullet' ? '#00ff00' : '#ff00ff', 6);
                 
-                if (powerUp.type === 'bullet' && this.bulletCount < this.maxBullets) {
-                    this.bulletCount++;
+                if (powerUp.type === 'bullet') {
+                    // 只有在弹道未满时才增加弹道数量
+                    if (this.bulletCount < this.maxBullets) {
+                        this.bulletCount++;
+                    }
+                    
+                    // 无论弹道是否已满，都计算连续获得的弹道道具
+                    this.consecutiveBulletPowerUps++;
+                    
+                    // 检查是否可以解锁僚机：当前弹道>=3且连续获得3个弹道道具
+                    if (this.bulletCount >= 3 && this.consecutiveBulletPowerUps >= 3 && this.wingmen.length < this.maxWingmen) {
+                        this.unlockWingman();
+                        this.consecutiveBulletPowerUps = 0; // 重置计数器，为下一个僚机重新计数
+                    }
                 } else if (powerUp.type === 'health') {
                     this.health = Math.min(this.maxHealth, this.health + 30);
+                    this.consecutiveBulletPowerUps = 0; // 获得生命道具时重置弹道道具计数
                 }
                 
                 this.powerUps.splice(i, 1);
@@ -714,6 +744,29 @@ class ShootingGame {
     }
     
     /**
+     * 解锁僚机
+     */
+    unlockWingman() {
+        if (this.wingmen.length < this.maxWingmen) {
+            const side = this.wingmen.length === 0 ? 'left' : 'right';
+            const wingman = new Wingman(this.player.x, this.player.y, side);
+            this.wingmen.push(wingman);
+            
+            // 可以添加解锁音效或特效
+            this.createParticles(this.player.x, this.player.y, '#0088ff', 15);
+        }
+    }
+    
+    /**
+     * 更新僚机
+     */
+    updateWingmen() {
+        this.wingmen.forEach(wingman => {
+            wingman.update(this.player.x, this.player.y);
+        });
+    }
+    
+    /**
      * 渲染游戏
      */
     render() {
@@ -729,6 +782,7 @@ class ShootingGame {
             this.player.draw(this.ctx);
         }
         
+        this.wingmen.forEach(wingman => wingman.draw(this.ctx));
         this.bullets.forEach(bullet => bullet.draw(this.ctx));
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
         this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));
@@ -1283,6 +1337,58 @@ class Particle {
         const alpha = this.life / this.maxLife;
         ctx.fillStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
         ctx.fillRect(this.x - 2, this.y - 2, 4, 4);
+    }
+}
+
+/**
+ * 僚机类
+ */
+class Wingman {
+    constructor(x, y, side) {
+        this.x = x;
+        this.y = y;
+        this.width = 20;
+        this.height = 30;
+        this.side = side; // 'left' or 'right'
+        this.shootTimer = 0;
+        this.shootInterval = 300; // 射击间隔（毫秒）
+        this.offsetX = side === 'left' ? -60 : 60; // 相对于玩家的偏移
+        this.offsetY = 20;
+    }
+    
+    /**
+     * 更新僚机位置（跟随玩家）
+     */
+    update(playerX, playerY) {
+        this.x = playerX + this.offsetX;
+        this.y = playerY + this.offsetY;
+        this.shootTimer += 16; // 假设60FPS，每帧约16ms
+    }
+    
+    /**
+     * 检查是否可以射击
+     */
+    canShoot() {
+        if (this.shootTimer >= this.shootInterval) {
+            this.shootTimer = 0;
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * 绘制僚机
+     */
+    draw(ctx) {
+        // 绘制僚机主体（蓝色，区别于玩家）
+        ctx.fillStyle = '#0088ff';
+        ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        
+        // 绘制僚机标识
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('W', this.x, this.y + 4);
     }
 }
 
