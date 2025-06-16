@@ -30,6 +30,7 @@ class ShootingGame {
         this.maxMissiles = 2; // 最多解锁2个导弹
         this.missileTimer = 0; // 导弹发射计时器
         this.missileInterval = 3000; // 导弹发射间隔（3秒）
+        this.currentMissileIndex = 0; // 当前发射的导弹索引（用于交替发射）
         
         // 游戏对象数组
         this.player = null;
@@ -200,6 +201,7 @@ class ShootingGame {
         this.missiles = [];
         this.unlockedMissiles = 0;
         this.missileTimer = 0;
+        this.currentMissileIndex = 0; // 重置导弹发射索引
         
         // 清空游戏对象
         this.bullets = [];
@@ -421,7 +423,9 @@ class ShootingGame {
         // 更新导弹发射计时器
         if (this.unlockedMissiles > 0 && this.wingmen.length > 0) {
             this.missileTimer += deltaTime;
-            if (this.missileTimer >= this.missileInterval) {
+            // 根据解锁的导弹数量调整发射间隔
+            const interval = this.unlockedMissiles === 2 ? 1000 : this.missileInterval; // 两个导弹时1秒间隔
+            if (this.missileTimer >= interval) {
                 this.launchMissile();
                 this.missileTimer = 0;
             }
@@ -453,11 +457,13 @@ class ShootingGame {
         let targetY = this.player.y;
         
         if (this.touch.active) {
-            targetX = this.touch.x;
-            targetY = this.touch.y;
+            // 触摸控制时，飞机位置相对手指位置向上偏移60像素，向左偏移20像素
+            targetX = this.touch.x - 20;
+            targetY = this.touch.y - 60;
         } else if (this.mouse.down) {
-            targetX = this.mouse.x;
-            targetY = this.mouse.y;
+            // 鼠标控制时，飞机位置相对鼠标位置向上偏移40像素，向左偏移15像素
+            targetX = this.mouse.x - 15;
+            targetY = this.mouse.y - 40;
         }
         
         // 键盘控制
@@ -703,10 +709,9 @@ class ShootingGame {
                     this.consecutiveBulletPowerUps++;
                     this.totalBulletPowerUps++; // 增加总弹道道具计数
                     
-                    // 检查是否可以解锁僚机：当前弹道>=3且连续获得3个弹道道具
-                    if (this.bulletCount >= 3 && this.consecutiveBulletPowerUps >= 3 && this.wingmen.length < this.maxWingmen) {
+                    // 检查是否可以解锁僚机：收集5个和10个弹道包分别解锁僚机
+                    if ((this.totalBulletPowerUps === 5 || this.totalBulletPowerUps === 10) && this.wingmen.length < this.maxWingmen) {
                         this.unlockWingman();
-                        this.consecutiveBulletPowerUps = 0; // 重置计数器，为下一个僚机重新计数
                     }
                     
                     // 检查是否可以解锁导弹：12个和24个弹道道具各解锁一个导弹
@@ -807,8 +812,14 @@ class ShootingGame {
      */
     launchMissile() {
         if (this.wingmen.length > 0) {
-            // 随机选择一个僚机发射导弹
-            const wingman = this.wingmen[Math.floor(Math.random() * this.wingmen.length)];
+            // 如果有两个导弹，交替从不同僚机发射；否则随机选择
+            let wingman;
+            if (this.unlockedMissiles === 2 && this.wingmen.length >= 2) {
+                wingman = this.wingmen[this.currentMissileIndex % this.wingmen.length];
+                this.currentMissileIndex++; // 下次从另一个僚机发射
+            } else {
+                wingman = this.wingmen[Math.floor(Math.random() * this.wingmen.length)];
+            }
             
             // 寻找最近的敌机作为目标
             let target = null;
