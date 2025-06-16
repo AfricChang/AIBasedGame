@@ -113,7 +113,19 @@ body {
 }
 
 .auto-heal-info {
-    color: #00FF7F;
+    color: #90EE90;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.game-mode-info {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.level-info {
+    color: #00BFFF;
     font-weight: bold;
     font-size: 12px;
 }
@@ -273,10 +285,94 @@ p {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* 游戏模式选择样式 */
+.game-mode-selection {
+    margin: 20px 0;
+    width: 100%;
+    max-width: 500px;
+}
+
+.game-mode-selection h3 {
+    margin-bottom: 15px;
+    color: #FFD700;
+    font-size: 1.2em;
+}
+
+.mode-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mode-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 15px 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    text-align: center;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.mode-btn.selected {
+    background: rgba(106, 90, 205, 0.3);
+    border-color: #6A5ACD;
+    box-shadow: 0 0 15px rgba(106, 90, 205, 0.5);
+}
+
+.mode-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #FFD700;
+}
+
+.mode-desc {
+    font-size: 0.9em;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .mode-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .mode-btn {
+        min-width: 250px;
+        max-width: 90%;
+    }
+    
+    .mode-title {
+        font-size: 1em;
+    }
+    
+    .mode-desc {
+        font-size: 0.85em;
+    }
+}
+
+
+
 /* 隐藏滚动条 */
 html, body {
     overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
 }

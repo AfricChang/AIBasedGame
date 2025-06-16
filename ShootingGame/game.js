@@ -12,6 +12,10 @@ class ShootingGame {
         
         // 游戏状态
         this.gameState = 'menu'; // menu, playing, paused, gameOver
+        this.gameMode = 'endless'; // endless, level
+        this.currentLevel = 1;
+        this.levelProgress = 0;
+        this.levelTarget = 1000; // 每关需要的分数
         this.score = 0;
         this.health = 100;
         this.maxHealth = 100;
@@ -150,8 +154,14 @@ class ShootingGame {
      * 设置UI事件
      */
     setupUI() {
-        document.getElementById('startBtn').addEventListener('click', () => {
+        // 游戏模式选择
+        document.getElementById('endlessModeBtn').addEventListener('click', () => {
+            this.selectGameMode('endless');
             this.startGame();
+        });
+        
+        document.getElementById('levelModeBtn').addEventListener('click', () => {
+            alert('关卡模式正在开发中，敬请期待！');
         });
         
         document.getElementById('pauseBtn').addEventListener('click', () => {
@@ -195,6 +205,33 @@ class ShootingGame {
     }
     
     /**
+     * 选择游戏模式
+     */
+    selectGameMode(mode) {
+        this.gameMode = mode;
+        
+        // 更新按钮状态
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        if (mode === 'endless') {
+            document.getElementById('endlessModeBtn').classList.add('selected');
+        } else {
+            document.getElementById('levelModeBtn').classList.add('selected');
+        }
+    }
+    
+    /**
+     * 检查关卡进度
+     */
+    checkLevelProgress() {
+        // 关卡模式暂未实现
+    }
+    
+
+    
+    /**
      * 开始游戏
      */
     startGame() {
@@ -203,6 +240,8 @@ class ShootingGame {
         this.health = this.maxHealth;
         this.bulletCount = 1;
         this.bulletSpeedMultiplier = 1; // 重置弹道速度倍数
+        
+
         
         // 重置僚机系统
         this.wingmen = [];
@@ -313,6 +352,13 @@ class ShootingGame {
         } else {
             healthBar.style.background = 'linear-gradient(90deg, #ff4444, #ff6666)';
         }
+        
+        // 更新游戏模式信息
+        const gameModeInfo = document.getElementById('gameModeInfo');
+        const levelInfo = document.getElementById('levelInfo');
+        
+        gameModeInfo.textContent = '模式: 无尽';
+        levelInfo.style.display = 'none';
     }
     
     /**
@@ -350,21 +396,23 @@ class ShootingGame {
      */
     spawnEnemy() {
         const x = Math.random() * (this.canvas.width - 60);
-        const speed = 2 + Math.random() * 3 + (this.score / 1000);
+        let speed = 2 + Math.random() * 3;
         
-        // 根据分数决定敌机类型概率
-        const scoreLevel = Math.floor(this.score / 500);
+        // 根据分数调整难度
+        speed += (this.score / 1000);
+        const difficultyLevel = Math.floor(this.score / 500);
+        
         const rand = Math.random();
         let enemyType = 'scout';
         
-        if (scoreLevel >= 4 && rand < 0.05) {
-            enemyType = 'boss'; // 5% Boss机（高分时）
-        } else if (scoreLevel >= 3 && rand < 0.15) {
-            enemyType = 'gunship'; // 10% 炮艇（中高分时）
-        } else if (scoreLevel >= 2 && rand < 0.35) {
-            enemyType = 'bomber'; // 20% 轰炸机（中分时）
-        } else if (scoreLevel >= 1 && rand < 0.60) {
-            enemyType = 'fighter'; // 25% 战斗机（低分时）
+        if (difficultyLevel >= 4 && rand < 0.05) {
+            enemyType = 'boss'; // 5% Boss机（高难度时）
+        } else if (difficultyLevel >= 3 && rand < 0.15) {
+            enemyType = 'gunship'; // 10% 炮艇（中高难度时）
+        } else if (difficultyLevel >= 2 && rand < 0.35) {
+            enemyType = 'bomber'; // 20% 轰炸机（中难度时）
+        } else if (difficultyLevel >= 1 && rand < 0.60) {
+            enemyType = 'fighter'; // 25% 战斗机（低难度时）
         } else {
             enemyType = 'scout'; // 40% 侦察机（默认）
         }
@@ -418,7 +466,9 @@ class ShootingGame {
         
         // 生成敌人
         this.enemySpawnTimer += deltaTime;
-        if (this.enemySpawnTimer > 1000 - (this.score / 10)) {
+        const spawnInterval = Math.max(300, 1000 - (this.score / 10));
+        
+        if (this.enemySpawnTimer > spawnInterval) {
             this.spawnEnemy();
             this.enemySpawnTimer = 0;
         }
@@ -674,6 +724,7 @@ class ShootingGame {
                                 case 'boss': scoreBonus = 100; break;
                             }
                             this.score += scoreBonus;
+                            this.checkLevelProgress(); // 检查关卡进度
                             this.enemies.splice(j, 1);
                             // 播放爆炸音效
                             this.audioManager.playExplosion();
