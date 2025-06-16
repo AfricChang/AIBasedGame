@@ -107,6 +107,17 @@ body {
     font-weight: bold;
 }
 
+.health-packs-info {
+    color: #FF69B4;
+    font-weight: bold;
+}
+
+.auto-heal-info {
+    color: #00FF7F;
+    font-weight: bold;
+    font-size: 12px;
+}
+
 .pause-btn, .sound-btn {
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -199,7 +210,7 @@ p {
     font-size: 14px;
 }
 
-/* ????? */
+/* 移动端适配 */
 @media (max-width: 768px) {
     .game-header {
         font-size: 12px;
@@ -252,7 +263,7 @@ p {
     }
 }
 
-/* ??????? */
+/* 防止选中和缩放 */
 .game-container {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -262,7 +273,7 @@ p {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* ????? */
+/* 隐藏滚动条 */
 html, body {
     overflow: hidden;
     position: fixed;

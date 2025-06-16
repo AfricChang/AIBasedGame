@@ -32,6 +32,16 @@ class ShootingGame {
         this.missileInterval = 3000; // 导弹发射间隔（3秒）
         this.currentMissileIndex = 0; // 当前发射的导弹索引（用于交替发射）
         
+        // 血量包系统
+        this.healthPacksCollected = 0; // 收集的血量包数量
+        this.autoHealUnlocked = false; // 是否解锁自动恢复血量
+        this.autoHealTimer = 0; // 自动恢复血量计时器
+        this.autoHealInterval = 5000; // 自动恢复间隔（5秒）
+        this.autoHealPercent = 0.1; // 自动恢复百分比（10%）
+        this.shield = false; // 保护罩状态
+        this.shieldTimer = 0; // 保护罩计时器
+        this.shieldDuration = 5000; // 保护罩持续时间（5秒）
+        
         // 游戏对象数组
         this.player = null;
         this.bullets = [];
@@ -203,6 +213,13 @@ class ShootingGame {
         this.missileTimer = 0;
         this.currentMissileIndex = 0; // 重置导弹发射索引
         
+        // 重置血量包系统
+        this.healthPacksCollected = 0;
+        this.autoHealUnlocked = false;
+        this.autoHealTimer = 0;
+        this.shield = false;
+        this.shieldTimer = 0;
+        
         // 清空游戏对象
         this.bullets = [];
         this.enemies = [];
@@ -275,6 +292,15 @@ class ShootingGame {
         document.getElementById('bulletCount').textContent = this.bulletCount;
         document.getElementById('totalBulletCount').textContent = this.totalBulletPowerUps;
         document.getElementById('missileCount').textContent = this.unlockedMissiles;
+        document.getElementById('healthPackCount').textContent = this.healthPacksCollected;
+        
+        // 显示或隐藏自动恢复状态
+        const autoHealStatus = document.getElementById('autoHealStatus');
+        if (this.autoHealUnlocked) {
+            autoHealStatus.style.display = 'block';
+        } else {
+            autoHealStatus.style.display = 'none';
+        }
         
         const healthBar = document.getElementById('healthBar');
         const healthPercent = (this.health / this.maxHealth) * 100;
@@ -428,6 +454,34 @@ class ShootingGame {
             if (this.missileTimer >= interval) {
                 this.launchMissile();
                 this.missileTimer = 0;
+            }
+        }
+        
+        // 更新自动恢复血量计时器
+        if (this.autoHealUnlocked && this.health < this.maxHealth) {
+            this.autoHealTimer += deltaTime;
+            if (this.autoHealTimer >= this.autoHealInterval) {
+                // 按百分比恢复血量
+                const healAmount = Math.ceil(this.maxHealth * this.autoHealPercent);
+                this.health = Math.min(this.maxHealth, this.health + healAmount);
+                this.autoHealTimer = 0;
+                // 创建恢复血量的特效
+                for (let i = 0; i < 3; i++) {
+                    this.particles.push(new Particle(
+                        this.player.x + (Math.random() - 0.5) * 40,
+                        this.player.y + (Math.random() - 0.5) * 40,
+                        '#00FF88'
+                    ));
+                }
+            }
+        }
+        
+        // 更新保护罩计时器
+        if (this.shield) {
+            this.shieldTimer += deltaTime;
+            if (this.shieldTimer >= this.shieldDuration) {
+                this.shield = false;
+                this.shieldTimer = 0;
             }
         }
         
@@ -639,13 +693,18 @@ class ShootingGame {
                 this.createParticles(this.player.x, this.player.y, '#ff0000', 6);
                 this.bullets.splice(i, 1);
                 
-                if (this.bulletCount > 1) {
-                    this.bulletCount--;
+                if (!this.shield) { // 保护罩状态下免疫伤害
+                    if (this.bulletCount > 1) {
+                        this.bulletCount--;
+                    } else {
+                        this.health -= 15;
+                    }
+                    // 播放玩家受伤音效
+                    this.audioManager.playPlayerHurt();
                 } else {
-                    this.health -= 15;
+                    // 保护罩吸收伤害的特效
+                    this.createParticles(this.player.x, this.player.y, '#00FFFF', 8);
                 }
-                // 播放玩家受伤音效
-                this.audioManager.playPlayerHurt();
             }
         }
         
@@ -683,13 +742,18 @@ class ShootingGame {
                 
                 this.enemies.splice(i, 1);
                 
-                if (this.bulletCount > 1) {
-                    this.bulletCount--;
+                if (!this.shield) { // 保护罩状态下免疫伤害
+                    if (this.bulletCount > 1) {
+                        this.bulletCount--;
+                    } else {
+                        this.health -= damage;
+                    }
+                    // 播放玩家受伤音效
+                    this.audioManager.playPlayerHurt();
                 } else {
-                    this.health -= damage;
+                    // 保护罩吸收伤害的特效
+                    this.createParticles(this.player.x, this.player.y, '#00FFFF', 8);
                 }
-                // 播放玩家受伤音效
-                this.audioManager.playPlayerHurt();
             }
         }
         
@@ -727,7 +791,38 @@ class ShootingGame {
                         }
                     }
                 } else if (powerUp.type === 'health') {
-                    this.health = Math.min(this.maxHealth, this.health + 30);
+                    this.healthPacksCollected++; // 增加血量包收集计数
+                    
+                    // 检查是否解锁自动恢复血量功能
+                    if (this.healthPacksCollected >= 10 && !this.autoHealUnlocked) {
+                        this.autoHealUnlocked = true;
+                        // 创建解锁自动恢复的特效
+                        for (let i = 0; i < 15; i++) {
+                            this.particles.push(new Particle(
+                                this.canvas.width / 2 + (Math.random() - 0.5) * 100,
+                                this.canvas.height / 2 + (Math.random() - 0.5) * 100,
+                                '#00FF00'
+                            ));
+                        }
+                    }
+                    
+                    // 如果满血状态，激活保护罩
+                    if (this.health >= this.maxHealth) {
+                        this.shield = true;
+                        this.shieldTimer = 0;
+                        // 创建保护罩激活特效
+                        for (let i = 0; i < 10; i++) {
+                            this.particles.push(new Particle(
+                                this.player.x + (Math.random() - 0.5) * 60,
+                                this.player.y + (Math.random() - 0.5) * 60,
+                                '#00FFFF'
+                            ));
+                        }
+                    } else {
+                        // 不是满血状态，正常恢复血量
+                        this.health = Math.min(this.maxHealth, this.health + 30);
+                    }
+                    
                     this.consecutiveBulletPowerUps = 0; // 获得生命道具时重置弹道道具计数
                 }
                 
@@ -763,13 +858,18 @@ class ShootingGame {
                 this.obstacles.splice(i, 1);
                 
                 // 障碍物造成较大伤害，强制玩家躲避
-                if (this.bulletCount > 1) {
-                    this.bulletCount--;
+                if (!this.shield) { // 保护罩状态下免疫伤害
+                    if (this.bulletCount > 1) {
+                        this.bulletCount--;
+                    } else {
+                        this.health -= 25; // 比普通敌机伤害稍高
+                    }
+                    // 播放玩家受伤音效
+                    this.audioManager.playPlayerHurt();
                 } else {
-                    this.health -= 25; // 比普通敌机伤害稍高
+                    // 保护罩吸收伤害的特效
+                    this.createParticles(this.player.x, this.player.y, '#00FFFF', 8);
                 }
-                // 播放玩家受伤音效
-                this.audioManager.playPlayerHurt();
             }
         }
     }
@@ -911,7 +1011,8 @@ class ShootingGame {
      */
     render() {
         // 清空画布
-        this.ctx.fillStyle = 'rgba(0, 4, 40, 0.1)';
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = 'rgba(0, 4, 40, 1)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // 绘制星空背景
@@ -920,6 +1021,24 @@ class ShootingGame {
         // 绘制游戏对象
         if (this.player) {
             this.player.draw(this.ctx);
+            
+            // 绘制保护罩
+            if (this.shield) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.strokeStyle = '#00FFFF';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, 35, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // 添加闪烁效果
+                const time = Date.now() * 0.01;
+                this.ctx.globalAlpha = 0.3 + Math.sin(time) * 0.2;
+                this.ctx.fillStyle = '#00FFFF';
+                this.ctx.fill();
+                this.ctx.restore();
+            }
         }
         
         this.wingmen.forEach(wingman => wingman.draw(this.ctx));
@@ -1194,16 +1313,17 @@ class Enemy {
         
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(this.x, this.y - this.height/2);
-        ctx.lineTo(this.x - this.width/2, this.y + this.height/2);
-        ctx.lineTo(this.x + this.width/2, this.y + this.height/2);
+        // 机头朝下：顶点在下方
+        ctx.moveTo(this.x, this.y + this.height/2);
+        ctx.lineTo(this.x - this.width/2, this.y - this.height/2);
+        ctx.lineTo(this.x + this.width/2, this.y - this.height/2);
         ctx.closePath();
         ctx.fill();
         
-        // 引擎光（减小尾焰效果）
+        // 引擎光（位置调整到机尾上方）
         ctx.fillStyle = '#88ffaa';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.height/3, 2, 3, 0, 0, 2 * Math.PI);
+        ctx.ellipse(this.x, this.y - this.height/3, 2, 3, 0, 0, 2 * Math.PI);
         ctx.fill();
     }
     
