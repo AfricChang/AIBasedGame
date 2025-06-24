@@ -467,7 +467,7 @@
                         tile.dataset.col = j;
                         tile.dataset.fruit = fruit;
                         
-                        tile.addEventListener('click', () => handleTileClick(i, j, fruit, tile));
+                        tile.addEventListener('click', () => handleTileClick(i, j, tile));
                         
                         gameGridElement.appendChild(tile);
                         gameGrid.push({
@@ -501,9 +501,14 @@
             }
             
             // 处理方块点击
-            function handleTileClick(row, col, fruit, element) {
-                // 如果游戏未激活、正在处理或方块已匹配，则忽略点击
-                if (!gameActive || isProcessing || element.classList.contains('matched')) return;
+            function handleTileClick(row, col, element) {
+                const currentTileData = gameGrid.find(t => t.row === row && t.col === col);
+                if (!currentTileData || currentTileData.matched) return;
+
+                const fruit = currentTileData.fruit;
+
+                // 如果游戏未激活或正在处理，则忽略点击
+                if (!gameActive || isProcessing) return;
                 
                 // 如果之前没有选中的方块
                 if (!selectedTile) {
