@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连连看游戏 - 优化版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 700px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        
+        .stat-item {
+            text-align: center;
+            font-size: 1.1rem;
+            min-width: 100px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.8rem;
+            color: #FFEB3B;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+        }
+        
+        .game-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 700px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tile {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tile:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 1);
+        }
+        
+        .tile.selected {
+            background: #FFEB3B;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 235, 59, 0.8);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px rgba(255, 235, 59, 0.8); }
+            50% { box-shadow: 0 0 20px rgba(255, 235, 59, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 235, 59, 0.8); }
+        }
+        
+        .tile.matched {
+            visibility: hidden;
+            opacity: 0;
+            transform: scale(0.1);
+            transition: all 0.5s ease;
+        }
+        
+        /* 折线连接容器 */
+        #connection-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 700px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(255, 94, 98, 0.4);
+            min-width: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 94, 98, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s;
+        }
+        
+        button:hover::after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 700px;
+            font-size: 1rem;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #FFEB3B;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.3rem;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .instructions li::before {
+            content: '•';
+            color: #FFEB3B;
+            position: absolute;
+            left: 0;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .tile {
+                font-size: 1.6rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stat-item {
+                font-size: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.4rem;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 1rem;
+                min-width: 120px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tile {
+                font-size: 1.2rem;
+            }
+            
+            .grid {
+                gap: 3px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+        
+        .win-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        .win-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .win-content {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            transform: scale(0.8);
+            animation: popIn 0.5s forwards;
+        }
+        
+        @keyframes popIn {
+            to { transform: scale(1); }
+        }
+        
+        .win-content h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
+        
+        .win-content p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        
+        .win-content button {
+            background: linear-gradient(to right, #00c9ff, #92fe9d);
+            font-size: 1.3rem;
+            padding: 15px 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>水果连连看（优化版）</h1>
+        <div class="stats-container">
+            <div class="stat-item">
+                <div>得分</div>
+                <div id="score" class="stat-value">0</div>
+            </div>
+            <div class="stat-item">
+                <div>剩余时间</div>
+                <div id="timer" class="stat-value">120</div>
+            </div>
+            <div class="stat-item">
+                <div>剩余方块</div>
+                <div id="tiles-left" class="stat-value">100</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <!-- 用于绘制折线的Canvas -->
+        <canvas id="connection-canvas"></canvas>
+        <div class="grid" id="game-grid"></div>
+    </div>
+    
+    <div class="controls">
+        <button id="reset-btn">重新开始</button>
+        <button id="hint-btn">提示</button>
+        <button id="shuffle-btn">洗牌</button>
+    </div>
+    
+    <div class="instructions">
+        <h2>游戏说明</h2>
+        <ul>
+            <li>选择两个相同的水果图标，它们可以用不超过两个拐点的直线连接</li>
+            <li>成功连接两个相同水果会获得10分</li>
+            <li>游戏总时间120秒，时间结束游戏终止</li>
+            <li>消除所有水果获得胜利</li>
+            <li>使用"提示"按钮可以高亮显示一对可匹配的水果（消耗5分）</li>
+            <li>使用"洗牌"按钮可以重新排列剩余方块（消耗3分）</li>
+            <li><strong>新功能</strong>：连接时会显示带有最多两个拐点的折线路径</li>
+        </ul>
+    </div>
+    
+    <div class="win-message" id="win-message">
+        <div class="win-content">
+            <h2>恭喜获胜！</h2>
+            <p>最终得分: <span id="final-score">0</span></p>
+            <button id="play-again-btn">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 游戏配置
+            const GRID_SIZE = 10;
+            const FRUITS = ['🍎', '🍌', '🍊', '🍓', '🍇', '🍉', '🥭', '🍑'];
+            const INITIAL_TIME = 120; // 秒
+            const SCORE_PER_MATCH = 10;
+            const HINT_COST = 5;
+            const SHUFFLE_COST = 3;
+            
+            // 游戏状态
+            let gameGrid = [];
+            let selectedTile = null;
+            let score = 0;
+            let timeLeft = INITIAL_TIME;
+            let tilesLeft = GRID_SIZE * GRID_SIZE;
+            let gameActive = true;
+            let timer;
+            let isProcessing = false;
+            
+            // DOM元素
+            const gameGridElement = document.getElementById('game-grid');
+            const scoreElement = document.getElementById('score');
+            const timerElement = document.getElementById('timer');
+            const tilesLeftElement = document.getElementById('tiles-left');
+            const resetButton = document.getElementById('reset-btn');
+            const hintButton = document.getElementById('hint-btn');
+            const shuffleButton = document.getElementById('shuffle-btn');
+            const canvas = document.getElementById('connection-canvas');
+            const ctx = canvas.getContext('2d');
+            const winMessage = document.getElementById('win-message');
+            const finalScoreElement = document.getElementById('final-score');
+            const playAgainButton = document.getElementById('play-again-btn');
+            
+            // 初始化游戏
+            function initGame() {
+                // 重置状态
+                gameGrid = [];
+                selectedTile = null;
+                score = 0;
+                timeLeft = INITIAL_TIME;
+                tilesLeft = GRID_SIZE * GRID_SIZE;
+                gameActive = true;
+                isProcessing = false;
+                
+                // 清除计时器
+                if (timer) clearInterval(timer);
+                
+                // 更新UI
+                scoreElement.textContent = score;
+                timerElement.textContent = timeLeft;
+                tilesLeftElement.textContent = tilesLeft;
+                gameGridElement.innerHTML = '';
+                winMessage.classList.remove('show');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 调整Canvas大小
+                resizeCanvas();
+                
+                // 创建水果对
+                let fruits = [];
+                const totalPairs = (GRID_SIZE * GRID_SIZE) / 2;
+                for (let i = 0; i < totalPairs; i++) {
+                    const fruit = FRUITS[Math.floor(Math.random() * FRUITS.length)];
+                    fruits.push(fruit, fruit);
+                }
+                
+                // 随机打乱水果（使用Fisher-Yates洗牌算法）
+                shuffleArray(fruits);
+                
+                // 创建网格
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        const index = i * GRID_SIZE + j;
+                        const fruit = fruits[index];
+                        
+                        const tile = document.createElement('div');
+                        tile.className = 'tile';
+                        tile.textContent = fruit;
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        tile.dataset.fruit = fruit;
+                        
+                        tile.addEventListener('click', () => handleTileClick(i, j, fruit, tile));
+                        
+                        gameGridElement.appendChild(tile);
+                        gameGrid.push({
+                            row: i,
+                            col: j,
+                            fruit: fruit,
+                            element: tile,
+                            matched: false
+                        });
+                    }
+                }
+                
+                // 开始计时
+                timer = setInterval(updateTimer, 1000);
+            }
+            
+            // Fisher-Yates洗牌算法（确保真随机性）
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+            
+            // 调整Canvas大小
+            function resizeCanvas() {
+                const rect = gameGridElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // 处理方块点击
+            function handleTileClick(row, col, fruit, element) {
+                // 如果游戏未激活、正在处理或方块已匹配，则忽略点击
+                if (!gameActive || isProcessing || element.classList.contains('matched')) return;
+                
+                // 如果之前没有选中的方块
+                if (!selectedTile) {
+                    selectedTile = {row, col, fruit, element};
+                    element.classList.add('selected');
+                    return;
+                }
+                
+                // 如果点击了同一个方块
+                if (selectedTile.row === row && selectedTile.col === col) {
+                    selectedTile.element.classList.remove('selected');
+                    selectedTile = null;
+                    return;
+                }
+                
+                // 如果点击了不同的水果
+                if (selectedTile.fruit !== fruit) {
+                    selectedTile.element.classList.remove('selected');
+                    selectedTile = {row, col, fruit, element};
+                    element.classList.add('selected');
+                    return;
+                }
+                
+                // 检查是否可以连接
+                const connection = findConnectionPath(selectedTile.row, selectedTile.col, row, col);
+                if (connection && connection.path.length > 0) {
+                    isProcessing = true; // 锁定处理状态
+                    
+                    // 增加分数
+                    score += SCORE_PER_MATCH;
+                    scoreElement.textContent = score;
+                    
+                    // 减少剩余方块计数
+                    tilesLeft -= 2;
+                    tilesLeftElement.textContent = tilesLeft;
+                    
+                    // 标记为已匹配
+                    const tile1 = gameGrid.find(t => t.row === selectedTile.row && t.col === selectedTile.col);
+                    const tile2 = gameGrid.find(t => t.row === row && t.col === col);
+                    
+                    tile1.matched = true;
+                    tile2.matched = true;
+                    
+                    // 添加匹配动画
+                    tile1.element.classList.add('matched');
+                    tile2.element.classList.add('matched');
+                    
+                    // 绘制连接线
+                    drawConnectionLine(connection.path);
+                    
+                    // 检查游戏是否胜利
+                    if (tilesLeft === 0) {
+                        setTimeout(() => {
+                            gameActive = false;
+                            clearInterval(timer);
+                            showWinMessage();
+                        }, 1000);
+                    }
+                    
+                    // 重置选择并解除锁定
+                    setTimeout(() => {
+                        selectedTile = null;
+                        isProcessing = false;
+                        // 清除连接线
+                        setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 500);
+                    }, 1000);
+                } else {
+                    // 无法连接
+                    selectedTile.element.classList.remove('selected');
+                    selectedTile = {row, col, fruit, element};
+                    element.classList.add('selected');
+                }
+            }
+            
+            // 查找连接路径（返回路径点）
+            function findConnectionPath(row1, col1, row2, col2) {
+                // 相同位置不能连接
+                if (row1 === row2 && col1 === col2) return null;
+                
+                // 检查直接水平连接
+                if (row1 === row2 && checkHorizontal(row1, col1, col2)) {
+                    return {
+                        connected: true,
+                        path: [
+                            {row: row1, col: col1},
+                            {row: row2, col: col2}
+                        ]
+                    };
+                }
+                
+                // 检查直接垂直连接
+                if (col1 === col2 && checkVertical(col1, row1, row2)) {
+                    return {
+                        connected: true,
+                        path: [
+                            {row: row1, col: col1},
+                            {row: row2, col: col2}
+                        ]
+                    };
+                }
+                
+                // 检查一个拐点的连接（L形）
+                const oneCorner = checkOneCorner(row1, col1, row2, col2);
+                if (oneCorner.connected) {
+                    return {
+                        connected: true,
+                        path: [
+                            {row: row1, col: col1},
+                            {row: oneCorner.cornerRow, col: oneCorner.cornerCol},
+                            {row: row2, col: col2}
+                        ]
+                    };
+                }
+                
+                // 检查两个拐点的连接（三段折线）
+                const twoCorners = checkTwoCorners(row1, col1, row2, col2);
+                if (twoCorners.connected) {
+                    return {
+                        connected: true,
+                        path: [
+                            {row: row1, col: col1},
+                            {row: twoCorners.corner1Row, col: twoCorners.corner1Col},
+                            {row: twoCorners.corner2Row, col: twoCorners.corner2Col},
+                            {row: row2, col: col2}
+                        ]
+                    };
+                }
+                
+                return null;
+            }
+            
+            // 检查水平方向是否畅通
+            function checkHorizontal(row, col1, col2) {
+                const start = Math.min(col1, col2);
+                const end = Math.max(col1, col2);
+                
+                for (let c = start + 1; c < end; c++) {
+                    if (!isTileEmpty(row, c)) return false;
+                }
+                
+                return true;
+            }
+            
+            // 检查垂直方向是否畅通
+            function checkVertical(col, row1, row2) {
+                const start = Math.min(row1, row2);
+                const end = Math.max(row1, row2);
+                
+                for (let r = start + 1; r < end; r++) {
+                    if (!isTileEmpty(r, col)) return false;
+                }
+                
+                return true;
+            }
+            
+            // 检查一个拐点的连接
+            function checkOneCorner(row1, col1, row2, col2) {
+                // 拐点1：水平然后垂直
+                if (isTileEmpty(row1, col2) && 
+                    checkHorizontal(row1, col1, col2) && 
+                    checkVertical(col2, row1, row2)) {
+                    return {
+                        connected: true,
+                        cornerRow: row1,
+                        cornerCol: col2
+                    };
+                }
+                
+                // 拐点2：垂直然后水平
+                if (isTileEmpty(row2, col1) && 
+                    checkVertical(col1, row1, row2) && 
+                    checkHorizontal(row2, col1, col2)) {
+                    return {
+                        connected: true,
+                        cornerRow: row2,
+                        cornerCol: col1
+                    };
+                }
+                
+                return {connected: false};
+            }
+            
+            // 检查两个拐点的连接（支持边界情况）
+            function checkTwoCorners(row1, col1, row2, col2) {
+                // 尝试所有可能的中间点（包括边界外）
+                for (let r = -1; r <= GRID_SIZE; r++) {
+                    // 检查垂直-水平-垂直路径
+                    if (isTileEmpty(r, col1) && 
+                        isTileEmpty(r, col2) && 
+                        checkVertical(col1, row1, r) && 
+                        checkHorizontal(r, col1, col2) && 
+                        checkVertical(col2, r, row2)) {
+                        return {
+                            connected: true,
+                            corner1Row: r,
+                            corner1Col: col1,
+                            corner2Row: r,
+                            corner2Col: col2
+                        };
+                    }
+                }
+                
+                // 尝试所有可能的中间列（包括边界外）
+                for (let c = -1; c <= GRID_SIZE; c++) {
+                    // 检查水平-垂直-水平路径
+                    if (isTileEmpty(row1, c) && 
+                        isTileEmpty(row2, c) && 
+                        checkHorizontal(row1, col1, c) && 
+                        checkVertical(c, row1, row2) && 
+                        checkHorizontal(row2, c, col2)) {
+                        return {
+                            connected: true,
+                            corner1Row: row1,
+                            corner1Col: c,
+                            corner2Row: row2,
+                            corner2Col: c
+                        };
+                    }
+                }
+                
+                return {connected: false};
+            }
+            
+            // 检查指定位置是否为空（无方块或已被消除）
+            function isTileEmpty(row, col) {
+                // 边界外的点始终可连接
+                if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) {
+                    return true;
+                }
+                
+                const tile = gameGrid.find(t => t.row === row && t.col === col);
+                return !tile || tile.matched;
+            }
+            
+            // 绘制连接线（带最多两个拐点的折线）
+            function drawConnectionLine(pathPoints) {
+                if (!pathPoints || pathPoints.length < 2) return;
+                
+                // 获取网格尺寸信息
+                const gridRect = gameGridElement.getBoundingClientRect();
+                const tileWidth = gridRect.width / GRID_SIZE;
+                const tileHeight = gridRect.height / GRID_SIZE;
+                
+                // 设置线条样式
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.beginPath();
+                ctx.strokeStyle = '#FFEB3B';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // 转换为Canvas坐标（处理边界外点）
+                const canvasPoints = pathPoints.map(point => {
+                    let x, y;
+                    
+                    // 处理边界外的点
+                    if (point.col < 0) x = -tileWidth/2;
+                    else if (point.col >= GRID_SIZE) x = gridRect.width + tileWidth/2;
+                    else x = point.col * tileWidth + tileWidth / 2;
+                    
+                    if (point.row < 0) y = -tileHeight/2;
+                    else if (point.row >= GRID_SIZE) y = gridRect.height + tileHeight/2;
+                    else y = point.row * tileHeight + tileHeight / 2;
+                    
+                    return {x, y};
+                });
+                
+                // 绘制折线
+                ctx.moveTo(canvasPoints[0].x, canvasPoints[0].y);
+                for (let i = 1; i < canvasPoints.length; i++) {
+                    ctx.lineTo(canvasPoints[i].x, canvasPoints[i].y);
+                }
+                
+                // 添加发光效果
+                ctx.shadowColor = 'rgba(255, 235, 59, 0.8)';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                
+                // 绘制起点和终点圆点
+                drawEndPoint(canvasPoints[0].x, canvasPoints[0].y);
+                drawEndPoint(canvasPoints[canvasPoints.length - 1].x, 
+                            canvasPoints[canvasPoints.length - 1].y);
+                
+                // 重置阴影效果
+                ctx.shadowBlur = 0;
+            }
+            
+            // 绘制端点
+            function drawEndPoint(x, y) {
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#FF5722';
+                ctx.fill();
+                
+                // 添加内发光效果
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFEB3B';
+                ctx.fill();
+            }
+            
+            // 更新计时器
+            function updateTimer() {
+                if (!gameActive) return;
+                
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    gameActive = false;
+                    showGameOver();
+                }
+            }
+            
+            // 提示功能
+            function findHint() {
+                // 如果分数不足，无法使用提示
+                if (score < HINT_COST) {
+                    alert(`提示需要 ${HINT_COST} 分！`);
+                    return;
+                }
+                
+                // 尝试寻找可匹配的对
+                const unmatchedTiles = gameGrid.filter(tile => !tile.matched);
+                
+                for (let i = 0; i < unmatchedTiles.length; i++) {
+                    for (let j = i + 1; j < unmatchedTiles.length; j++) {
+                        const tile1 = unmatchedTiles[i];
+                        const tile2 = unmatchedTiles[j];
+                        
+                        if (tile1.fruit === tile2.fruit && 
+                            findConnectionPath(tile1.row, tile1.col, tile2.row, tile2.col)) {
+                            
+                            // 高亮显示这对方块
+                            tile1.element.classList.add('selected');
+                            tile2.element.classList.add('selected');
+                            
+                            // 扣除提示分数
+                            score -= HINT_COST;
+                            scoreElement.textContent = score;
+                            
+                            // 3秒后取消高亮
+                            setTimeout(() => {
+                                tile1.element.classList.remove('selected');
+                                tile2.element.classList.remove('selected');
+                            }, 3000);
+                            
+                            return;
+                        }
+                    }
+                }
+                
+                alert('没有找到可匹配的对！');
+            }
+            
+            // 洗牌功能（已修复洗牌后无法连接的问题）
+            function shuffleTiles() {
+                if (score < SHUFFLE_COST) {
+                    alert(`洗牌需要 ${SHUFFLE_COST} 分！`);
+                    return;
+                }
+                
+                // 扣除洗牌分数
+                score -= SHUFFLE_COST;
+                scoreElement.textContent = score;
+                
+                // 获取所有未匹配的方块
+                const unmatchedTiles = gameGrid.filter(tile => !tile.matched);
+                const fruits = unmatchedTiles.map(tile => tile.fruit);
+                
+                // 随机打乱水果顺序（使用Fisher-Yates算法）
+                shuffleArray(fruits);
+                
+                // 重新分配水果
+                unmatchedTiles.forEach((tile, index) => {
+                    tile.fruit = fruits[index];
+                    tile.element.textContent = fruits[index];
+                    // 确保匹配状态重置
+                    tile.matched = false;
+                    tile.element.classList.remove('matched');
+                });
+                
+                // 取消当前选择
+                if (selectedTile) {
+                    selectedTile.element.classList.remove('selected');
+                    selectedTile = null;
+                }
+            }
+            
+            // 显示获胜消息
+            function showWinMessage() {
+                finalScoreElement.textContent = score;
+                winMessage.classList.add('show');
+            }
+            
+            // 显示游戏结束消息
+            function showGameOver() {
+                alert(`时间到！最终得分: ${score}`);
+            }
+            
+            // 事件监听
+            resetButton.addEventListener('click', initGame);
+            hintButton.addEventListener('click', findHint);
+            shuffleButton.addEventListener('click', shuffleTiles);
+            playAgainButton.addEventListener('click', initGame);
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 开始游戏
+            initGame();
+        });
+    </script>
+</body>
+</html>
