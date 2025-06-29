@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打飞机游戏</title>
+    <title>&#25171;&#39134;&#26426;&#28216;&#25103;</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,10 +11,10 @@
         <!-- 游戏界面 -->
         <div id="gameScreen" class="screen active">
             <div class="game-header">
-                <div class="score">分数: <span id="score">0</span></div>
-                <div class="high-score">最高分: <span id="currentHighScore">0</span></div>
+                <div class="score">&#20998;&#25968;: <span id="score">0</span></div>
+                <div class="high-score">&#26368;&#39640;&#20998;: <span id="currentHighScore">0</span></div>
                 <div class="health-bar">
-                    <div class="health-label">生命值:</div>
+                    <div class="health-label">&#29983;&#21629;&#20540;:</div>
                     <div class="health-container">
                         <div id="healthBar" class="health-fill"></div>
                     </div>
@@ -23,54 +23,55 @@
                 <div class="total-bullets-info">📦 <span id="totalBulletCount">0</span></div>
                 <div class="missiles-info">🚁 <span id="missileCount">0</span>/2</div>
                 <div class="health-packs-info">❤️ <span id="healthPackCount">0</span></div>
-                <div class="auto-heal-info" id="autoHealStatus" style="display: none;">💚 自动恢复</div>
-                <div class="game-mode-info" id="gameModeInfo">模式: 无尽</div>
-                <div class="level-info" id="levelInfo" style="display: none;">关卡: <span id="currentLevel">1</span></div>
-                <button id="soundBtn" class="sound-btn">🔊</button>
-                <button id="pauseBtn" class="pause-btn">暂停</button>
+                <div class="auto-heal-info" id="autoHealStatus" style="display: none;">💚 &#33258;&#21160;&#24605;&#22797;</div>
+                <div class="game-mode-info" id="gameModeInfo">&#27169;&#24335;: &#26080;&#23613;</div>
+                <div class="level-info" id="levelInfo" style="display: none;">&#20851;&#21345;: <span id="currentLevel">1</span></div>
+                <button id="soundBtn" class="sound-btn">&#128266;</button>
+                <button id="pauseBtn" class="pause-btn">&#26242;&#20572;</button>
             </div>
             <canvas id="gameCanvas"></canvas>
         </div>
 
         <!-- 开始界面 -->
         <div id="startScreen" class="screen">
-            <h1>打飞机游戏</h1>
-            <p>移动飞机躲避敌人，收集道具增强火力！</p>
+            <h1>&#25171;&#39134;&#26426;&#28216;&#25103;</h1>
+            <p>&#31227;&#21160;&#39134;&#26426;&#36341;&#36942;&#25924;&#20154;&#65292;&#25910;&#38598;&#36947;&#20855;&#22686;&#24378;&#28779;&#21147;&#65281;</p>
             
-            <button id="endlessModeBtn" class="game-btn">无尽模式</button>
-            <button id="levelModeBtn" class="game-btn">闯关模式</button>
-            <button id="backToMainBtn" class="game-btn" onclick="window.location.href='../index.html'">返回主菜单</button>
+            <button id="endlessModeBtn" class="game-btn">&#26080;&#23613;&#27169;&#24335;</button>
+            <button id="levelModeBtn" class="game-btn">&#38314;&#20851;&#27169;&#24335;</button>
+            <button id="backToMainBtn" class="game-btn" onclick="window.location.href='../index.html'">&#36820;&#22238;&#20027;&#33756;&#21333;</button>
             <div class="instructions">
-                <h3>游戏说明:</h3>
+                <h3>&#28216;&#25103;&#35828;&#26126;:</h3>
                 <ul>
-                    <li>触摸或鼠标移动控制飞机</li>
-                    <li>收集蓝色道具增加弹道</li>
-                    <li>收集红色道具恢复生命值</li>
-                    <li>避免撞击敌机</li>
-                    <li>点击暂停按钮可暂停游戏</li>
+                    <li>&#35302;&#25712;&#25110;&#40736;&#26631;&#31227;&#21160;&#25511;&#21046;&#39134;&#26426;</li>
+                    <li>&#25910;&#38598;&#34013;&#33394;&#36947;&#20855;&#22686;&#21152;&#24377;&#36947;</li>
+                    <li>&#25910;&#38598;&#32418;&#33394;&#36947;&#20855;&#24605;&#22797;&#29983;&#21629;&#20540;</li>
+                    <li>&#36991;&#20813;&#25269;&#20987;&#25924;&#26426;</li>
+                    <li>&#28857;&#20987;&#26242;&#20572;&#25353;&#38062;&#21487;&#26242;&#20572;&#28216;&#25103;</li>
                 </ul>
             </div>
         </div>
 
         <!-- 暂停界面 -->
         <div id="pauseScreen" class="screen">
-            <h2>游戏暂停</h2>
-            <button id="resumeBtn" class="game-btn">继续游戏</button>
-            <button id="restartBtn" class="game-btn">重新开始</button>
-            <button id="backToMenuBtn" class="game-btn">返回主菜单</button>
+            <h2>&#28216;&#25103;&#26242;&#20572;</h2>
+            <button id="resumeBtn" class="game-btn">&#32487;&#32493;&#28216;&#25103;</button>
+            <button id="restartBtn" class="game-btn">&#37325;&#26032;&#24320;&#22987;</button>
+            <button id="backToMenuBtn" class="game-btn">&#36820;&#22238;&#20027;&#33756;&#21333;</button>
         </div>
 
         <!-- 游戏结束界面 -->
         <div id="gameOverScreen" class="screen">
-            <h2>游戏结束</h2>
-            <p>最终分数: <span id="finalScore">0</span></p>
-            <p>最高分数: <span id="highScore">0</span></p>
-            <button id="playAgainBtn" class="game-btn">再玩一次</button>
-            <button id="menuBtn" class="game-btn">返回主菜单</button>
+            <h2>&#28216;&#25103;&#32467;&#26463;</h2>
+            <p>&#26368;&#32456;&#20998;&#25968;: <span id="finalScore">0</span></p>
+            <p>&#26368;&#39640;&#20998;&#25968;: <span id="highScore">0</span></p>
+            <button id="playAgainBtn" class="game-btn">&#20877;&#29609;&#19968;&#27425;</button>
+            <button id="menuBtn" class="game-btn">&#36820;&#22238;&#20027;&#33756;&#21333;</button>
         </div>
     </div>
 
     <script src="audio.js"></script>
+    <script src="assets.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
