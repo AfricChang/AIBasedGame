@@ -1,17 +1,62 @@
 <!DOCTYPE html>
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		
-		<meta id="viewport" name="viewport" content="width=540,user-scalable=no,target-densitydpi=high-dpi">
+		<meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		
 		<script data-main="js/main" src="require.js"></script>
 		<title>一个都不能死</title>
 		<link rel="stylesheet" href="../common/style.css">
 		<style type="text/css">
 			body{
-		        margin:0px;
-		        padding:0px;
-		        overflow: hidden;
-		    }
+	        margin:0px;
+	        padding:0px;
+	        overflow: hidden;
+	        background-color: #000;
+	    }
+	    
+	    .game-container {
+	        display: flex;
+	        justify-content: center;
+	        align-items: center;
+	        min-height: 100vh;
+	        padding: 10px;
+	        box-sizing: border-box;
+	    }
+	    
+	    #linkScreen {
+	        max-width: 100%;
+	        max-height: 100vh;
+	        width: auto;
+	        height: auto;
+	        display: block;
+	        border: 1px solid #333;
+	    }
+	    
+	    /* 手机端适配 */
+	    @media (max-width: 768px) {
+	        .game-container {
+	            padding: 5px;
+	        }
+	        
+	        #linkScreen {
+	            width: 100%;
+	            height: auto;
+	            max-height: calc(100vh - 60px);
+	        }
+	    }
+	    
+	    /* 超小屏幕适配 */
+	    @media (max-width: 480px) {
+	        .game-container {
+	            padding: 2px;
+	        }
+	        
+	        #linkScreen {
+	            width: 100vw;
+	            height: auto;
+	            max-height: calc(100vh - 50px);
+	        }
+	    }
 		</style>
 		<script language="javascript">
 		window.shareData = {
@@ -40,7 +85,7 @@
 			// 显示微信分享图片
 			let shareDiv = document.getElementById("share");
 			shareDiv.style.display = "block";
-			document.getElementById("logo").src = "../weChat.jpg";
+			document.getElementById("logo").src = "./weChat.jpg";
 			shareDiv.onclick = function() {
 				this.style.display = "none";
 			}
@@ -81,8 +126,8 @@
 	<script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="main" src="main.js"></script></head>
 	<body>
 		<button class="back-button" onclick="confirmExit()">←</button>
-		<div style="text-align:center;">
-			<canvas id="linkScreen" width="1366" height="621" style="width: 1366px; height: 621px;">
+		<div class="game-container">
+			<canvas id="linkScreen" width="1366" height="621">
 				很遗憾，您的浏览器不支持HTML5，请使用支持HTML5的浏览器。
 			</canvas>
 		</div>
