@@ -198,13 +198,15 @@ class AnimalReleaseGame {
         } else if (moveResult.canRelease) {
             // 可以直接释放
             this.highlightPath(moveResult.path);
-            await this.animateAnimalMovement(row, col, moveResult.path);
+            // 等待路径高亮显示完成后直接释放
+            await new Promise(resolve => setTimeout(resolve, 300));
             await this.releaseAnimal(row, col);
             this.updateScore(moveResult.path.length);
         } else {
             // 需要移动到阻挡物旁边
             this.highlightPath(moveResult.path);
-            await this.animateAnimalMovement(row, col, moveResult.path);
+            // 等待路径高亮显示完成后直接移动到最终位置
+            await new Promise(resolve => setTimeout(resolve, 300));
             await this.moveAnimalToPosition(row, col, moveResult.finalPosition);
         }
         
@@ -333,7 +335,7 @@ class AnimalReleaseGame {
         
         // 创建移动的动物副本
          const movingAnimal = animalElement.cloneNode(true);
-         movingAnimal.className = 'animal smooth-moving';
+         movingAnimal.className = 'animal';
          movingAnimal.style.position = 'fixed';
          movingAnimal.style.left = startRect.left + 'px';
          movingAnimal.style.top = startRect.top + 'px';
@@ -440,7 +442,7 @@ class AnimalReleaseGame {
             
             // 创建移动的动物副本
              const movingAnimal = animalElement.cloneNode(true);
-             movingAnimal.className = 'animal smooth-moving';
+             movingAnimal.className = 'animal';
              movingAnimal.style.position = 'fixed';
              movingAnimal.style.left = fromRect.left + 'px';
              movingAnimal.style.top = fromRect.top + 'px';
