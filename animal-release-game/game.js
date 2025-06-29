@@ -32,6 +32,10 @@ class AnimalReleaseGame {
             right: '→'
         };
         
+        // 初始化音效和粒子系统
+        this.audioManager = null;
+        this.particleSystem = null;
+        
         this.init();
     }
     
@@ -39,11 +43,28 @@ class AnimalReleaseGame {
      * 初始化游戏
      */
     init() {
+        this.initAudioAndParticles();
         this.createBoard();
         this.generateAnimals();
         this.bindEvents();
         this.updateUI();
         this.adjustBoardSize();
+    }
+    
+    /**
+     * 初始化音效和粒子系统
+     */
+    initAudioAndParticles() {
+        // 初始化音效管理器
+        if (typeof AudioManager !== 'undefined') {
+            this.audioManager = new AudioManager();
+        }
+        
+        // 初始化粒子系统
+        const particleCanvas = document.getElementById('particleCanvas');
+        if (particleCanvas && typeof ParticleSystem !== 'undefined') {
+            this.particleSystem = new ParticleSystem(particleCanvas);
+        }
     }
     
     /**
@@ -154,6 +175,11 @@ class AnimalReleaseGame {
         const cell = this.board[row][col];
         if (!cell.animal) return;
         
+        // 播放点击音效
+        if (this.audioManager) {
+            this.audioManager.play('click');
+        }
+        
         this.isAnimating = true;
         
         // 计算移动路径和结果
@@ -164,12 +190,10 @@ class AnimalReleaseGame {
             // 动物无法移动，显示一个简短的提示动画
             const animalElement = cell.element.querySelector('.animal');
             if (animalElement) {
-                animalElement.style.transform = 'scale(1.1)';
-                animalElement.style.filter = 'brightness(1.2)';
+                animalElement.classList.add('shake-effect');
                 setTimeout(() => {
-                    animalElement.style.transform = '';
-                    animalElement.style.filter = '';
-                }, 200);
+                    animalElement.classList.remove('shake-effect');
+                }, 500);
             }
         } else if (moveResult.canRelease) {
             // 可以直接释放
@@ -361,6 +385,21 @@ class AnimalReleaseGame {
         const animalElement = cell.element.querySelector('.animal');
         
         if (animalElement) {
+            // 播放释放音效
+            if (this.audioManager) {
+                this.audioManager.play('release');
+            }
+            
+            // 创建爆炸粒子效果
+            if (this.particleSystem) {
+                const rect = cell.element.getBoundingClientRect();
+                const gameBoard = document.getElementById('gameBoard');
+                const boardRect = gameBoard.getBoundingClientRect();
+                const x = rect.left + rect.width / 2 - boardRect.left;
+                const y = rect.top + rect.height / 2 - boardRect.top;
+                this.particleSystem.createExplosion(x, y, 12, { color: '#FFD700' });
+            }
+            
             animalElement.classList.add('releasing');
             
             return new Promise(resolve => {
@@ -471,6 +510,20 @@ class AnimalReleaseGame {
         if (this.combo > 1) {
             const comboElement = document.getElementById('combo');
             comboElement.classList.add('combo-effect');
+            
+            // 播放连击音效
+            if (this.audioManager) {
+                this.audioManager.playCombo(this.combo);
+            }
+            
+            // 创建连击粒子效果
+            if (this.particleSystem) {
+                const rect = comboElement.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                this.particleSystem.createComboEffect(x, y, this.combo);
+            }
+            
             setTimeout(() => {
                 comboElement.classList.remove('combo-effect');
             }, 600);
@@ -540,6 +593,20 @@ class AnimalReleaseGame {
     useShuffle() {
         if (this.tools.shuffle <= 0 || this.isAnimating) return;
         
+        // 播放道具音效
+        if (this.audioManager) {
+            this.audioManager.play('tool');
+        }
+        
+        // 创建粒子效果
+        if (this.particleSystem) {
+            const gameBoard = document.getElementById('gameBoard');
+            const rect = gameBoard.getBoundingClientRect();
+            const x = rect.width / 2;
+            const y = rect.height / 2;
+            this.particleSystem.createToolEffect(x, y, 'shuffle');
+        }
+        
         this.tools.shuffle--;
         this.combo = 0; // 重置连击
         this.generateAnimals();
@@ -551,6 +618,20 @@ class AnimalReleaseGame {
      */
     useFlip() {
         if (this.tools.flip <= 0 || this.isAnimating) return;
+        
+        // 播放道具音效
+        if (this.audioManager) {
+            this.audioManager.play('tool');
+        }
+        
+        // 创建粒子效果
+        if (this.particleSystem) {
+            const gameBoard = document.getElementById('gameBoard');
+            const rect = gameBoard.getBoundingClientRect();
+            const x = rect.width / 2;
+            const y = rect.height / 2;
+            this.particleSystem.createToolEffect(x, y, 'flip');
+        }
         
         this.tools.flip--;
         
@@ -584,6 +665,20 @@ class AnimalReleaseGame {
      */
     useHint() {
         if (this.tools.hint <= 0 || this.isAnimating) return;
+        
+        // 播放道具音效
+        if (this.audioManager) {
+            this.audioManager.play('tool');
+        }
+        
+        // 创建粒子效果
+        if (this.particleSystem) {
+            const gameBoard = document.getElementById('gameBoard');
+            const rect = gameBoard.getBoundingClientRect();
+            const x = rect.width / 2;
+            const y = rect.height / 2;
+            this.particleSystem.createToolEffect(x, y, 'hint');
+        }
         
         this.tools.hint--;
         
@@ -621,6 +716,24 @@ class AnimalReleaseGame {
      * 显示胜利弹窗
      */
     showVictoryModal() {
+        // 播放胜利音效
+        if (this.audioManager) {
+            this.audioManager.play('victory');
+        }
+        
+        // 创建庆祝粒子效果
+        if (this.particleSystem) {
+            const gameBoard = document.getElementById('gameBoard');
+            const rect = gameBoard.getBoundingClientRect();
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * rect.width;
+                    const y = Math.random() * rect.height;
+                    this.particleSystem.createExplosion(x, y, 20, { color: '#FFD700', speed: 5 });
+                }, i * 200);
+            }
+        }
+        
         const levelScore = this.score;
         const comboBonus = this.maxCombo * 50;
         
@@ -633,6 +746,11 @@ class AnimalReleaseGame {
      * 显示游戏结束弹窗
      */
     showGameOverModal() {
+        // 播放失败音效
+        if (this.audioManager) {
+            this.audioManager.play('gameOver');
+        }
+        
         document.getElementById('finalScore').textContent = this.score;
         document.getElementById('maxCombo').textContent = this.maxCombo;
         document.getElementById('gameOverModal').classList.remove('hidden');
@@ -695,12 +813,28 @@ class AnimalReleaseGame {
         document.getElementById('restartBtn').addEventListener('click', () => this.restart());
         document.getElementById('nextLevelBtn').addEventListener('click', () => this.nextLevel());
         
+        // 音效控制按钮
+        const audioToggle = document.getElementById('audioToggle');
+        if (audioToggle && this.audioManager) {
+            audioToggle.addEventListener('click', () => {
+                const isMuted = this.audioManager.toggleMute();
+                audioToggle.textContent = isMuted ? '🔇' : '🔊';
+                audioToggle.classList.toggle('muted', isMuted);
+                audioToggle.title = isMuted ? '开启音效' : '关闭音效';
+            });
+        }
+        
         // 响应式调整
         window.addEventListener('resize', () => {
             this.adjustBoardSize();
             this.createBoard();
             this.generateAnimals();
             this.updateUI();
+            
+            // 调整粒子系统画布大小
+            if (this.particleSystem) {
+                this.particleSystem.resize();
+            }
         });
     }
 }

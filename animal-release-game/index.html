@@ -11,19 +11,24 @@
 <body>
     <button class="back-button" onclick="confirmExit()">←</button>
     <div class="game-container">
+        <!-- 音效控制按钮 -->
+        <button class="audio-control" id="audioToggle" title="切换音效">
+            🔊
+        </button>
+        
         <div class="header">
             <div class="score-panel">
                 <div class="score-item">
-                    <span class="label">分数:</span>
-                    <span id="score">0</span>
+                    <span class="score-label">分数</span>
+                    <span class="score-value" id="score">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">连击:</span>
-                    <span id="combo">0</span>
+                    <span class="score-label">连击</span>
+                    <span class="score-value" id="combo">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">关卡:</span>
-                    <span id="level">1</span>
+                    <span class="score-label">关卡</span>
+                    <span class="score-value" id="level">1</span>
                 </div>
             </div>
             <div class="tools-panel">
@@ -42,8 +47,12 @@
             </div>
         </div>
         
-        <div class="game-board" id="gameBoard">
-            <!-- 游戏格子将通过JavaScript动态生成 -->
+        <div class="game-board-container">
+            <div class="game-board" id="gameBoard">
+                <!-- 游戏格子将通过JavaScript动态生成 -->
+            </div>
+            <!-- 粒子效果画布 -->
+            <canvas class="particle-canvas" id="particleCanvas"></canvas>
         </div>
         
         <div class="progress-bar">
@@ -76,6 +85,8 @@
         </div>
     </div>
     
+    <script src="audio.js"></script>
+    <script src="particles.js"></script>
     <script src="game.js"></script>
     <script src="../common/navigation.js"></script>
 </body>
