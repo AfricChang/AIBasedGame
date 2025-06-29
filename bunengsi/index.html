@@ -37,7 +37,13 @@
 			window.shareData.tTitle = document.title;
 		}
 		function dp_Ranking(){
-			window.location=mebtnopenurl;
+			// 显示微信分享图片
+			let shareDiv = document.getElementById("share");
+			shareDiv.style.display = "block";
+			document.getElementById("logo").src = "../weChat.jpg";
+			shareDiv.onclick = function() {
+				this.style.display = "none";
+			}
 		}
 
 		function showAd(){
@@ -81,8 +87,7 @@
 			</canvas>
 		</div>
 		<div id="share" style="display:none">
-		<img id="logo" width="100%" src="460.jpg" style="position:absolute;top:0;left:0;">
-		<img width="100%" src="" style="position:absolute;top:0;left:0;display:" onClick="document.getElementById('share').style.display='none';">
+		<img id="logo" width="100%" src="460.jpg" style="position:absolute;top:0;left:0;" />
 		</div>
 		<script src="../common/navigation.js"></script>
 </body></html>
