@@ -3,7 +3,12 @@ class Game {
         try {
             console.log('Initializing game...');
             this.canvas = document.getElementById('GameCanvas');
-            this.ctx = this.canvas.getContext('2d');
+            // 优化Canvas上下文设置，关闭透明度以提升性能
+            this.ctx = this.canvas.getContext('2d', { 
+                alpha: false,
+                desynchronized: true,
+                willReadFrequently: false
+            });
             this.score = 0;
             // 从localStorage读取最高分
             const savedBestScore = localStorage.getItem('watermelon_best_score');
@@ -16,6 +21,35 @@ class Game {
             this.isDragging = false;
             this.dropDelay = false;
             this.collisionHandler = null;
+            
+            // 性能优化：添加离屏Canvas缓存
+            this.offscreenCanvas = document.createElement('canvas');
+            this.offscreenCtx = this.offscreenCanvas.getContext('2d', { alpha: false });
+            
+            // 性能优化：预渲染水果纹理
+            this.fruitTextures = new Map();
+            
+            // 性能配置管理
+            this.performanceConfig = new PerformanceConfig();
+            const config = this.performanceConfig.getConfig();
+            
+            // 性能优化：帧率控制
+            this.lastFrameTime = 0;
+            this.targetFPS = config.targetFPS;
+            this.frameInterval = 1000 / this.targetFPS;
+            
+            // 内存管理优化
+            this.objectPool = {
+                particles: [],
+                bodies: []
+            };
+            
+            // 性能监控
+            this.performanceStats = {
+                frameCount: 0,
+                lastStatsTime: 0,
+                fps: 0
+            };
 
             // 初始化音频管理器
             this.audio = new AudioManager();
@@ -32,14 +66,18 @@ class Game {
             // 初始化物理引擎
             this.engine = Matter.Engine.create({
                 enableSleeping: true,
-                constraintIterations: 10,  // 增加约束迭代次数
-                positionIterations: 20,   // 增加位置迭代次数
-                velocityIterations: 20,   // 增加速度迭代次数
+                constraintIterations: config.physicsIterations.constraint,  // 根据性能配置调整
+                positionIterations: config.physicsIterations.position,   // 根据性能配置调整
+                velocityIterations: config.physicsIterations.velocity,   // 根据性能配置调整
                 timing: {
-                    timeScale: 0.6,       // 降低时间缩放
+                    timeScale: 1,         // 优化时间缩放
+                    isFixed: false,      // 启用动态时间步长
                     sleepThreshold: 0.5   // 提高睡眠阈值
                 }
             });
+            
+            // 启用宽相位碰撞检测优化
+            this.engine.broadphase.controller = Matter.Grid.create();
             
             // 调整重力以适应屏幕高度
             this.engine.world.gravity.y = Math.max(0.8, Math.min(1.5, this.canvas.height / 400));
@@ -96,6 +134,9 @@ class Game {
                 { radius: 95, color: '#7FFF00', density: 0.009, score: 9, name: '梨' },       // 梨
                 { radius: 105, color: '#FF1493', density: 0.01, score: 10, name: '西瓜' }     // 西瓜
             ];
+            
+            // 预渲染水果纹理以提升性能
+            this.preRenderFruitTextures();
 
             // 添加碰撞检测
             this.setupCollisionDetection();
@@ -210,7 +251,10 @@ class Game {
     }
 
     initEvents() {
-        // 触摸/鼠标事件处理
+        // 优化事件处理，使用防抖和事件委托
+        let moveThrottle = false;
+        const throttleDelay = 16; // 约60fps
+        
         const handleStart = (e) => {
             e.preventDefault();
             if (this.isGameOver) {
@@ -220,14 +264,16 @@ class Game {
             this.isDragging = true;
             this.handlePointerMove(e);
         };
-
+        
         const handleMove = (e) => {
             e.preventDefault();
-            if (this.isDragging) {
+            if (!moveThrottle) {
+                moveThrottle = true;
+                setTimeout(() => { moveThrottle = false; }, throttleDelay);
                 this.handlePointerMove(e);
             }
         };
-
+        
         const handleEnd = (e) => {
             e.preventDefault();
             if (this.isDragging) {
@@ -235,24 +281,21 @@ class Game {
                 this.dropFruit();
             }
         };
-
-        // 添加触摸事件监听
-        if ('ontouchstart' in window) {
-            this.canvas.addEventListener('touchstart', handleStart, { passive: false });
-            this.canvas.addEventListener('touchmove', handleMove, { passive: false });
-            this.canvas.addEventListener('touchend', handleEnd, { passive: false });
-            this.canvas.addEventListener('touchcancel', handleEnd, { passive: false });
-        } else {
-            // 添加鼠标事件监听
-            this.canvas.addEventListener('mousedown', handleStart);
-            this.canvas.addEventListener('mousemove', handleMove);
-            this.canvas.addEventListener('mouseup', handleEnd);
-            this.canvas.addEventListener('mouseleave', handleEnd);
-        }
+        
+        // 简化事件监听，统一处理鼠标和触摸事件
+        this.canvas.addEventListener('mousedown', handleStart);
+        this.canvas.addEventListener('mousemove', handleMove);
+        this.canvas.addEventListener('mouseup', handleEnd);
+        this.canvas.addEventListener('mouseleave', handleEnd);
+        
+        this.canvas.addEventListener('touchstart', handleStart, { passive: false });
+        this.canvas.addEventListener('touchmove', handleMove, { passive: false });
+        this.canvas.addEventListener('touchend', handleEnd, { passive: false });
+        this.canvas.addEventListener('touchcancel', handleEnd, { passive: false });
     }
 
     handlePointerMove(e) {
-        if (!this.nextFruit || this.dropDelay) return;
+        if (!this.nextFruit || !this.isDragging) return;
 
         let x;
         if (e.touches) {
@@ -280,11 +323,13 @@ class Game {
             Matter.Events.off(this.engine, 'collisionStart', this.collisionHandler);
         }
 
-        // 创建新的碰撞处理器
+        // 优化碰撞检测处理器
+        const merges = new Set(); // 用于跟踪已处理的合并
+        let mergeQueue = []; // 合并队列，批量处理
+        
         this.collisionHandler = (event) => {
             const pairs = event.pairs;
-            const merges = new Set(); // 使用Set来防止重复合并
-
+            
             for (let i = 0; i < pairs.length; i++) {
                 const pair = pairs[i];
                 const bodyA = pair.bodyA;
@@ -299,24 +344,34 @@ class Game {
                     }
                 }
                 
-                if (bodyA.label.startsWith('fruit_') && bodyB.label.startsWith('fruit_')) {
-                    const typeA = parseInt(bodyA.label.split('_')[1]);
-                    const typeB = parseInt(bodyB.label.split('_')[1]);
+                // 优化：预先检查标签，避免字符串操作
+                if (bodyA.label && bodyB.label && 
+                    bodyA.label.indexOf('fruit_') === 0 && 
+                    bodyB.label.indexOf('fruit_') === 0) {
+                    
+                    const typeA = bodyA.label.charCodeAt(6) - 48; // 优化：直接从字符码获取数字
+                    const typeB = bodyB.label.charCodeAt(6) - 48;
                     
                     if (typeA === typeB && typeA < this.fruitTypes.length - 1) {
                         // 将碰撞对添加到合并集合中
-                        const mergeKey = [bodyA.id, bodyB.id].sort().join(',');
+                        const mergeKey = bodyA.id < bodyB.id ? 
+                            bodyA.id + ',' + bodyB.id : bodyB.id + ',' + bodyA.id;
+                        
                         if (!merges.has(mergeKey)) {
                             merges.add(mergeKey);
-                            // 使用requestAnimationFrame来延迟合并，防止在物理引擎更新时修改物体
-                            requestAnimationFrame(() => {
-                                if (bodyA.position && bodyB.position) { // 确保物体还存在
-                                    this.mergeFruits(bodyA, bodyB, typeA);
-                                }
-                            });
+                            mergeQueue.push({ bodyA, bodyB, type: typeA });
                         }
                     }
                 }
+            }
+            
+            // 批量处理合并，减少requestAnimationFrame调用
+            if (mergeQueue.length > 0) {
+                requestAnimationFrame(() => {
+                    this.processMergeQueue(mergeQueue);
+                    mergeQueue = [];
+                    merges.clear();
+                });
             }
         };
 
@@ -366,23 +421,49 @@ class Game {
         Matter.World.add(this.engine.world, body);
         this.fruits.push({
             body: body,
-            type: currentFruit.type
+            type: currentFruit.type,
+            createTime: Date.now()  // 添加创建时间戳
         });
 
-        // 立即清除nextFruit，这样就不会继续显示预览
-        this.nextFruit = null;
-
-        // 延迟创建下一个水果
+        // 立即创建下一个水果，但保持dropDelay状态
+        this.createNextFruit();
+        
+        // 延迟重置dropDelay，允许下次掉落
         setTimeout(() => {
-            this.createNextFruit();
             this.dropDelay = false;
-        }, 500);
+        }, 200); // 减少延迟时间，提升响应性
+        this.isDragging = true;
     }
 
-    mergeFruits(bodyA, bodyB, type) {
-        // 确保两个物体都还存在于物理世界中
-        if (!bodyA.position || !bodyB.position) return;
-
+    // 批量处理合并队列
+    processMergeQueue(mergeQueue) {
+        const toRemove = [];
+        const toAdd = [];
+        
+        for (const merge of mergeQueue) {
+            if (merge.bodyA.position && merge.bodyB.position) {
+                const result = this.prepareMerge(merge.bodyA, merge.bodyB, merge.type);
+                if (result) {
+                    toRemove.push(merge.bodyA, merge.bodyB);
+                    toAdd.push(result);
+                }
+            }
+        }
+        
+        // 批量移除和添加，减少物理世界操作次数
+        if (toRemove.length > 0) {
+            Matter.World.remove(this.engine.world, toRemove);
+            this.fruits = this.fruits.filter(f => !toRemove.includes(f.body));
+        }
+        
+        if (toAdd.length > 0) {
+            const newBodies = toAdd.map(item => item.body);
+            Matter.World.add(this.engine.world, newBodies);
+            this.fruits.push(...toAdd);
+        }
+    }
+    
+    prepareMerge(bodyA, bodyB, type) {
         // 计算新水果的位置
         const posA = bodyA.position;
         const posB = bodyB.position;
@@ -390,11 +471,6 @@ class Game {
             x: (posA.x + posB.x) / 2,
             y: (posA.y + posB.y) / 2
         };
-
-        // 从物理世界和数组中移除旧水果
-        Matter.World.remove(this.engine.world, bodyA);
-        Matter.World.remove(this.engine.world, bodyB);
-        this.fruits = this.fruits.filter(f => f.body !== bodyA && f.body !== bodyB);
 
         // 创建新水果
         const newType = type + 1;
@@ -429,53 +505,67 @@ class Game {
             }
         );
 
-        // 添加新水果到游戏中
-        Matter.World.add(this.engine.world, newBody);
-        this.fruits.push({
-            body: newBody,
-            type: newType
-        });
-
         // 播放合并音效
         this.audio.play('merge');
 
         // 播放合并动画效果
-        this.createMergeEffect(newPos.x, newPos.y, newFruit.color);
+        this.createOptimizedParticleEffect(newPos.x, newPos.y, newFruit.color);
+        
+        return {
+            body: newBody,
+            type: newType,
+            createTime: Date.now()  // 添加创建时间戳
+        };
     }
 
-    createMergeEffect(x, y, color) {
+    // 优化的粒子效果，减少Canvas状态改变
+    createOptimizedParticleEffect(x, y, color) {
+        const config = this.performanceConfig.getConfig();
+        if (!config.enableParticles) return; // 低性能设备禁用粒子
+        
+        const particleCount = config.maxParticles;
         const particles = [];
-        const particleCount = 10;
         
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;
-            const speed = 5;
+            const speed = 4;
             particles.push({
                 x: x,
                 y: y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 life: 1,
-                color: color
+                size: 3
             });
         }
         
         const animate = () => {
+            // 批量处理粒子，减少Canvas状态改变
+            this.ctx.save();
+            this.ctx.fillStyle = color;
+            
+            let hasAliveParticles = false;
+            
             particles.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += 0.2; // 重力
-                p.life -= 0.02;
-                
                 if (p.life > 0) {
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, 4 * p.life, 0, Math.PI * 2);
-                    this.ctx.fillStyle = p.color + Math.floor(p.life * 255).toString(16).padStart(2, '0');
-                    this.ctx.fill();
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.15; // 重力
+                    p.life -= 0.03;
+                    
+                    if (p.life > 0) {
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.beginPath();
+                        this.ctx.arc(Math.round(p.x), Math.round(p.y), p.size * p.life, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        hasAliveParticles = true;
+                    }
                 }
             });
             
-            if (particles.some(p => p.life > 0)) {
+            this.ctx.restore();
+            
+            if (hasAliveParticles) {
                 requestAnimationFrame(animate);
             }
         };
@@ -483,8 +573,44 @@ class Game {
         animate();
     }
 
+    // 性能监控方法
+    updatePerformanceStats(currentTime) {
+        this.performanceStats.frameCount++;
+        
+        if (currentTime - this.performanceStats.lastStatsTime >= 1000) {
+            this.performanceStats.fps = this.performanceStats.frameCount;
+            this.performanceStats.frameCount = 0;
+            this.performanceStats.lastStatsTime = currentTime;
+            
+            // 动态调整性能设置
+            this.performanceConfig.adjustForFPS(this.performanceStats.fps);
+            
+            // 可选：在控制台显示FPS（调试用）
+            if (this.performanceStats.fps < this.targetFPS * 0.8) {
+                console.log('Performance warning: FPS =', this.performanceStats.fps);
+            }
+        }
+    }
+    
+    // 内存清理方法
+    cleanupMemory() {
+        // 清理睡眠的物体
+        const sleepingBodies = this.fruits.filter(fruit => fruit.body.isSleeping);
+        if (sleepingBodies.length > 50) { // 如果睡眠物体过多
+            // 可以考虑移除一些较小的睡眠水果
+        }
+        
+        // 清理对象池
+        if (this.objectPool.particles.length > 100) {
+            this.objectPool.particles.length = 50;
+        }
+    }
+
     restart() {
-        // 仅重置游戏状态，不清除已有水果
+        // 清理内存
+        this.cleanupMemory();
+        
+        // 重置游戏状态
         this.score = 0;
         this.isGameOver = false;
         this.isDragging = false;
@@ -499,51 +625,135 @@ class Game {
         }
     }
 
+    /**
+     * 检查游戏是否结束
+     * 使用相对于画布高度的比例来判断，避免固定像素值导致的误判
+     */
     checkGameOver() {
         if (this.isGameOver) return;
         
-        // 检查是否有水果超出上边界
+        // 计算危险线位置（画布高度的15%，最小50像素，最大150像素）
+        const dangerLine = Math.max(50, Math.min(150, this.canvas.height * 0.15));
+        
+        // 检查是否有水果超出危险线
+        let fruitsAboveDangerLine = 0;
         for (let fruit of this.fruits) {
-            if (fruit.body.position.y < 100) { // 如果有水果位置高于顶部一定距离
+            if (fruit.body.position.y < dangerLine) {
+                fruitsAboveDangerLine++;
+            }
+        }
+        
+        // 只有当有多个水果（至少2个）超出危险线时才判定游戏结束
+        // 这样可以避免单个水果短暂超出边界时的误判
+        if (fruitsAboveDangerLine >= 2) {
+            // 额外检查：确保这些水果不是刚刚掉落的（给1秒缓冲时间）
+            let stableFruitsAboveLine = 0;
+            const currentTime = Date.now();
+            
+            for (let fruit of this.fruits) {
+                if (fruit.body.position.y < dangerLine) {
+                    // 如果水果创建时间超过1秒，认为是稳定的
+                    if (!fruit.createTime || (currentTime - fruit.createTime) > 1000) {
+                        stableFruitsAboveLine++;
+                    }
+                }
+            }
+            
+            if (stableFruitsAboveLine >= 2) {
                 this.isGameOver = true;
                 // 播放游戏结束音效
                 this.audio.play('gameOver');
-                break;
             }
         }
     }
 
-    draw() {
+    // 预渲染水果纹理
+    preRenderFruitTextures() {
+        this.fruitTypes.forEach((fruit, index) => {
+            const size = fruit.radius * 2 + 4; // 添加边距
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { alpha: true });
+            
+            // 绘制水果纹理
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, fruit.radius, 0, Math.PI * 2);
+            ctx.fillStyle = fruit.color;
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 添加高光效果
+            const gradient = ctx.createRadialGradient(
+                size / 2 - fruit.radius * 0.3, size / 2 - fruit.radius * 0.3, 0,
+                size / 2, size / 2, fruit.radius
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            this.fruitTextures.set(index, canvas);
+        });
+    }
+
+    draw(currentTime = 0) {
+        // 帧率控制
+        if (currentTime - this.lastFrameTime < this.frameInterval) {
+            requestAnimationFrame((time) => this.draw(time));
+            return;
+        }
+        this.lastFrameTime = currentTime;
+        
+        // 性能监控
+        this.updatePerformanceStats(currentTime);
+        
         // 确保canvas上下文存在
         if (!this.ctx) return;
 
-        // 清除画布
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // 优化：使用整数坐标避免子像素渲染
+        this.ctx.save();
+        this.ctx.imageSmoothingEnabled = false;
+        
+        // 清除画布 - 使用fillRect比clearRect更快
+        this.ctx.fillStyle = '#f0f0f0';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // 绘制所有水果
+        // 批量绘制水果 - 使用预渲染纹理
         this.fruits.forEach(fruit => {
-            const type = this.fruitTypes[fruit.type];
-            this.ctx.beginPath();
-            this.ctx.arc(fruit.body.position.x, fruit.body.position.y, type.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = type.color;
-            this.ctx.fill();
-            this.ctx.stroke();
+            const texture = this.fruitTextures.get(fruit.type);
+            if (texture) {
+                const x = Math.round(fruit.body.position.x - texture.width / 2);
+                const y = Math.round(fruit.body.position.y - texture.height / 2);
+                this.ctx.drawImage(texture, x, y);
+            }
         });
 
         // 绘制下一个水果的预览
         if (this.nextFruit) {
-            const type = this.fruitTypes[this.nextFruit.type];
-            this.ctx.beginPath();
-            this.ctx.arc(this.nextFruit.position.x, this.nextFruit.position.y, type.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = type.color + '80'; // 添加透明度
-            this.ctx.fill();
-            this.ctx.stroke();
+            const texture = this.fruitTextures.get(this.nextFruit.type);
+            if (texture) {
+                this.ctx.globalAlpha = 0.5;
+                const x = Math.round(this.nextFruit.position.x - texture.width / 2);
+                const y = Math.round(this.nextFruit.position.y - texture.height / 2);
+                this.ctx.drawImage(texture, x, y);
+                this.ctx.globalAlpha = 1.0;
+            }
         }
+        
+        this.ctx.restore();
 
         // 检查游戏结束
         this.checkGameOver();
+        
+        // 定期清理内存（每5秒）
+        if (currentTime % 5000 < this.frameInterval) {
+            this.cleanupMemory();
+        }
 
         // 请求下一帧
-        requestAnimationFrame(() => this.draw());
+        requestAnimationFrame((time) => this.draw(time));
     }
 }
