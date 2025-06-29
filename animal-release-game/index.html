@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动物消消消 - 益智消除游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../common/style.css">
+</head>
+<body>
+    <button class="back-button" onclick="confirmExit()">←</button>
+    <div class="game-container">
+        <div class="header">
+            <div class="score-panel">
+                <div class="score-item">
+                    <span class="label">分数:</span>
+                    <span id="score">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">连击:</span>
+                    <span id="combo">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">关卡:</span>
+                    <span id="level">1</span>
+                </div>
+            </div>
+            <div class="tools-panel">
+                <button id="shuffle-btn" class="tool-btn" title="洗牌">
+                    <span class="tool-icon">🔀</span>
+                    <span class="tool-count" id="shuffle-count">3</span>
+                </button>
+                <button id="flip-btn" class="tool-btn" title="翻转方向">
+                    <span class="tool-icon">🔄</span>
+                    <span class="tool-count" id="flip-count">3</span>
+                </button>
+                <button id="hint-btn" class="tool-btn" title="提示">
+                    <span class="tool-icon">💡</span>
+                    <span class="tool-count" id="hint-count">5</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-board" id="gameBoard">
+            <!-- 游戏格子将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+            <span class="progress-text" id="progressText">0/10</span>
+        </div>
+        
+        <div class="game-info">
+            <p>点击动物移动它们！动物会沿着箭头方向移动进行消除得分。</p>
+        </div>
+    </div>
+    
+    <!-- 游戏结束弹窗 -->
+    <div id="gameOverModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="finalScore">0</span></p>
+            <p>最高连击: <span id="maxCombo">0</span></p>
+            <button id="restartBtn" class="btn-primary">重新开始</button>
+        </div>
+    </div>
+    
+    <!-- 胜利弹窗 -->
+    <div id="victoryModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>恭喜过关！</h2>
+            <p>获得分数: <span id="levelScore">0</span></p>
+            <p>连击奖励: <span id="comboBonus">0</span></p>
+            <button id="nextLevelBtn" class="btn-primary">下一关</button>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+    <script src="../common/navigation.js"></script>
+</body>
+</html>
