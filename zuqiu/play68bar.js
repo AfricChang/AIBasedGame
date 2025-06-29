@@ -1,4 +1,4 @@
-ï»¿function shareFriend() {
+function shareFriend() {
 	WeixinJSBridge.invoke("sendAppMessage", {
 		appid: appid,
 		img_url: imgUrl,
@@ -75,7 +75,7 @@ function addShareWX() {
 	t.style.cssText = "text-align:right;padding-left:10px;";
 	e.appendChild(t);
 	var n = document.createElement("img");
-	n.src = "http://g.lanrenmb.com/games/xcw/py.png";
+	n.src = "";
 	n.id = "share-wx-img";
 	n.style.cssText = "max-width:280px;padding-right:25px;";
 	t.appendChild(n);
@@ -107,14 +107,14 @@ function isMobile() {
 function isIOS() {
 	return navigator.userAgent.match(/iphone|ipod|ios/i)
 }
-var HOME_PATH = HOME_PATH || "http://g.lanrenmb.com/",
+var HOME_PATH = HOME_PATH || "",
 RESOURCE_IMG_PATH = RESOURCE_IMG_PATH || "/images/",
 HORIZONTAL = HORIZONTAL || false,
 COVER_SHOW_TIME = COVER_SHOW_TIME || 2e3;
 var imgUrl = HOME_PATH + "icons/wxicon.png";
 var lineLink = HOME_PATH;
-var descContent = "å¿«æ¥è·Ÿæˆ‘ä¸€èµ·ç©ï¼";
-var shareTitle = "æœ€å¥½ç©çš„å°æ¸¸æˆå°±åœ¨46465.comï¼";
+var descContent = "¿ìÀ´¸úÎÒÒ»ÆğÍæ£¡";
+var shareTitle = "×îºÃÍæµÄĞ¡ÓÎÏ·¾ÍÔÚ46465.com£¡";
 var appid = "";
 document.addEventListener("WeixinJSBridgeReady",
 function() {
@@ -198,5 +198,5 @@ if (isWeixin()) {
 }
 addSidebar();
 if (getCookie("num") != 3){
-	window.onbeforeunload=function(){return"ç¦»å¼€æ­¤é¡µé¢å°†ä¼šé€€å‡ºæ¸¸æˆå“¦"}
+	window.onbeforeunload=function(){return"Àë¿ª´ËÒ³Ãæ½«»áÍË³öÓÎÏ·Å¶"}
 }

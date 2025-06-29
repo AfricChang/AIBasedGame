@@ -1,4 +1,4 @@
-﻿
+
 function play68_init() {
 	updateShare(0);
 }
@@ -13,18 +13,18 @@ function play68_submitScore(score) {
 }
 
 function updateShare(bestScore) {
-	imgUrl = 'http://g.lanrenmb.com/games/zuqiu/soccermoveicon.png';
-	lineLink = 'http://g.lanrenmb.com/games/zuqiu';
-	descContent = "快跟我一起用手指指点足球！";
+	imgUrl = '';
+	lineLink = '';
+	descContent = "�����һ������ָָ������";
 	updateShareScore(bestScore);
 	appid = '';
 }
 
 function updateShareScore(bestScore) {
 	if(bestScore > 0) {
-		shareTitle = "我玩《滚滚足球》过了" + bestScore + "关，动脑的足球最好玩！";
+		shareTitle = "���桶�������򡷹���" + bestScore + "�أ����Ե���������棡";
 	}
 	else{
-		shareTitle = "世界杯快到了，快来玩《滚滚足球》！动脑的足球最好玩！";
+		shareTitle = "���籭�쵽�ˣ������桶�������򡷣����Ե���������棡";
 	}
 }
