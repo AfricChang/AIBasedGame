@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>水果连连看</title>
+    <link rel="stylesheet" href="../common/style.css">
     <style>
         * {
             box-sizing: border-box;
@@ -330,9 +331,14 @@
             font-size: 1.3rem;
             padding: 15px 40px;
         }
+
+
+
+
     </style>
 </head>
 <body>
+    <button class="back-button" onclick="confirmExit()">←</button>
     <div class="game-header">
         <h1>水果连连看</h1>
         <div class="stats-container">
@@ -384,6 +390,9 @@
         </div>
     </div>
 
+
+
+    <script src="../common/navigation.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // 游戏配置

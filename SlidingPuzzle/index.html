@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>华容道游戏</title>
+    <link rel="stylesheet" href="../common/style.css">
     <style>
         * {
             box-sizing: border-box;
@@ -223,9 +224,11 @@
                 font-size: 1.8em;
             }
         }
+
     </style>
 </head>
 <body>
+    <button class="back-button" onclick="confirmExit()">←</button>
     <div class="container">
         <h1>华容道</h1>
         
@@ -260,7 +263,10 @@
             <button class="restart-btn">再玩一次</button>
         </div>
     </div>
+
+
     
+    <script src="../common/navigation.js"></script>
     <script>
         let gridSize = 3;
         let puzzleState = [];
