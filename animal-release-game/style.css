@@ -4,6 +4,99 @@
     box-sizing: border-box;
 }
 
+/* 返回按钮样式 */
+.back-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #333;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 确认对话框样式 */
+.confirm-dialog {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    text-align: center;
+    min-width: 280px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.confirm-dialog p {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.confirm-dialog-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.confirm-dialog button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.confirm-dialog .confirm-yes {
+    background: #4a90e2;
+    color: white;
+}
+
+.confirm-dialog .confirm-no {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.confirm-dialog .confirm-yes:hover {
+    background: #357abd;
+}
+
+.confirm-dialog .confirm-no:hover {
+    background: #d0d0d0;
+}
+
+.dialog-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
 body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -97,6 +190,15 @@ body {
     font-weight: bold;
 }
 
+.game-board-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
 .game-board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
@@ -105,8 +207,12 @@ body {
     background: #34495e;
     padding: 10px;
     border-radius: 15px;
-    margin-bottom: 20px;
     aspect-ratio: 1;
+    width: 100%;
+    max-width: min(80vw, 80vh);
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
 }
 
 .cell {
@@ -119,6 +225,12 @@ body {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    aspect-ratio: 1;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .cell:hover {
@@ -135,6 +247,12 @@ body {
     transition: all 0.3s ease;
     position: relative;
     z-index: 2;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
 .animal.moving {
@@ -158,6 +276,12 @@ body {
     opacity: 0.9;
     font-weight: bold;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
 }
 
 .direction-arrow.up { top: 2px; }
@@ -265,7 +389,7 @@ body {
     box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
 }
 
-/* 动画效果 */
+/* ????Ч?? */
 @keyframes moveAnimation {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
@@ -322,7 +446,7 @@ body {
     }
 }
 
-/* 新增视觉效果动画 */
+/* ???????Ч?????? */
 @keyframes sparkle {
     0%, 100% {
         transform: scale(1) rotate(0deg);
@@ -397,7 +521,7 @@ body {
     100% { filter: hue-rotate(360deg); }
 }
 
-/* 特效类 */
+/* ??Ч?? */
 .combo-effect {
     animation: comboEffect 0.6s ease-in-out;
 }
@@ -430,7 +554,7 @@ body {
     animation: rainbow 3s linear infinite;
 }
 
-/* 粒子画布 */
+/* ??????? */
 .particle-canvas {
     position: absolute;
     top: 0;
@@ -439,7 +563,7 @@ body {
     z-index: 10;
 }
 
-/* 音效控制按钮 */
+/* ??Ч?????? */
 .audio-control {
     position: absolute;
     top: 20px;
@@ -467,7 +591,7 @@ body {
     color: #e74c3c;
 }
 
-/* 增强现有元素的视觉效果 */
+/* ??????????????Ч?? */
 .cell:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -515,7 +639,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 进度条增强效果 */
+/* ?????????Ч?? */
 .progress-bar {
     position: relative;
     overflow: hidden;
@@ -537,11 +661,11 @@ body {
     100% { left: 100%; }
 }
 
-/* ??????? */
+/* 响应式设计 */
 @media (max-width: 768px) {
     .game-container {
-        padding: 20px;
-        margin: 10px;
+        padding: 15px;
+        margin: 5px;
     }
     
     .header {
@@ -551,35 +675,114 @@ body {
     
     .score-panel {
         justify-content: center;
-    }
-    
-    .game-board {
-        grid-template-columns: repeat(6, 1fr);
-        grid-template-rows: repeat(6, 1fr);
-    }
-    
-    .animal {
-        font-size: 20px;
-    }
-    
-    .tool-btn {
-        padding: 10px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .game-board {
-        grid-template-columns: repeat(5, 1fr);
-        grid-template-rows: repeat(5, 1fr);
-    }
-    
-    .animal {
-        font-size: 18px;
+        flex-wrap: wrap;
     }
     
     .score-item {
         padding: 8px 12px;
         font-size: 14px;
+        min-width: 60px;
+    }
+    
+    .game-board-container {
+        padding: 0 5px;
+    }
+    
+    .game-board {
+        padding: 6px;
+        gap: 1px;
+        width: 85vw;
+        height: 85vw;
+        max-width: 400px;
+        max-height: 400px;
+    }
+    
+    .cell {
+        min-height: 0;
+        aspect-ratio: 1;
+    }
+    
+    .animal {
+        font-size: clamp(16px, 4vw, 18px);
+    }
+    
+    .direction-arrow {
+        font-size: clamp(10px, 3vw, 12px);
+        width: clamp(16px, 4vw, 20px);
+        height: clamp(16px, 4vw, 20px);
+    }
+    
+    .tool-btn {
+        padding: 8px;
+        font-size: 12px;
+        min-width: 40px;
+    }
+    
+    .tool-count {
+        width: 16px;
+        height: 16px;
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-container {
+        padding: 10px;
+        margin: 2px;
+    }
+    
+    .score-item {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 50px;
+    }
+    
+    .game-board-container {
+        padding: 0 2px;
+    }
+    
+    .game-board {
+        padding: 4px;
+        gap: 1px;
+        width: 90vw;
+        height: 90vw;
+        max-width: 350px;
+        max-height: 350px;
+    }
+    
+    .cell {
+        border-radius: 4px;
+    }
+    
+    .animal {
+        font-size: clamp(14px, 3.5vw, 16px);
+    }
+    
+    .direction-arrow {
+        font-size: clamp(8px, 2.5vw, 10px);
+        width: clamp(14px, 3.5vw, 18px);
+        height: clamp(14px, 3.5vw, 18px);
+    }
+    
+    .tool-btn {
+        padding: 6px;
+        font-size: 10px;
+        min-width: 35px;
+    }
+    
+    .tool-count {
+        width: 14px;
+        height: 14px;
+        font-size: 7px;
+        top: -3px;
+        right: -3px;
+    }
+    
+    .audio-control {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        top: 10px;
+        right: 10px;
     }
 }

@@ -49,6 +49,18 @@ class AnimalReleaseGame {
         this.bindEvents();
         this.updateUI();
         this.adjustBoardSize();
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            this.adjustBoardSize();
+        });
+        
+        // 监听设备方向变化
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.adjustBoardSize();
+            }, 100);
+        });
     }
     
     /**
@@ -72,12 +84,24 @@ class AnimalReleaseGame {
      */
     adjustBoardSize() {
         const width = window.innerWidth;
-        if (width <= 480) {
-            this.boardSize = 5;
-        } else if (width <= 768) {
-            this.boardSize = 6;
+        const height = window.innerHeight;
+        const minDimension = Math.min(width, height);
+        
+        let newBoardSize;
+        if (minDimension <= 480) {
+            newBoardSize = 5;
+        } else if (minDimension <= 768) {
+            newBoardSize = 6;
         } else {
-            this.boardSize = 8;
+            newBoardSize = 8;
+        }
+        
+        // 只有当尺寸真正改变时才重新创建游戏板
+        if (newBoardSize !== this.boardSize) {
+            this.boardSize = newBoardSize;
+            this.createBoard();
+            this.generateAnimals();
+            this.updateUI();
         }
         
         const gameBoard = document.getElementById('gameBoard');

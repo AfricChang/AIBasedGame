@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>动物消消消 - 益智消除游戏</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="../common/style.css">
 </head>
 <body>
     <button class="back-button" onclick="confirmExit()">←</button>
@@ -88,6 +87,48 @@
     <script src="audio.js"></script>
     <script src="particles.js"></script>
     <script src="game.js"></script>
-    <script src="../common/navigation.js"></script>
+    <script>
+        // 导航功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const dialogHTML = `
+                <div class="dialog-overlay"></div>
+                <div class="confirm-dialog">
+                    <p>确定要返回主菜单吗？当前进度将不会保存。</p>
+                    <div class="confirm-dialog-buttons">
+                        <button class="confirm-yes">确定</button>
+                        <button class="confirm-no">取消</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+
+            // 绑定事件
+            const overlay = document.querySelector('.dialog-overlay');
+            const dialog = document.querySelector('.confirm-dialog');
+            const yesButton = dialog.querySelector('.confirm-yes');
+            const noButton = dialog.querySelector('.confirm-no');
+
+            yesButton.addEventListener('click', () => {
+                window.location.href = '../index.html';
+            });
+
+            noButton.addEventListener('click', () => {
+                overlay.style.display = 'none';
+                dialog.style.display = 'none';
+            });
+
+            overlay.addEventListener('click', () => {
+                overlay.style.display = 'none';
+                dialog.style.display = 'none';
+            });
+        });
+
+        function confirmExit() {
+            const overlay = document.querySelector('.dialog-overlay');
+            const dialog = document.querySelector('.confirm-dialog');
+            overlay.style.display = 'block';
+            dialog.style.display = 'block';
+        }
+    </script>
 </body>
 </html>
