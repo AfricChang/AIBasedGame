@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Mobile Maze Game</title>
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <section id="mainMenu" class="screen active">
+            <div class="hero-card">
+                <p class="eyebrow">Mobile Maze Game</p>
+                <h1>迷踪微光</h1>
+                <p class="hero-copy">在有限视野中摸索出口，利用信标、钥匙和传送门完成 20 个渐进式迷宫挑战。</p>
+                <div class="hero-actions">
+                    <button id="startGameBtn" class="primary-btn">开始游戏</button>
+                    <button id="levelSelectBtn" class="ghost-btn">关卡选择</button>
+                </div>
+                <div class="hero-actions secondary-actions">
+                    <button id="settingsBtn" class="text-btn">设置</button>
+                    <button id="aboutBtn" class="text-btn">关于</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="levelSelectScreen" class="screen">
+            <div class="panel">
+                <div class="panel-header">
+                    <button class="back-btn" data-target="mainMenu">返回</button>
+                    <h2>关卡选择</h2>
+                    <span class="panel-meta" id="progressMeta">已解锁 1 / 20</span>
+                </div>
+                <div id="levelGrid" class="level-grid"></div>
+            </div>
+        </section>
+
+        <section id="settingsScreen" class="screen">
+            <div class="panel">
+                <div class="panel-header">
+                    <button class="back-btn" data-target="mainMenu">返回</button>
+                    <h2>设置</h2>
+                    <span class="panel-meta">移动端优先</span>
+                </div>
+                <div class="settings-list">
+                    <label class="setting-item">
+                        <span>显示方向键</span>
+                        <input id="showDpadSetting" type="checkbox" checked>
+                    </label>
+                    <label class="setting-item">
+                        <span>触觉反馈</span>
+                        <input id="vibrationSetting" type="checkbox" checked>
+                    </label>
+                    <label class="setting-item">
+                        <span>视野记忆</span>
+                        <input id="rememberFogSetting" type="checkbox" checked>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <section id="aboutScreen" class="screen">
+            <div class="panel">
+                <div class="panel-header">
+                    <button class="back-btn" data-target="mainMenu">返回</button>
+                    <h2>关于</h2>
+                    <span class="panel-meta">独立小游戏 / 可嵌入合集</span>
+                </div>
+                <div class="about-copy">
+                    <p>《迷踪微光》是一款为移动端设计的 2D 网格迷宫游戏。</p>
+                    <p>玩法核心是“有限视野 + 渐进式探索 + 触屏移动”，每一关都在地图规模、视野范围和机制组合上逐步加压。</p>
+                    <p>当前版本支持：20 个关卡、渐进视野、钥匙门、信标 Buff、减速泥地、传送门、单向门、压板机关、限时挑战、关卡计时与存档。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="gameScreen" class="screen">
+            <div class="game-layout">
+                <header class="hud">
+                    <button id="pauseBtn" class="hud-btn">暂停</button>
+                    <div class="hud-center">
+                        <strong id="levelTitle">L01 晨光入口</strong>
+                        <span id="objectiveLabel">抵达出口</span>
+                    </div>
+                    <div class="hud-right">
+                        <span id="timerLabel">00:00.0</span>
+                    </div>
+                </header>
+
+                <div class="status-strip">
+                    <div class="status-chip">
+                        <span>视野</span>
+                        <strong id="visionLabel">4</strong>
+                    </div>
+                    <div class="status-chip">
+                        <span>步数</span>
+                        <strong id="moveCountLabel">0</strong>
+                    </div>
+                    <div class="status-chip buff-chip">
+                        <span>Buff</span>
+                        <strong id="buffLabel">无</strong>
+                    </div>
+                </div>
+
+                <div id="gameViewport" class="game-viewport">
+                    <canvas id="gameCanvas" aria-label="迷宫画布"></canvas>
+                    <button id="swipeHint" class="swipe-hint" type="button">滑动移动</button>
+                </div>
+
+                <div id="dpad" class="dpad">
+                    <button class="dpad-btn" data-dir="up">↑</button>
+                    <div class="dpad-middle">
+                        <button class="dpad-btn" data-dir="left">←</button>
+                        <button class="dpad-btn" data-dir="down">↓</button>
+                        <button class="dpad-btn" data-dir="right">→</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="pauseOverlay" class="overlay">
+            <div class="overlay-card">
+                <h3>已暂停</h3>
+                <p>在有限视野里冷静规划下一步。</p>
+                <div class="overlay-actions">
+                    <button id="resumeBtn" class="primary-btn">继续</button>
+                    <button id="restartBtn" class="ghost-btn">重开本关</button>
+                    <button id="leaveToMenuBtn" class="text-btn">返回主菜单</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultOverlay" class="overlay">
+            <div class="overlay-card">
+                <h3 id="resultTitle">挑战完成</h3>
+                <p id="resultSummary">你顺利穿过了迷宫。</p>
+                <div class="result-stats">
+                    <span>时间 <strong id="resultTime">00:00.0</strong></span>
+                    <span>步数 <strong id="resultMoves">0</strong></span>
+                </div>
+                <div class="overlay-actions">
+                    <button id="resultPrimaryBtn" class="primary-btn">下一关</button>
+                    <button id="resultSecondaryBtn" class="ghost-btn">重玩本关</button>
+                    <button id="resultMenuBtn" class="text-btn">关卡选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+</body>
+</html>

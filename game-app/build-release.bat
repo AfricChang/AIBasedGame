@@ -16,6 +16,7 @@ rem Copy game files
 xcopy /Y /E /I "..\FlappyBird" "www\FlappyBird"
 xcopy /Y /E /I "..\Minesweeper" "www\Minesweeper"
 xcopy /Y /E /I "..\TicTacToe" "www\TicTacToe"
+xcopy /Y /E /I "..\MobileMazeGame" "www\MobileMazeGame"
 
 echo Game files sync completed
 
