@@ -191,9 +191,11 @@ class MobileMazeGame {
         this.pendingDirection = null;
         this.heldDirection = null;
         this.heldDirectionSource = null;
+        this.heldRepeatReadyAt = 0;
         this.messageTimeout = null;
         this.swipeStart = null;
         this.resultMode = "next";
+        this.lastHudRenderMs = -1;
 
         this.canvas = document.getElementById("gameCanvas");
         this.ctx = this.canvas.getContext("2d");
@@ -301,7 +303,7 @@ class MobileMazeGame {
             const dir = mapping[event.key];
             if (dir) {
                 event.preventDefault();
-                this.setHeldDirection(dir, "keyboard");
+                this.setHeldDirection(dir, "keyboard", performance.now());
                 if (!event.repeat) {
                     this.requestMove(dir);
                 }
@@ -338,7 +340,7 @@ class MobileMazeGame {
             const direction = button.dataset.dir;
             button.addEventListener("pointerdown", (event) => {
                 event.preventDefault();
-                this.setHeldDirection(direction, "dpad");
+                this.setHeldDirection(direction, "dpad", performance.now());
                 this.requestMove(direction);
             });
             button.addEventListener("pointerup", () => {
@@ -389,14 +391,16 @@ class MobileMazeGame {
         });
     }
 
-    setHeldDirection(direction, source) {
+    setHeldDirection(direction, source, now = performance.now()) {
         this.heldDirection = direction;
         this.heldDirectionSource = source;
+        this.heldRepeatReadyAt = now + 240;
     }
 
     clearHeldDirection() {
         this.heldDirection = null;
         this.heldDirectionSource = null;
+        this.heldRepeatReadyAt = 0;
     }
 
     saveSetting(key, value) {
@@ -633,9 +637,11 @@ class MobileMazeGame {
         this.computeVisibility();
         this.updateHUD();
 
-        const nextDirection = this.pendingDirection || this.heldDirection;
+        const now = performance.now();
+        const nextDirection = this.pendingDirection || (this.heldDirection && now >= this.heldRepeatReadyAt ? this.heldDirection : null);
         this.pendingDirection = null;
         if (nextDirection) {
+            this.heldRepeatReadyAt = now + 95;
             this.tryMove(nextDirection);
         }
     }
@@ -645,6 +651,7 @@ class MobileMazeGame {
         const visited = new Set();
         let currentRow = row;
         let currentCol = col;
+        let teleportedThisStep = false;
 
         while (true) {
             const key = cellKey(currentRow, currentCol);
@@ -696,12 +703,13 @@ class MobileMazeGame {
             }
 
             const teleport = runtime.features.teleports.get(key);
-            if (teleport && teleport.target && teleport.uses !== 0) {
+            if (!teleportedThisStep && teleport && teleport.target && teleport.uses !== 0) {
                 teleport.uses = teleport.uses > 0 ? teleport.uses - 1 : teleport.uses;
                 runtime.player.row = teleport.target.row;
                 runtime.player.col = teleport.target.col;
                 currentRow = teleport.target.row;
                 currentCol = teleport.target.col;
+                teleportedThisStep = true;
                 this.flashMessage("跃迁成功");
                 this.softVibrate(20);
                 continue;
@@ -792,14 +800,28 @@ class MobileMazeGame {
         }
 
         const runtime = this.runtime;
+        const timerBucket = Math.floor(runtime.elapsedMs / 100);
+        const buffLabel = this.buffSystem.getLabel();
+        if (
+            this.elements.levelTitle.textContent === `${runtime.level.code} ${runtime.level.name}` &&
+            this.elements.objectiveLabel.textContent === this.getObjectiveStatusText(runtime) &&
+            this.elements.timerLabel.dataset.bucket === String(timerBucket) &&
+            this.elements.visionLabel.textContent === String(this.getCurrentVisionRadius()) &&
+            this.elements.moveCountLabel.textContent === String(runtime.moveCount) &&
+            this.elements.buffLabel.textContent === buffLabel
+        ) {
+            return;
+        }
+
         this.elements.levelTitle.textContent = `${runtime.level.code} ${runtime.level.name}`;
         this.elements.objectiveLabel.textContent = this.getObjectiveStatusText(runtime);
         this.elements.timerLabel.textContent = runtime.level.timerSec
             ? `${formatTime(runtime.elapsedMs)} / ${runtime.level.timerSec}s`
             : formatTime(runtime.elapsedMs);
+        this.elements.timerLabel.dataset.bucket = String(timerBucket);
         this.elements.visionLabel.textContent = String(this.getCurrentVisionRadius());
         this.elements.moveCountLabel.textContent = String(runtime.moveCount);
-        this.elements.buffLabel.textContent = this.buffSystem.getLabel();
+        this.elements.buffLabel.textContent = buffLabel;
     }
 
     getObjectiveStatusText(runtime) {
@@ -889,7 +911,11 @@ class MobileMazeGame {
                     this.completeMove();
                 }
             }
-            this.updateHUD();
+            const currentBucket = Math.floor(runtime.elapsedMs / 100);
+            if (this.lastHudRenderMs !== currentBucket) {
+                this.lastHudRenderMs = currentBucket;
+                this.updateHUD();
+            }
         }
     }
 
@@ -946,6 +972,7 @@ class MobileMazeGame {
             return;
         }
         let fill = "#07111b";
+        const visibilityStrength = visible ? (cell.visibilityStrength ?? 1) : explored ? 0.22 : 0;
 
         if (visible) {
             const colors = {
@@ -967,14 +994,18 @@ class MobileMazeGame {
         ctx.fillRect(x, y, size, size);
 
         if (visible) {
-            const glowRadius = Math.max(4, size / 1.2);
-            const glow = ctx.createRadialGradient(x + size / 2, y + size / 2, 2, x + size / 2, y + size / 2, glowRadius);
-            glow.addColorStop(0, "rgba(255, 255, 255, 0.08)");
-            glow.addColorStop(1, "rgba(255, 255, 255, 0)");
-            ctx.fillStyle = glow;
+            const fogAlpha = clamp(0.76 - visibilityStrength * 0.7, 0.08, 0.68);
+            ctx.fillStyle = `rgba(2, 7, 14, ${fogAlpha})`;
             ctx.fillRect(x, y, size, size);
-        } else if (!explored) {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.82)";
+
+            const edgeAlpha = clamp(0.03 + visibilityStrength * 0.08, 0.03, 0.11);
+            ctx.fillStyle = `rgba(255, 255, 255, ${edgeAlpha})`;
+            ctx.fillRect(x, y, size, size * 0.06);
+        } else if (explored) {
+            ctx.fillStyle = "rgba(2, 7, 14, 0.48)";
+            ctx.fillRect(x, y, size, size);
+        } else {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.86)";
             ctx.fillRect(x, y, size, size);
         }
     }
@@ -990,13 +1021,14 @@ class MobileMazeGame {
         const centerX = x + size / 2;
         const centerY = y + size / 2;
         const dimmed = cell.visibility === "explored";
+        const visibilityStrength = cell.visibility === "visible" ? (cell.visibilityStrength ?? 1) : 0.3;
 
         const withAlpha = (alpha) => {
             ctx.globalAlpha = alpha;
         };
 
         if (this.runtime.features.keys.has(key)) {
-            withAlpha(dimmed ? 0.45 : 1);
+            withAlpha(dimmed ? 0.45 : Math.max(0.32, visibilityStrength));
             ctx.fillStyle = "#f8d15f";
             ctx.beginPath();
             ctx.arc(centerX, centerY, size * 0.16, 0, Math.PI * 2);
@@ -1007,7 +1039,7 @@ class MobileMazeGame {
 
         const beacon = this.runtime.features.beacons.get(key);
         if (beacon) {
-            withAlpha(dimmed ? 0.35 : beacon.used ? 0.45 : 0.95);
+            withAlpha(dimmed ? 0.35 : beacon.used ? 0.45 : Math.max(0.4, visibilityStrength));
             ctx.strokeStyle = "#66d9d2";
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -1021,7 +1053,7 @@ class MobileMazeGame {
         }
 
         if (this.runtime.features.teleports.has(key)) {
-            withAlpha(dimmed ? 0.35 : 0.92);
+            withAlpha(dimmed ? 0.35 : Math.max(0.4, visibilityStrength));
             ctx.strokeStyle = "#8da8ff";
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -1035,7 +1067,7 @@ class MobileMazeGame {
 
         const door = this.runtime.features.doors.get(key);
         if (door && !door.open) {
-            withAlpha(dimmed ? 0.4 : 0.95);
+            withAlpha(dimmed ? 0.4 : Math.max(0.48, visibilityStrength));
             ctx.fillStyle = door.requiresPlate ? "#7ce38b" : "#ff8a3d";
             ctx.fillRect(x + size * 0.2, y + size * 0.22, size * 0.6, size * 0.56);
             ctx.fillStyle = "#0f1721";
@@ -1044,14 +1076,14 @@ class MobileMazeGame {
         }
 
         if (this.runtime.features.plate && this.runtime.features.plate.key === key) {
-            withAlpha(dimmed ? 0.35 : this.runtime.player.plateActivated ? 0.85 : 1);
+            withAlpha(dimmed ? 0.35 : this.runtime.player.plateActivated ? Math.max(0.46, visibilityStrength) : Math.max(0.56, visibilityStrength));
             ctx.fillStyle = this.runtime.player.plateActivated ? "#7ce38b" : "#b8d36c";
             ctx.fillRect(x + size * 0.22, y + size * 0.6, size * 0.56, size * 0.12);
             ctx.globalAlpha = 1;
         }
 
         if (this.runtime.features.exit.key === key) {
-            withAlpha(dimmed ? 0.4 : 1);
+            withAlpha(dimmed ? 0.4 : Math.max(0.5, visibilityStrength));
             ctx.fillStyle = "#8bd8a0";
             ctx.fillRect(x + size * 0.2, y + size * 0.18, size * 0.16, size * 0.62);
             ctx.fillRect(x + size * 0.28, y + size * 0.18, size * 0.38, size * 0.14);
@@ -1065,7 +1097,10 @@ class MobileMazeGame {
         }
 
         const ctx = this.ctx;
-        ctx.strokeStyle = cell.visibility === "visible" ? "#d5e3ff" : "#445165";
+        const visibilityStrength = cell.visibility === "visible" ? (cell.visibilityStrength ?? 1) : 0.3;
+        ctx.strokeStyle = cell.visibility === "visible"
+            ? `rgba(213, 227, 255, ${0.18 + visibilityStrength * 0.82})`
+            : "#445165";
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         if (cell.walls.top) {
@@ -1106,6 +1141,13 @@ class MobileMazeGame {
         const centerY = row * size + size / 2;
 
         ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "#ffc857";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, Math.max(16, size * 0.7), 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
         ctx.fillStyle = "#ffc857";
         ctx.beginPath();
         ctx.arc(centerX, centerY, Math.max(4, size * 0.24), 0, Math.PI * 2);
@@ -1309,6 +1351,10 @@ class MobileMazeGame {
             .filter((neighbor) => neighbor.row >= 0 && neighbor.row < grid.length && neighbor.col >= 0 && neighbor.col < grid[0].length);
     }
 
+    getCellDegree(grid, row, col) {
+        return this.getOpenNeighbors(grid, row, col).length;
+    }
+
     findFarthestCell(grid, start) {
         const queue = [{ ...start, distance: 0 }];
         const visited = new Set([cellKey(start.row, start.col)]);
@@ -1347,7 +1393,7 @@ class MobileMazeGame {
             return cell;
         };
 
-        const placeRandomFloor = (count, { preferFar = false, skipPath = false } = {}) => {
+        const placeRandomFloor = (count, { preferFar = false, skipPath = false, minDegree = 0 } = {}) => {
             const candidates = [];
             for (let row = 0; row < runtime.level.rows; row += 1) {
                 for (let col = 0; col < runtime.level.cols; col += 1) {
@@ -1356,6 +1402,9 @@ class MobileMazeGame {
                         continue;
                     }
                     if (skipPath && runtime.pathToExit.some((item) => item.row === row && item.col === col)) {
+                        continue;
+                    }
+                    if (this.getCellDegree(runtime.grid, row, col) < minDegree) {
                         continue;
                     }
                     candidates.push({ row, col, score: Math.abs(row - runtime.start.row) + Math.abs(col - runtime.start.col) });
@@ -1444,7 +1493,10 @@ class MobileMazeGame {
 
         if (runtime.level.challengeTags.includes("teleport-pair") || runtime.level.challengeTags.includes("teleport-chain") || runtime.level.challengeTags.includes("teleport-pair")) {
             const pairCount = runtime.level.challengeTags.includes("teleport-chain") ? 2 : 1;
-            const teleportCells = placeRandomFloor(pairCount * 2, { preferFar: true, skipPath: true });
+            let teleportCells = placeRandomFloor(pairCount * 2, { preferFar: true, skipPath: true, minDegree: 2 });
+            if (teleportCells.length < pairCount * 2) {
+                teleportCells = placeRandomFloor(pairCount * 2, { preferFar: true, skipPath: false, minDegree: 2 });
+            }
             for (let index = 0; index < teleportCells.length; index += 2) {
                 const from = teleportCells[index];
                 const to = teleportCells[index + 1];
@@ -1493,11 +1545,13 @@ class MobileMazeGame {
             if (cell.visibility === "visible") {
                 cell.visibility = this.saveData.settings.rememberFog ? "explored" : "hidden";
             }
+            cell.visibilityStrength = 0;
         });
 
         if (revealAll) {
             runtime.grid.flat().forEach((cell) => {
                 cell.visibility = "visible";
+                cell.visibilityStrength = 1;
             });
             return;
         }
@@ -1509,6 +1563,9 @@ class MobileMazeGame {
                     continue;
                 }
                 runtime.grid[row][col].visibility = "visible";
+                const normalized = clamp(distance / Math.max(radius, 0.001), 0, 1);
+                const eased = 1 - Math.pow(normalized, 1.85);
+                runtime.grid[row][col].visibilityStrength = clamp(0.16 + eased * 0.84, 0.16, 1);
             }
         }
     }

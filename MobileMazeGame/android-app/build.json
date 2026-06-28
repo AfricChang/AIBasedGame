@@ -1,0 +1,11 @@
+{
+  "android": {
+    "release": {
+      "keystore": "E:\\AI\\web\\AIBasedGame\\MobileMazeGame\\..\\game-app\\game-app-release.keystore",
+      "storePassword": "game-app-store",
+      "alias": "game-app",
+      "password": "game-app-store",
+      "keystoreType": "PKCS12"
+    }
+  }
+}
