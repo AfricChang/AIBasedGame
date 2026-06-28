@@ -12,6 +12,7 @@ const DEFAULT_SAVE = {
     settings: {
         showDpad: true,
         vibration: true,
+        sound: true,
         rememberFog: true
     },
     progress: {
@@ -192,10 +193,204 @@ class StorageService {
     }
 }
 
+class AudioService {
+    constructor(isEnabled) {
+        this.isEnabled = isEnabled;
+        this.context = null;
+        this.master = null;
+        this.lastPlayed = new Map();
+        this.unlocked = false;
+    }
+
+    unlock() {
+        if (!this.isEnabled()) {
+            return null;
+        }
+
+        const context = this.ensureContext();
+        if (!context || !this.master) {
+            return null;
+        }
+
+        if (!this.unlocked) {
+            const buffer = context.createBuffer(1, 1, context.sampleRate);
+            const source = context.createBufferSource();
+            const gain = context.createGain();
+            gain.gain.value = 0;
+            source.buffer = buffer;
+            source.connect(gain);
+            gain.connect(this.master);
+            source.start(0);
+            this.unlocked = true;
+        }
+
+        if (context.state === "suspended") {
+            context.resume().catch(() => {});
+        }
+        return context;
+    }
+
+    play(name) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
+        const context = this.unlock();
+        if (!context || !this.master) {
+            return;
+        }
+
+        const now = performance.now();
+        const lastPlayedAt = this.lastPlayed.get(name) || 0;
+        if (now - lastPlayedAt < 38) {
+            return;
+        }
+        this.lastPlayed.set(name, now);
+
+        if (context.state !== "running") {
+            context.resume()
+                .then(() => this.playPattern(name))
+                .catch(() => {});
+            return;
+        }
+
+        this.playPattern(name);
+    }
+
+    playPattern(name) {
+        switch (name) {
+            case "ui":
+                this.tone({ type: "triangle", start: 420, end: 620, duration: 0.055, volume: 0.045 });
+                break;
+            case "start":
+                this.tone({ type: "triangle", start: 320, end: 520, duration: 0.09, volume: 0.055 });
+                this.tone({ type: "triangle", start: 520, end: 760, duration: 0.11, volume: 0.045, delay: 0.055 });
+                break;
+            case "move":
+                this.tone({ type: "triangle", start: 210, end: 160, duration: 0.055, volume: 0.038 });
+                break;
+            case "mud":
+                this.tone({ type: "sawtooth", start: 120, end: 88, duration: 0.085, volume: 0.04 });
+                this.noise({ duration: 0.055, volume: 0.025, frequency: 380 });
+                break;
+            case "bump":
+                this.tone({ type: "square", start: 86, end: 52, duration: 0.075, volume: 0.07 });
+                break;
+            case "key":
+                this.tone({ type: "triangle", start: 760, end: 1120, duration: 0.12, volume: 0.065 });
+                this.tone({ type: "sine", start: 1220, end: 1320, duration: 0.08, volume: 0.045, delay: 0.07 });
+                break;
+            case "door":
+                this.tone({ type: "sawtooth", start: 210, end: 360, duration: 0.14, volume: 0.055 });
+                break;
+            case "plate":
+                this.tone({ type: "triangle", start: 280, end: 540, duration: 0.13, volume: 0.06 });
+                break;
+            case "beacon":
+                this.tone({ type: "sine", start: 540, end: 920, duration: 0.22, volume: 0.055 });
+                this.tone({ type: "sine", start: 810, end: 1220, duration: 0.2, volume: 0.038, delay: 0.045 });
+                break;
+            case "teleport":
+                this.tone({ type: "sine", start: 360, end: 980, duration: 0.18, volume: 0.06 });
+                this.noise({ duration: 0.12, volume: 0.022, frequency: 1800 });
+                break;
+            case "trap":
+                this.tone({ type: "sawtooth", start: 170, end: 92, duration: 0.2, volume: 0.055 });
+                break;
+            case "win":
+                this.tone({ type: "triangle", start: 520, end: 720, duration: 0.14, volume: 0.08 });
+                this.tone({ type: "triangle", start: 720, end: 980, duration: 0.16, volume: 0.075, delay: 0.09 });
+                this.tone({ type: "sine", start: 980, end: 1320, duration: 0.28, volume: 0.065, delay: 0.2 });
+                this.tone({ type: "sine", start: 660, end: 880, duration: 0.24, volume: 0.038, delay: 0.28 });
+                break;
+            case "fail":
+                this.tone({ type: "sawtooth", start: 240, end: 128, duration: 0.22, volume: 0.07 });
+                this.tone({ type: "sawtooth", start: 150, end: 84, duration: 0.18, volume: 0.052, delay: 0.14 });
+                break;
+            default:
+                break;
+        }
+    }
+
+    ensureContext() {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) {
+            return null;
+        }
+
+        if (!this.context) {
+            this.context = new AudioContextCtor();
+            this.master = this.context.createGain();
+            this.master.gain.value = 0.9;
+            this.master.connect(this.context.destination);
+        }
+
+        return this.context;
+    }
+
+    tone({ type, start, end = start, duration, volume, delay = 0 }) {
+        const context = this.ensureContext();
+        if (!context || !this.master) {
+            return;
+        }
+
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const startAt = context.currentTime + delay;
+        const endAt = startAt + duration;
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(Math.max(20, start), startAt);
+        oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, end), endAt);
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, endAt);
+
+        oscillator.connect(gain);
+        gain.connect(this.master);
+        oscillator.start(startAt);
+        oscillator.stop(endAt + 0.03);
+    }
+
+    noise({ duration, volume, frequency, delay = 0 }) {
+        const context = this.ensureContext();
+        if (!context || !this.master) {
+            return;
+        }
+
+        const sampleCount = Math.floor(context.sampleRate * duration);
+        const buffer = context.createBuffer(1, sampleCount, context.sampleRate);
+        const samples = buffer.getChannelData(0);
+        for (let index = 0; index < sampleCount; index += 1) {
+            samples[index] = Math.random() * 2 - 1;
+        }
+
+        const source = context.createBufferSource();
+        const filter = context.createBiquadFilter();
+        const gain = context.createGain();
+        const startAt = context.currentTime + delay;
+        const endAt = startAt + duration;
+
+        source.buffer = buffer;
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(frequency, startAt);
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, endAt);
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.master);
+        source.start(startAt);
+        source.stop(endAt + 0.02);
+    }
+}
+
 class MobileMazeGame {
     constructor() {
         this.storage = new StorageService();
         this.saveData = this.storage.load();
+        this.audio = new AudioService(() => !!this.saveData.settings.sound);
         this.currentScreen = "mainMenu";
         this.currentLevelId = 1;
         this.runtime = null;
@@ -255,28 +450,53 @@ class MobileMazeGame {
             settings: {
                 showDpad: document.getElementById("showDpadSetting"),
                 vibration: document.getElementById("vibrationSetting"),
+                sound: document.getElementById("soundSetting"),
                 rememberFog: document.getElementById("rememberFogSetting")
             }
         };
     }
 
     bindUI() {
+        const unlockAudio = () => this.audio.unlock();
+        document.addEventListener("pointerdown", unlockAudio, { capture: true });
+        document.addEventListener("touchstart", unlockAudio, { capture: true, passive: true });
+        document.addEventListener("keydown", unlockAudio, { capture: true });
+
         document.getElementById("startGameBtn").addEventListener("click", () => {
             this.startLevel(this.saveData.progress.unlockedLevel);
         });
-        document.getElementById("levelSelectBtn").addEventListener("click", () => this.showScreen("levelSelectScreen"));
-        document.getElementById("settingsBtn").addEventListener("click", () => this.showScreen("settingsScreen"));
-        document.getElementById("aboutBtn").addEventListener("click", () => this.showScreen("aboutScreen"));
+        document.getElementById("levelSelectBtn").addEventListener("click", () => {
+            this.audio.play("ui");
+            this.showScreen("levelSelectScreen");
+        });
+        document.getElementById("settingsBtn").addEventListener("click", () => {
+            this.audio.play("ui");
+            this.showScreen("settingsScreen");
+        });
+        document.getElementById("aboutBtn").addEventListener("click", () => {
+            this.audio.play("ui");
+            this.showScreen("aboutScreen");
+        });
         document.querySelectorAll(".back-btn").forEach((button) => {
             button.addEventListener("click", () => {
+                this.audio.play("ui");
                 this.showScreen(button.dataset.target);
             });
         });
 
-        document.getElementById("pauseBtn").addEventListener("click", () => this.pauseGame());
-        document.getElementById("resumeBtn").addEventListener("click", () => this.resumeGame());
+        document.getElementById("pauseBtn").addEventListener("click", () => {
+            this.audio.play("ui");
+            this.pauseGame();
+        });
+        document.getElementById("resumeBtn").addEventListener("click", () => {
+            this.audio.play("ui");
+            this.resumeGame();
+        });
         document.getElementById("restartBtn").addEventListener("click", () => this.restartLevel());
-        document.getElementById("leaveToMenuBtn").addEventListener("click", () => this.leaveToMenu());
+        document.getElementById("leaveToMenuBtn").addEventListener("click", () => {
+            this.audio.play("ui");
+            this.leaveToMenu();
+        });
 
         this.elements.resultPrimaryBtn.addEventListener("click", () => {
             if (this.resultMode === "next") {
@@ -288,12 +508,17 @@ class MobileMazeGame {
         });
         this.elements.resultSecondaryBtn.addEventListener("click", () => this.restartLevel());
         this.elements.resultMenuBtn.addEventListener("click", () => {
+            this.audio.play("ui");
             this.hideOverlay(this.elements.resultOverlay);
             this.showScreen("levelSelectScreen");
         });
 
         this.elements.settings.showDpad.addEventListener("change", () => this.saveSetting("showDpad", this.elements.settings.showDpad.checked));
         this.elements.settings.vibration.addEventListener("change", () => this.saveSetting("vibration", this.elements.settings.vibration.checked));
+        this.elements.settings.sound.addEventListener("change", () => {
+            this.saveSetting("sound", this.elements.settings.sound.checked);
+            this.audio.play("ui");
+        });
         this.elements.settings.rememberFog.addEventListener("change", () => {
             this.saveSetting("rememberFog", this.elements.settings.rememberFog.checked);
             if (this.runtime) {
@@ -425,6 +650,7 @@ class MobileMazeGame {
     applySettingsToUI() {
         this.elements.settings.showDpad.checked = !!this.saveData.settings.showDpad;
         this.elements.settings.vibration.checked = !!this.saveData.settings.vibration;
+        this.elements.settings.sound.checked = !!this.saveData.settings.sound;
         this.elements.settings.rememberFog.checked = !!this.saveData.settings.rememberFog;
         this.elements.dpad.classList.toggle("hidden", !this.saveData.settings.showDpad);
     }
@@ -514,6 +740,7 @@ class MobileMazeGame {
         }
 
         this.currentLevelId = levelId;
+        this.audio.play("start");
         this.buffSystem.clear();
         this.pendingDirection = null;
         this.clearHeldDirection();
@@ -608,6 +835,7 @@ class MobileMazeGame {
         if (door && !door.open) {
             if (runtime.player.keys >= door.requiredKeys && (!door.requiresPlate || runtime.player.plateActivated)) {
                 door.open = true;
+                this.audio.play("door");
                 this.flashMessage(door.requiredKeys > 1 ? "双钥门开启" : "门已开启");
             } else {
                 this.flashMessage(door.requiresPlate ? "需要先激活压板" : "钥匙不足，门无法开启");
@@ -636,6 +864,7 @@ class MobileMazeGame {
         runtime.player.row = nextRow;
         runtime.player.col = nextCol;
         runtime.moveCount += 1;
+        this.audio.play(runtime.grid[nextRow][nextCol].tile === "mud" ? "mud" : "move");
         this.updateHUD();
     }
 
@@ -676,6 +905,7 @@ class MobileMazeGame {
             if (runtime.features.keys.has(key)) {
                 runtime.features.keys.delete(key);
                 runtime.player.keys += 1;
+                this.audio.play("key");
                 this.flashMessage(runtime.player.keys > 1 ? "获得钥匙 x2 目标推进" : "获得钥匙");
                 this.softVibrate(35);
             }
@@ -683,6 +913,7 @@ class MobileMazeGame {
             const beacon = runtime.features.beacons.get(key);
             if (beacon && !beacon.used) {
                 beacon.used = true;
+                this.audio.play("beacon");
                 this.buffSystem.add({
                     id: `beacon-${key}`,
                     label: beacon.label,
@@ -695,6 +926,7 @@ class MobileMazeGame {
             }
 
             if (runtime.features.darkTraps.has(key)) {
+                this.audio.play("trap");
                 this.buffSystem.add({
                     id: `dark-${key}`,
                     label: "视野受损",
@@ -707,6 +939,7 @@ class MobileMazeGame {
 
             if (runtime.features.plate && runtime.features.plate.key === key && !runtime.player.plateActivated) {
                 runtime.player.plateActivated = true;
+                this.audio.play("plate");
                 this.flashMessage("压板已激活，终门解锁");
                 const exitDoor = runtime.features.doors.get(cellKey(runtime.exit.row, runtime.exit.col));
                 if (exitDoor) {
@@ -723,6 +956,7 @@ class MobileMazeGame {
                 currentRow = teleport.target.row;
                 currentCol = teleport.target.col;
                 teleportedThisStep = true;
+                this.audio.play("teleport");
                 this.flashMessage("跃迁成功");
                 this.softVibrate(20);
                 continue;
@@ -765,6 +999,7 @@ class MobileMazeGame {
     handleLevelComplete() {
         const runtime = this.runtime;
         runtime.state = "won";
+        this.audio.play("win");
         this.computeVisibility(true);
 
         const best = this.saveData.progress.completedLevels[this.currentLevelId];
@@ -797,6 +1032,7 @@ class MobileMazeGame {
             return;
         }
         runtime.state = "lost";
+        this.audio.play("fail");
         this.computeVisibility(true);
         this.resultMode = "replay";
         this.elements.resultTitle.textContent = "挑战失败";
@@ -863,6 +1099,7 @@ class MobileMazeGame {
     }
 
     bumpFeedback() {
+        this.audio.play("bump");
         this.softVibrate(12);
     }
 
@@ -985,27 +1222,17 @@ class MobileMazeGame {
         if (size <= 1) {
             return;
         }
-        let fill = "#07111b";
         const visibilityStrength = visible ? (cell.visibilityStrength ?? 1) : explored ? 0.22 : 0;
 
         if (visible) {
-            const colors = {
-                floor: "#1f3145",
-                mud: "#3d3a2a",
-                beacon: "#15394a",
-                trap: "#372037",
-                plate: "#2f3b1d",
-                exit: "#223920",
-                teleport: "#1a2647",
-                key: "#3c3117"
-            };
-            fill = colors[cell.tile] || "#22384d";
+            this.drawWoodFloor(cell, x, y, size, visibilityStrength);
         } else if (explored) {
-            fill = "#111a23";
+            ctx.fillStyle = "#15130f";
+            ctx.fillRect(x, y, size, size);
+        } else {
+            ctx.fillStyle = "#07111b";
+            ctx.fillRect(x, y, size, size);
         }
-
-        ctx.fillStyle = fill;
-        ctx.fillRect(x, y, size, size);
 
         if (visible) {
             const fogAlpha = clamp(0.76 - visibilityStrength * 0.7, 0.08, 0.68);
@@ -1020,6 +1247,60 @@ class MobileMazeGame {
             ctx.fillRect(x, y, size, size);
         } else {
             ctx.fillStyle = "rgba(0, 0, 0, 0.86)";
+            ctx.fillRect(x, y, size, size);
+        }
+    }
+
+    drawWoodFloor(cell, x, y, size, visibilityStrength) {
+        const ctx = this.ctx;
+        const tone = ((cell.row * 19 + cell.col * 23) % 9) - 4;
+        const baseByTile = {
+            floor: [91, 59, 38],
+            key: [104, 65, 34],
+            beacon: [71, 66, 48],
+            trap: [76, 48, 52],
+            plate: [78, 67, 39],
+            exit: [69, 77, 43],
+            teleport: [72, 61, 72],
+            mud: [64, 54, 36]
+        };
+        const overlayByTile = {
+            mud: "rgba(62, 47, 28, 0.48)",
+            beacon: "rgba(47, 126, 133, 0.3)",
+            trap: "rgba(92, 36, 92, 0.34)",
+            plate: "rgba(118, 142, 54, 0.28)",
+            exit: "rgba(88, 155, 85, 0.28)",
+            teleport: "rgba(88, 104, 180, 0.28)",
+            key: "rgba(156, 106, 42, 0.16)"
+        };
+        const base = baseByTile[cell.tile] || baseByTile.floor;
+        const red = clamp(base[0] + tone * 3, 0, 255);
+        const green = clamp(base[1] + tone * 2, 0, 255);
+        const blue = clamp(base[2] + tone, 0, 255);
+        const split = (cell.row + cell.col) % 2 === 0 ? 0.48 : 0.56;
+        const grainAlpha = 0.05 + visibilityStrength * 0.09;
+        const shadowAlpha = 0.1 + visibilityStrength * 0.06;
+
+        ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+        ctx.fillRect(x, y, size, size);
+
+        ctx.fillStyle = `rgba(37, 20, 10, ${shadowAlpha})`;
+        ctx.fillRect(x, y + size * split, size, Math.max(1, size * 0.035));
+        ctx.fillRect(x, y, Math.max(1, size * 0.035), size);
+
+        ctx.fillStyle = `rgba(255, 222, 164, ${grainAlpha})`;
+        for (let index = 0; index < 3; index += 1) {
+            const grainY = y + size * (0.18 + index * 0.24) + tone * 0.18;
+            const inset = size * (0.12 + ((cell.row + cell.col + index) % 3) * 0.05);
+            ctx.fillRect(x + inset, grainY, size - inset * 1.4, Math.max(1, size * 0.018));
+        }
+
+        ctx.fillStyle = `rgba(26, 13, 7, ${0.06 + visibilityStrength * 0.05})`;
+        ctx.fillRect(x, y + size - Math.max(1, size * 0.03), size, Math.max(1, size * 0.03));
+
+        const overlay = overlayByTile[cell.tile];
+        if (overlay) {
+            ctx.fillStyle = overlay;
             ctx.fillRect(x, y, size, size);
         }
     }
