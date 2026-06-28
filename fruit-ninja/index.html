@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>切水果忍者</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- 主界面 -->
+        <div id="mainMenu" class="screen">
+            <div class="menu-content">
+                <h1 class="game-title">切水果忍者</h1>
+                <div class="fruit-icons">
+                    🍎🍊🍌🍇🥝
+                </div>
+                <button id="startBtn" class="start-button">开始游戏</button>
+                <div class="instructions">
+                    <p>滑动屏幕切割水果</p>
+                    <p>避免切到炸弹</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="game-ui">
+                <div class="score-display">
+                    <span>得分: <span id="score">0</span></span>
+                </div>
+                <div class="lives-display">
+                    <span>生命: <span id="lives">❤️❤️❤️</span></span>
+                </div>
+                <button id="soundToggle" class="sound-button">🔊</button>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <!-- 游戏结束界面 -->
+        <div id="gameOverScreen" class="screen hidden">
+            <div class="game-over-content">
+                <h2>游戏结束</h2>
+                <div class="final-score">
+                    <p>最终得分: <span id="finalScore">0</span></p>
+                </div>
+                <button id="restartBtn" class="restart-button">重新开始</button>
+                <button id="backToMenuBtn" class="menu-button">返回主菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用时间戳参数强制刷新缓存 -->
+    <script>
+        // 添加时间戳参数，强制浏览器加载最新版本的脚本
+        const timestamp = new Date().getTime();
+        
+        // 动态创建脚本标签
+        function loadScript(src) {
+            const script = document.createElement('script');
+            script.src = src + '?v=' + timestamp;
+            document.body.appendChild(script);
+            return script;
+        }
+        
+        // 按顺序加载脚本
+        const audioScript = loadScript('audio.js');
+        audioScript.onload = function() {
+            const effectsScript = loadScript('effects.js');
+            effectsScript.onload = function() {
+                loadScript('game.js');
+            };
+        };
+    </script>
+</body>
+</html>
