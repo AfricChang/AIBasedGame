@@ -32,6 +32,19 @@ function edgeKey(fromRow, fromCol, toRow, toCol) {
     return `${fromRow},${fromCol}->${toRow},${toCol}`;
 }
 
+function parseEdgeKey(key) {
+    const [from, to] = key.split("->");
+    if (!from || !to) {
+        return null;
+    }
+    const [fromRow, fromCol] = from.split(",").map(Number);
+    const [toRow, toCol] = to.split(",").map(Number);
+    if ([fromRow, fromCol, toRow, toCol].some((value) => !Number.isFinite(value))) {
+        return null;
+    }
+    return { fromRow, fromCol, toRow, toCol };
+}
+
 function formatTime(ms) {
     const totalTenths = Math.floor(ms / 100);
     const tenths = totalTenths % 10;
@@ -583,7 +596,7 @@ class MobileMazeGame {
             return;
         }
 
-        const blockedByOneWay = runtime.features.oneWayBlocked.has(edgeKey(nextRow, nextCol, row, col));
+        const blockedByOneWay = runtime.features.oneWayBlocked.has(edgeKey(row, col, nextRow, nextCol));
         if (blockedByOneWay) {
             this.flashMessage("单向门阻止了回头路");
             this.bumpFeedback();
@@ -960,6 +973,7 @@ class MobileMazeGame {
             }
         }
 
+        this.drawOneWayGates(cellSize);
         this.drawPlayer(cellSize);
         ctx.restore();
     }
@@ -1120,6 +1134,98 @@ class MobileMazeGame {
             ctx.lineTo(x, y + size);
         }
         ctx.stroke();
+    }
+
+    drawOneWayGates(size) {
+        const gates = this.runtime.features.oneWayBlocked;
+        if (!gates.size || size <= 1) {
+            return;
+        }
+
+        const ctx = this.ctx;
+        gates.forEach((key) => {
+            const edge = parseEdgeKey(key);
+            if (!edge) {
+                return;
+            }
+
+            const fromCell = this.runtime.grid[edge.fromRow]?.[edge.fromCol];
+            const toCell = this.runtime.grid[edge.toRow]?.[edge.toCol];
+            if (!fromCell || !toCell) {
+                return;
+            }
+
+            const fromStrength = fromCell.visibility === "visible"
+                ? (fromCell.visibilityStrength ?? 1)
+                : fromCell.visibility === "explored" ? 0.3 : 0;
+            const toStrength = toCell.visibility === "visible"
+                ? (toCell.visibilityStrength ?? 1)
+                : toCell.visibility === "explored" ? 0.3 : 0;
+            const visibilityStrength = Math.max(fromStrength, toStrength);
+            if (visibilityStrength <= 0) {
+                return;
+            }
+
+            const directionX = edge.fromCol - edge.toCol;
+            const directionY = edge.fromRow - edge.toRow;
+            if (Math.abs(directionX) + Math.abs(directionY) !== 1) {
+                return;
+            }
+
+            const centerX = (edge.fromCol + edge.toCol + 1) * size / 2;
+            const centerY = (edge.fromRow + edge.toRow + 1) * size / 2;
+            const sideX = -directionY;
+            const sideY = directionX;
+            const arrowLength = size * 0.48;
+            const gateLength = size * 0.46;
+            const arrowHead = Math.max(4, size * 0.16);
+            const startX = centerX - directionX * arrowLength * 0.42;
+            const startY = centerY - directionY * arrowLength * 0.42;
+            const endX = centerX + directionX * arrowLength * 0.42;
+            const endY = centerY + directionY * arrowLength * 0.42;
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0.48, visibilityStrength * 0.95);
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+
+            ctx.strokeStyle = "rgba(4, 10, 18, 0.76)";
+            ctx.lineWidth = Math.max(5, size * 0.16);
+            ctx.beginPath();
+            ctx.moveTo(centerX - sideX * gateLength * 0.5, centerY - sideY * gateLength * 0.5);
+            ctx.lineTo(centerX + sideX * gateLength * 0.5, centerY + sideY * gateLength * 0.5);
+            ctx.stroke();
+
+            ctx.strokeStyle = "#ff8a3d";
+            ctx.lineWidth = Math.max(3, size * 0.1);
+            ctx.beginPath();
+            ctx.moveTo(centerX - sideX * gateLength * 0.5, centerY - sideY * gateLength * 0.5);
+            ctx.lineTo(centerX + sideX * gateLength * 0.5, centerY + sideY * gateLength * 0.5);
+            ctx.stroke();
+
+            ctx.strokeStyle = "rgba(4, 10, 18, 0.82)";
+            ctx.lineWidth = Math.max(4, size * 0.14);
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            ctx.strokeStyle = "#ffd166";
+            ctx.lineWidth = Math.max(2, size * 0.07);
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffd166";
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - directionX * arrowHead + sideX * arrowHead * 0.62, endY - directionY * arrowHead + sideY * arrowHead * 0.62);
+            ctx.lineTo(endX - directionX * arrowHead - sideX * arrowHead * 0.62, endY - directionY * arrowHead - sideY * arrowHead * 0.62);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        });
     }
 
     drawPlayer(size) {
