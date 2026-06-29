@@ -27,6 +27,14 @@
 3. `docs/exec-plan.md`
 4. `data/level-plan.json`
 
+## 开发命令
+
+```powershell
+npm test
+```
+
+当前测试使用 Node.js 内置 `node:test`，不依赖第三方测试框架。
+
 ## 当前结论摘要
 
 - 技术栈建议：`原生 Canvas + ES Modules + HTML/CSS UI`

@@ -1958,6 +1958,24 @@ class MobileMazeGame {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    new MobileMazeGame();
-});
+if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+        new MobileMazeGame();
+    });
+}
+
+export {
+    AudioService,
+    BuffSystem,
+    DEFAULT_SAVE,
+    DIRS,
+    MobileMazeGame,
+    SeededRandom,
+    StorageService,
+    cellKey,
+    clamp,
+    deepCloneSave,
+    edgeKey,
+    formatTime,
+    parseEdgeKey
+};
