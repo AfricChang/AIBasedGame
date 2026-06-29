@@ -103,6 +103,10 @@
                         <span>步数</span>
                         <strong id="moveCountLabel">0</strong>
                     </div>
+                    <div class="status-chip">
+                        <span>目标</span>
+                        <strong id="targetLabel">00:00.0 / 0步</strong>
+                    </div>
                     <div class="status-chip buff-chip">
                         <span>Buff</span>
                         <strong id="buffLabel">无</strong>
@@ -141,6 +145,11 @@
             <div class="overlay-card">
                 <h3 id="resultTitle">挑战完成</h3>
                 <p id="resultSummary">你顺利穿过了迷宫。</p>
+                <div class="result-rating">
+                    <strong id="resultStars">未评级</strong>
+                    <span id="resultTargets">目标 00:00.0 / 0步</span>
+                    <span id="resultRatingDetail">通关后根据目标时间和步数评级</span>
+                </div>
                 <div class="result-stats">
                     <span>时间 <strong id="resultTime">00:00.0</strong></span>
                     <span>步数 <strong id="resultMoves">0</strong></span>

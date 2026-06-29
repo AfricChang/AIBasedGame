@@ -224,7 +224,18 @@ button {
 
 .level-card span {
     font-size: 0.82rem;
+}
+
+.level-target {
+    color: var(--muted);
+}
+
+.level-best {
     color: var(--teal);
+}
+
+.level-empty {
+    color: var(--muted);
 }
 
 .settings-list {
@@ -296,7 +307,7 @@ button {
 
 .status-strip {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
     padding: 10px 12px;
 }
@@ -418,6 +429,25 @@ button {
 .overlay-card p,
 .result-stats {
     color: var(--muted);
+}
+
+.result-rating {
+    display: grid;
+    gap: 5px;
+    justify-items: center;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.result-rating strong {
+    color: var(--accent);
+    font-size: 1.35rem;
+}
+
+.result-rating span {
+    color: var(--muted);
+    font-size: 0.88rem;
 }
 
 .result-stats {

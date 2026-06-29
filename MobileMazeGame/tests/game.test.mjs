@@ -9,8 +9,10 @@ import {
     DIRS,
     MobileMazeGame,
     StorageService,
+    calculateLevelRating,
     cellKey,
     edgeKey,
+    mergeCompletionRecord,
     parseEdgeKey
 } from "../game.js";
 
@@ -188,7 +190,39 @@ test("all generated levels are mechanically solvable", () => {
         const result = solveRuntime(runtime);
         assert.equal(result.reachable, true, `${level.code} ${level.name} should be solvable`);
         assert.ok(result.moves !== null && result.moves > 0, `${level.code} should have a non-empty solution`);
+        assert.ok(result.moves <= level.targetMoves, `${level.code} targetMoves should allow an optimal route`);
     }
+});
+
+test("target thresholds calculate completion stars", () => {
+    const level = { targetTimeSec: 60, targetMoves: 20 };
+
+    assert.deepEqual(calculateLevelRating(level, 60000, 20), {
+        stars: 3,
+        metTimeTarget: true,
+        metMoveTarget: true,
+        targetTimeMs: 60000,
+        targetMoves: 20
+    });
+    assert.equal(calculateLevelRating(level, 61000, 20).stars, 2);
+    assert.equal(calculateLevelRating(level, 59000, 21).stars, 2);
+    assert.equal(calculateLevelRating(level, 61000, 21).stars, 1);
+});
+
+test("completion records retain best time, moves, and stars independently", () => {
+    const level = { targetTimeSec: 60, targetMoves: 20 };
+
+    const first = mergeCompletionRecord(null, level, 65000, 25);
+    assert.deepEqual(first, { bestTimeMs: 65000, bestMoves: 25, stars: 1 });
+
+    const fewerMoves = mergeCompletionRecord(first, level, 70000, 18);
+    assert.deepEqual(fewerMoves, { bestTimeMs: 65000, bestMoves: 18, stars: 2 });
+
+    const faster = mergeCompletionRecord(fewerMoves, level, 55000, 30);
+    assert.deepEqual(faster, { bestTimeMs: 55000, bestMoves: 18, stars: 2 });
+
+    const threeStars = mergeCompletionRecord(faster, level, 55000, 18);
+    assert.deepEqual(threeStars, { bestTimeMs: 55000, bestMoves: 18, stars: 3 });
 });
 
 test("challenge tags create the currently implemented feature types", () => {

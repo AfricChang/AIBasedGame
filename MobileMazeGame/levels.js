@@ -12,7 +12,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["tutorial", "short-path"],
         targetTimeSec: 40,
-        targetMoves: 24
+        targetMoves: 70
     },
     {
         id: 2,
@@ -27,7 +27,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["forks", "backtrack"],
         targetTimeSec: 50,
-        targetMoves: 30
+        targetMoves: 95
     },
     {
         id: 3,
@@ -42,7 +42,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["dead-ends", "memory"],
         targetTimeSec: 60,
-        targetMoves: 38
+        targetMoves: 95
     },
     {
         id: 4,
@@ -57,7 +57,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["low-vision"],
         targetTimeSec: 70,
-        targetMoves: 44
+        targetMoves: 120
     },
     {
         id: 5,
@@ -72,7 +72,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["key-door"],
         targetTimeSec: 75,
-        targetMoves: 46
+        targetMoves: 75
     },
     {
         id: 6,
@@ -87,7 +87,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["beacon", "buff-validation"],
         targetTimeSec: 80,
-        targetMoves: 50
+        targetMoves: 135
     },
     {
         id: 7,
@@ -102,7 +102,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["slow-tiles"],
         targetTimeSec: 90,
-        targetMoves: 56
+        targetMoves: 115
     },
     {
         id: 8,
@@ -117,7 +117,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["teleport-pair"],
         targetTimeSec: 95,
-        targetMoves: 58
+        targetMoves: 100
     },
     {
         id: 9,
@@ -132,7 +132,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["one-way-gate"],
         targetTimeSec: 100,
-        targetMoves: 62
+        targetMoves: 80
     },
     {
         id: 10,
@@ -147,7 +147,7 @@ export const LEVELS = [
         timerSec: 90,
         challengeTags: ["timer"],
         targetTimeSec: 85,
-        targetMoves: 60
+        targetMoves: 180
     },
     {
         id: 11,
@@ -162,7 +162,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["vision-debuff", "trap-tiles"],
         targetTimeSec: 110,
-        targetMoves: 70
+        targetMoves: 155
     },
     {
         id: 12,
@@ -177,7 +177,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["dual-keys", "route-planning"],
         targetTimeSec: 120,
-        targetMoves: 76
+        targetMoves: 145
     },
     {
         id: 13,
@@ -192,7 +192,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["hidden-shortcut", "exploration-reward"],
         targetTimeSec: 125,
-        targetMoves: 78
+        targetMoves: 135
     },
     {
         id: 14,
@@ -207,7 +207,7 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["pressure-plate", "sequence"],
         targetTimeSec: 130,
-        targetMoves: 82
+        targetMoves: 100
     },
     {
         id: 15,

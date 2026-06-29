@@ -55,6 +55,48 @@ function formatTime(ms) {
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
 }
 
+function calculateLevelRating(level, elapsedMs, moveCount) {
+    const targetTimeMs = level.targetTimeSec * 1000;
+    const metTimeTarget = elapsedMs <= targetTimeMs;
+    const metMoveTarget = moveCount <= level.targetMoves;
+    return {
+        stars: 1 + (metTimeTarget ? 1 : 0) + (metMoveTarget ? 1 : 0),
+        metTimeTarget,
+        metMoveTarget,
+        targetTimeMs,
+        targetMoves: level.targetMoves
+    };
+}
+
+function getCompletionStars(level, record) {
+    if (!record) {
+        return 0;
+    }
+
+    if (Number.isFinite(record.stars)) {
+        return clamp(record.stars, 0, 3);
+    }
+
+    if (Number.isFinite(record.bestTimeMs) && Number.isFinite(record.bestMoves)) {
+        return calculateLevelRating(level, record.bestTimeMs, record.bestMoves).stars;
+    }
+
+    return 0;
+}
+
+function mergeCompletionRecord(previous, level, elapsedMs, moveCount) {
+    const rating = calculateLevelRating(level, elapsedMs, moveCount);
+    return {
+        bestTimeMs: previous ? Math.min(previous.bestTimeMs ?? elapsedMs, elapsedMs) : elapsedMs,
+        bestMoves: previous ? Math.min(previous.bestMoves ?? moveCount, moveCount) : moveCount,
+        stars: Math.max(getCompletionStars(level, previous), rating.stars)
+    };
+}
+
+function formatLevelTarget(level) {
+    return `${formatTime(level.targetTimeSec * 1000)} / ${level.targetMoves}步`;
+}
+
 function deepCloneSave(save) {
     return JSON.parse(JSON.stringify(save));
 }
@@ -435,6 +477,7 @@ class MobileMazeGame {
             timerLabel: document.getElementById("timerLabel"),
             visionLabel: document.getElementById("visionLabel"),
             moveCountLabel: document.getElementById("moveCountLabel"),
+            targetLabel: document.getElementById("targetLabel"),
             buffLabel: document.getElementById("buffLabel"),
             swipeHint: document.getElementById("swipeHint"),
             dpad: document.getElementById("dpad"),
@@ -442,6 +485,9 @@ class MobileMazeGame {
             resultOverlay: document.getElementById("resultOverlay"),
             resultTitle: document.getElementById("resultTitle"),
             resultSummary: document.getElementById("resultSummary"),
+            resultStars: document.getElementById("resultStars"),
+            resultTargets: document.getElementById("resultTargets"),
+            resultRatingDetail: document.getElementById("resultRatingDetail"),
             resultTime: document.getElementById("resultTime"),
             resultMoves: document.getElementById("resultMoves"),
             resultPrimaryBtn: document.getElementById("resultPrimaryBtn"),
@@ -697,7 +743,10 @@ class MobileMazeGame {
     }
 
     updateProgressMeta() {
-        this.elements.progressMeta.textContent = `已解锁 ${this.saveData.progress.unlockedLevel} / ${LEVELS.length}`;
+        const totalStars = LEVELS.reduce((sum, level) => {
+            return sum + getCompletionStars(level, this.saveData.progress.completedLevels[level.id]);
+        }, 0);
+        this.elements.progressMeta.textContent = `已解锁 ${this.saveData.progress.unlockedLevel} / ${LEVELS.length} · 星级 ${totalStars} / ${LEVELS.length * 3}`;
     }
 
     renderLevelGrid() {
@@ -712,10 +761,15 @@ class MobileMazeGame {
             }
 
             const completed = this.saveData.progress.completedLevels[level.id];
+            const stars = getCompletionStars(level, completed);
+            const bestSummary = completed
+                ? `最佳 ${formatTime(completed.bestTimeMs)} · ${completed.bestMoves}步 · ${stars}星`
+                : "尚未通关";
             card.innerHTML = `
                 <strong>${level.code} ${level.name}</strong>
                 <small>${level.rows}x${level.cols} · 视野 ${level.visionRadius} · ${this.getObjectiveText(level)}</small>
-                <span>${completed ? `最佳 ${formatTime(completed.bestTimeMs)}` : "尚未通关"}</span>
+                <span class="level-target">目标 ${formatLevelTarget(level)}</span>
+                <span class="${completed ? "level-best" : "level-empty"}">${bestSummary}</span>
             `;
             card.addEventListener("click", () => this.startLevel(level.id));
             this.elements.levelGrid.appendChild(card);
@@ -1003,12 +1057,8 @@ class MobileMazeGame {
         this.computeVisibility(true);
 
         const best = this.saveData.progress.completedLevels[this.currentLevelId];
-        if (!best || runtime.elapsedMs < best.bestTimeMs) {
-            this.saveData.progress.completedLevels[this.currentLevelId] = {
-                bestTimeMs: runtime.elapsedMs,
-                bestMoves: runtime.moveCount
-            };
-        }
+        const rating = calculateLevelRating(runtime.level, runtime.elapsedMs, runtime.moveCount);
+        this.saveData.progress.completedLevels[this.currentLevelId] = mergeCompletionRecord(best, runtime.level, runtime.elapsedMs, runtime.moveCount);
 
         this.saveData.progress.unlockedLevel = Math.max(this.saveData.progress.unlockedLevel, Math.min(LEVELS.length, this.currentLevelId + 1));
         this.storage.save(this.saveData);
@@ -1022,6 +1072,9 @@ class MobileMazeGame {
             : "你已经完成全部 20 个迷宫挑战。";
         this.elements.resultTime.textContent = formatTime(runtime.elapsedMs);
         this.elements.resultMoves.textContent = String(runtime.moveCount);
+        this.elements.resultStars.textContent = `${rating.stars} 星`;
+        this.elements.resultTargets.textContent = `目标 ${formatLevelTarget(runtime.level)}`;
+        this.elements.resultRatingDetail.textContent = `${rating.metTimeTarget ? "时间达标" : "时间超出"} · ${rating.metMoveTarget ? "步数达标" : "步数超出"}`;
         this.elements.resultPrimaryBtn.textContent = this.currentLevelId < LEVELS.length ? "下一关" : "再次挑战";
         this.showOverlay(this.elements.resultOverlay);
     }
@@ -1039,6 +1092,9 @@ class MobileMazeGame {
         this.elements.resultSummary.textContent = message;
         this.elements.resultTime.textContent = formatTime(runtime.elapsedMs);
         this.elements.resultMoves.textContent = String(runtime.moveCount);
+        this.elements.resultStars.textContent = "未评级";
+        this.elements.resultTargets.textContent = `目标 ${formatLevelTarget(runtime.level)}`;
+        this.elements.resultRatingDetail.textContent = "通关后根据目标时间和步数评级";
         this.elements.resultPrimaryBtn.textContent = "再试一次";
         this.showOverlay(this.elements.resultOverlay);
     }
@@ -1051,12 +1107,14 @@ class MobileMazeGame {
         const runtime = this.runtime;
         const timerBucket = Math.floor(runtime.elapsedMs / 100);
         const buffLabel = this.buffSystem.getLabel();
+        const targetLabel = formatLevelTarget(runtime.level);
         if (
             this.elements.levelTitle.textContent === `${runtime.level.code} ${runtime.level.name}` &&
             this.elements.objectiveLabel.textContent === this.getObjectiveStatusText(runtime) &&
             this.elements.timerLabel.dataset.bucket === String(timerBucket) &&
             this.elements.visionLabel.textContent === String(this.getCurrentVisionRadius()) &&
             this.elements.moveCountLabel.textContent === String(runtime.moveCount) &&
+            this.elements.targetLabel.textContent === targetLabel &&
             this.elements.buffLabel.textContent === buffLabel
         ) {
             return;
@@ -1070,6 +1128,7 @@ class MobileMazeGame {
         this.elements.timerLabel.dataset.bucket = String(timerBucket);
         this.elements.visionLabel.textContent = String(this.getCurrentVisionRadius());
         this.elements.moveCountLabel.textContent = String(runtime.moveCount);
+        this.elements.targetLabel.textContent = targetLabel;
         this.elements.buffLabel.textContent = buffLabel;
     }
 
@@ -1972,10 +2031,12 @@ export {
     MobileMazeGame,
     SeededRandom,
     StorageService,
+    calculateLevelRating,
     cellKey,
     clamp,
     deepCloneSave,
     edgeKey,
     formatTime,
+    mergeCompletionRecord,
     parseEdgeKey
 };
