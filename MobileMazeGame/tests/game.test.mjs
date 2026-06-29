@@ -217,6 +217,20 @@ test("challenge tags create the currently implemented feature types", () => {
         if (tags.includes("vision-debuff") || tags.includes("trap-tiles")) {
             assert.ok(runtime.features.darkTraps.size > 0, `${level.code} should have dark traps`);
         }
+        if (tags.includes("dual-keys")) {
+            assert.equal(runtime.features.keys.size, 2, `${level.code} should have two keys`);
+            assert.ok(
+                Array.from(runtime.features.doors.values()).some((door) => door.requiredKeys === 2),
+                `${level.code} should have a two-key door`
+            );
+        }
+        if (tags.includes("pressure-plate")) {
+            assert.ok(runtime.features.plate, `${level.code} should have a pressure plate`);
+        }
+        if (tags.includes("timer")) {
+            assert.equal(typeof level.timerSec, "number", `${level.code} should configure a timer`);
+            assert.ok(level.timerSec > 0, `${level.code} should configure a positive timer`);
+        }
         if (level.objective === "activate-plate-and-exit" || level.objective === "final-relay") {
             assert.ok(runtime.features.plate, `${level.code} should have a pressure plate`);
         }
@@ -347,4 +361,23 @@ test("disabled audio does not create an audio context", () => {
 
 test.skip("visibility should respect wall blocking once grid-raycast is implemented");
 
-test.skip("design-only challenge tags should be reconciled with generated mechanics");
+test("mechanic challenge tags stay aligned with configured objectives", () => {
+    const retiredMechanicTags = new Set(["dark-core"]);
+
+    for (const level of LEVELS) {
+        const tags = new Set(level.challengeTags);
+        for (const tag of tags) {
+            assert.equal(retiredMechanicTags.has(tag), false, `${level.code} uses retired mechanic tag ${tag}`);
+        }
+
+        if (level.timerSec !== null) {
+            assert.ok(tags.has("timer"), `${level.code} has timerSec and should include timer tag`);
+        }
+        if (level.objective === "collect-two-keys-and-exit" || level.objective === "final-relay") {
+            assert.ok(tags.has("dual-keys"), `${level.code} requires two keys and should include dual-keys tag`);
+        }
+        if (level.objective === "activate-plate-and-exit" || level.objective === "final-relay") {
+            assert.ok(tags.has("pressure-plate"), `${level.code} requires a plate and should include pressure-plate tag`);
+        }
+    }
+});

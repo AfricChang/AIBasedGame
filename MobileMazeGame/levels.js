@@ -250,7 +250,7 @@ export const LEVELS = [
         visionRadius: 2,
         objective: "reach-exit",
         timerSec: null,
-        challengeTags: ["dark-core", "long-route"],
+        challengeTags: ["low-vision", "long-route"],
         targetTimeSec: 155,
         targetMoves: 96
     },
@@ -280,7 +280,7 @@ export const LEVELS = [
         visionRadius: 2,
         objective: "collect-two-keys-and-exit",
         timerSec: 165,
-        challengeTags: ["compound-mechanics", "pressure-plate", "teleport-pair"],
+        challengeTags: ["compound-mechanics", "dual-keys", "teleport-pair", "timer"],
         targetTimeSec: 160,
         targetMoves: 104
     },
@@ -295,7 +295,7 @@ export const LEVELS = [
         visionRadius: 2,
         objective: "final-relay",
         timerSec: 180,
-        challengeTags: ["final-trial", "beacon", "dual-keys", "teleport-chain", "timer"],
+        challengeTags: ["final-trial", "beacon", "dual-keys", "pressure-plate", "teleport-chain", "timer"],
         targetTimeSec: 175,
         targetMoves: 118
     }
