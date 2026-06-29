@@ -101,6 +101,57 @@ function deepCloneSave(save) {
     return JSON.parse(JSON.stringify(save));
 }
 
+function normalizeSaveData(rawSave) {
+    const rawSettings = rawSave && typeof rawSave === "object" ? rawSave.settings || {} : {};
+    const settings = {
+        showDpad: rawSettings.showDpad ?? (rawSettings.inputMode ? rawSettings.inputMode !== "swipe-only" : DEFAULT_SAVE.settings.showDpad),
+        vibration: rawSettings.vibration ?? DEFAULT_SAVE.settings.vibration,
+        sound: rawSettings.sound ?? rawSettings.sfxEnabled ?? rawSettings.musicEnabled ?? DEFAULT_SAVE.settings.sound,
+        rememberFog: rawSettings.rememberFog ?? DEFAULT_SAVE.settings.rememberFog
+    };
+
+    const rawProgress = rawSave && typeof rawSave === "object" ? rawSave.progress || {} : {};
+    const unlockedLevel = Number(rawProgress.unlockedLevel);
+    const completedLevels = {};
+    Object.entries(rawProgress.completedLevels || {}).forEach(([levelId, record]) => {
+        const level = LEVELS.find((item) => String(item.id) === String(levelId));
+        if (!level || !record || typeof record !== "object") {
+            return;
+        }
+
+        const bestTimeMs = Number(record.bestTimeMs);
+        const bestMoves = Number(record.bestMoves);
+        if (!Number.isFinite(bestTimeMs) || !Number.isFinite(bestMoves)) {
+            return;
+        }
+
+        const normalizedTimeMs = Math.max(0, bestTimeMs);
+        const normalizedMoves = Math.max(0, Math.floor(bestMoves));
+        completedLevels[level.id] = {
+            bestTimeMs: normalizedTimeMs,
+            bestMoves: normalizedMoves,
+            stars: Number.isFinite(record.stars)
+                ? clamp(Math.round(record.stars), 1, 3)
+                : calculateLevelRating(level, normalizedTimeMs, normalizedMoves).stars
+        };
+    });
+
+    return {
+        settings: {
+            showDpad: !!settings.showDpad,
+            vibration: !!settings.vibration,
+            sound: !!settings.sound,
+            rememberFog: !!settings.rememberFog
+        },
+        progress: {
+            unlockedLevel: Number.isFinite(unlockedLevel)
+                ? clamp(Math.floor(unlockedLevel), 1, LEVELS.length)
+                : DEFAULT_SAVE.progress.unlockedLevel,
+            completedLevels
+        }
+    };
+}
+
 class SeededRandom {
     constructor(seed) {
         this.seed = seed % 2147483647;
@@ -214,16 +265,7 @@ class StorageService {
                 return deepCloneSave(DEFAULT_SAVE);
             }
 
-            return {
-                settings: {
-                    ...DEFAULT_SAVE.settings,
-                    ...(JSON.parse(raw).settings || {})
-                },
-                progress: {
-                    ...DEFAULT_SAVE.progress,
-                    ...(JSON.parse(raw).progress || {})
-                }
-            };
+            return normalizeSaveData(JSON.parse(raw));
         } catch (error) {
             console.warn("Failed to load save data:", error);
             return deepCloneSave(DEFAULT_SAVE);
@@ -231,7 +273,7 @@ class StorageService {
     }
 
     save(saveData) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeSaveData(saveData)));
     }
 }
 
@@ -449,6 +491,14 @@ class MobileMazeGame {
 
         this.canvas = document.getElementById("gameCanvas");
         this.ctx = this.canvas.getContext("2d");
+        this.mapLayer = document.createElement("canvas");
+        this.mapCtx = this.mapLayer.getContext("2d");
+        this.mapRenderState = {
+            dpr: 1,
+            layout: null,
+            fullDirty: true,
+            dirtyCells: new Set()
+        };
         this.elements = this.collectElements();
 
         this.bindUI();
@@ -701,6 +751,29 @@ class MobileMazeGame {
         this.elements.dpad.classList.toggle("hidden", !this.saveData.settings.showDpad);
     }
 
+    markMapDirty(full = false) {
+        if (!this.mapRenderState) {
+            return;
+        }
+
+        if (full) {
+            this.mapRenderState.fullDirty = true;
+            this.mapRenderState.dirtyCells.clear();
+        }
+    }
+
+    markDirtyCell(row, col) {
+        if (!this.mapRenderState || !this.runtime) {
+            return;
+        }
+        if (row < 0 || row >= this.runtime.level.rows || col < 0 || col >= this.runtime.level.cols) {
+            return;
+        }
+        if (!this.mapRenderState.fullDirty) {
+            this.mapRenderState.dirtyCells.add(cellKey(row, col));
+        }
+    }
+
     resizeCanvas() {
         const viewport = document.getElementById("gameViewport");
         if (!viewport || viewport.clientWidth === 0 || viewport.clientHeight === 0) {
@@ -711,12 +784,25 @@ class MobileMazeGame {
         const height = Math.max(280, viewport.clientHeight);
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-        this.canvas.width = Math.floor(width * dpr);
-        this.canvas.height = Math.floor(height * dpr);
+        const pixelWidth = Math.floor(width * dpr);
+        const pixelHeight = Math.floor(height * dpr);
+        const changed = this.canvas.width !== pixelWidth || this.canvas.height !== pixelHeight || this.mapRenderState.dpr !== dpr;
+
+        if (changed) {
+            this.canvas.width = pixelWidth;
+            this.canvas.height = pixelHeight;
+            this.mapLayer.width = pixelWidth;
+            this.mapLayer.height = pixelHeight;
+            this.mapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            this.mapRenderState.dpr = dpr;
+            this.mapRenderState.layout = null;
+            this.markMapDirty(true);
+        }
+
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        return true;
+        return changed;
     }
 
     showScreen(screenId) {
@@ -801,6 +887,7 @@ class MobileMazeGame {
         this.hideOverlay(this.elements.pauseOverlay);
         this.hideOverlay(this.elements.resultOverlay);
         this.runtime = this.createLevelRuntime(level);
+        this.markMapDirty(true);
         this.updateHUD();
         this.showScreen("gameScreen");
         requestAnimationFrame(() => {
@@ -889,6 +976,7 @@ class MobileMazeGame {
         if (door && !door.open) {
             if (runtime.player.keys >= door.requiredKeys && (!door.requiresPlate || runtime.player.plateActivated)) {
                 door.open = true;
+                this.markDirtyCell(nextRow, nextCol);
                 this.audio.play("door");
                 this.flashMessage(door.requiredKeys > 1 ? "双钥门开启" : "门已开启");
             } else {
@@ -959,6 +1047,7 @@ class MobileMazeGame {
             if (runtime.features.keys.has(key)) {
                 runtime.features.keys.delete(key);
                 runtime.player.keys += 1;
+                this.markDirtyCell(currentRow, currentCol);
                 this.audio.play("key");
                 this.flashMessage(runtime.player.keys > 1 ? "获得钥匙 x2 目标推进" : "获得钥匙");
                 this.softVibrate(35);
@@ -967,6 +1056,7 @@ class MobileMazeGame {
             const beacon = runtime.features.beacons.get(key);
             if (beacon && !beacon.used) {
                 beacon.used = true;
+                this.markDirtyCell(currentRow, currentCol);
                 this.audio.play("beacon");
                 this.buffSystem.add({
                     id: `beacon-${key}`,
@@ -993,11 +1083,13 @@ class MobileMazeGame {
 
             if (runtime.features.plate && runtime.features.plate.key === key && !runtime.player.plateActivated) {
                 runtime.player.plateActivated = true;
+                this.markDirtyCell(currentRow, currentCol);
                 this.audio.play("plate");
                 this.flashMessage("压板已激活，终门解锁");
                 const exitDoor = runtime.features.doors.get(cellKey(runtime.exit.row, runtime.exit.col));
                 if (exitDoor) {
                     exitDoor.requiresPlate = false;
+                    this.markDirtyCell(runtime.exit.row, runtime.exit.col);
                 }
                 this.softVibrate(45);
             }
@@ -1234,7 +1326,39 @@ class MobileMazeGame {
         }
 
         const runtime = this.runtime;
+        const layout = this.getRenderLayout(runtime);
+        if (!layout) {
+            return;
+        }
+
+        if (!this.layoutMatches(this.mapRenderState.layout, layout)) {
+            this.mapRenderState.layout = layout;
+            this.markMapDirty(true);
+        }
+
+        const hasMapChanges = this.mapRenderState.fullDirty || this.mapRenderState.dirtyCells.size > 0;
+        const needsPlayerFrame = !!runtime.player.moving || hasMapChanges;
+        if (!needsPlayerFrame) {
+            return;
+        }
+
+        if (hasMapChanges) {
+            this.updateMapLayer(runtime, layout);
+        }
+
         const ctx = this.ctx;
+        ctx.clearRect(0, 0, layout.width, layout.height);
+        ctx.fillStyle = "#07111b";
+        ctx.fillRect(0, 0, layout.width, layout.height);
+        ctx.drawImage(this.mapLayer, 0, 0, layout.width, layout.height);
+
+        ctx.save();
+        ctx.translate(layout.offsetX, layout.offsetY);
+        this.drawPlayer(layout.cellSize);
+        ctx.restore();
+    }
+
+    getRenderLayout(runtime) {
         const width = this.canvas.clientWidth;
         const height = this.canvas.clientHeight;
         const padding = 18;
@@ -1242,40 +1366,104 @@ class MobileMazeGame {
         const rows = runtime.level.rows;
         const cellSize = Math.min((width - padding * 2) / cols, (height - padding * 2) / rows);
         if (!Number.isFinite(cellSize) || cellSize <= 1) {
-            return;
+            return null;
         }
         const boardWidth = cellSize * cols;
         const boardHeight = cellSize * rows;
-        const offsetX = (width - boardWidth) / 2;
-        const offsetY = (height - boardHeight) / 2;
-
-        ctx.clearRect(0, 0, width, height);
-
-        ctx.fillStyle = "#07111b";
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-
-        for (let row = 0; row < rows; row += 1) {
-            for (let col = 0; col < cols; col += 1) {
-                const cell = runtime.grid[row][col];
-                const x = col * cellSize;
-                const y = row * cellSize;
-
-                this.drawCell(cell, x, y, cellSize);
-                this.drawSpecials(row, col, x, y, cellSize);
-                this.drawWalls(cell, x, y, cellSize);
-            }
-        }
-
-        this.drawOneWayGates(cellSize);
-        this.drawPlayer(cellSize);
-        ctx.restore();
+        return {
+            width,
+            height,
+            rows,
+            cols,
+            cellSize,
+            boardWidth,
+            boardHeight,
+            offsetX: (width - boardWidth) / 2,
+            offsetY: (height - boardHeight) / 2
+        };
     }
 
-    drawCell(cell, x, y, size) {
-        const ctx = this.ctx;
+    layoutMatches(previous, next) {
+        return !!previous &&
+            previous.width === next.width &&
+            previous.height === next.height &&
+            previous.rows === next.rows &&
+            previous.cols === next.cols &&
+            previous.cellSize === next.cellSize &&
+            previous.offsetX === next.offsetX &&
+            previous.offsetY === next.offsetY;
+    }
+
+    updateMapLayer(runtime, layout) {
+        const ctx = this.mapCtx;
+        const redrawAll = this.mapRenderState.fullDirty ||
+            this.mapRenderState.dirtyCells.size > runtime.level.rows * runtime.level.cols * 0.45;
+
+        ctx.save();
+        if (redrawAll) {
+            ctx.clearRect(0, 0, layout.width, layout.height);
+            ctx.fillStyle = "#07111b";
+            ctx.fillRect(0, 0, layout.width, layout.height);
+            ctx.translate(layout.offsetX, layout.offsetY);
+            this.drawMapCells(runtime, layout, null);
+            this.drawOneWayGates(layout.cellSize, ctx);
+        } else {
+            const cellsToRedraw = new Set();
+            this.mapRenderState.dirtyCells.forEach((key) => {
+                const [row, col] = key.split(",").map(Number);
+                if (!Number.isFinite(row) || !Number.isFinite(col)) {
+                    return;
+                }
+                for (let nearRow = row - 1; nearRow <= row + 1; nearRow += 1) {
+                    for (let nearCol = col - 1; nearCol <= col + 1; nearCol += 1) {
+                        if (nearRow >= 0 && nearRow < runtime.level.rows && nearCol >= 0 && nearCol < runtime.level.cols) {
+                            cellsToRedraw.add(cellKey(nearRow, nearCol));
+                        }
+                    }
+                }
+            });
+
+            ctx.translate(layout.offsetX, layout.offsetY);
+            cellsToRedraw.forEach((key) => {
+                const [row, col] = key.split(",").map(Number);
+                ctx.clearRect(col * layout.cellSize, row * layout.cellSize, layout.cellSize, layout.cellSize);
+            });
+            this.drawMapCells(runtime, layout, cellsToRedraw);
+            this.drawOneWayGates(layout.cellSize, ctx, cellsToRedraw);
+        }
+        ctx.restore();
+
+        this.mapRenderState.fullDirty = false;
+        this.mapRenderState.dirtyCells.clear();
+    }
+
+    drawMapCells(runtime, layout, cellsToRedraw) {
+        const ctx = this.mapCtx;
+        const drawCellAt = (row, col) => {
+            const cell = runtime.grid[row][col];
+            const x = col * layout.cellSize;
+            const y = row * layout.cellSize;
+            this.drawCell(cell, x, y, layout.cellSize, ctx);
+            this.drawSpecials(row, col, x, y, layout.cellSize, ctx);
+            this.drawWalls(cell, x, y, layout.cellSize, ctx);
+        };
+
+        if (cellsToRedraw) {
+            cellsToRedraw.forEach((key) => {
+                const [row, col] = key.split(",").map(Number);
+                drawCellAt(row, col);
+            });
+            return;
+        }
+
+        for (let row = 0; row < layout.rows; row += 1) {
+            for (let col = 0; col < layout.cols; col += 1) {
+                drawCellAt(row, col);
+            }
+        }
+    }
+
+    drawCell(cell, x, y, size, ctx = this.ctx) {
         const visible = cell.visibility === "visible";
         const explored = cell.visibility === "explored";
         if (size <= 1) {
@@ -1284,7 +1472,7 @@ class MobileMazeGame {
         const visibilityStrength = visible ? (cell.visibilityStrength ?? 1) : explored ? 0.22 : 0;
 
         if (visible) {
-            this.drawWoodFloor(cell, x, y, size, visibilityStrength);
+            this.drawWoodFloor(cell, x, y, size, visibilityStrength, ctx);
         } else if (explored) {
             ctx.fillStyle = "#15130f";
             ctx.fillRect(x, y, size, size);
@@ -1310,8 +1498,7 @@ class MobileMazeGame {
         }
     }
 
-    drawWoodFloor(cell, x, y, size, visibilityStrength) {
-        const ctx = this.ctx;
+    drawWoodFloor(cell, x, y, size, visibilityStrength, ctx = this.ctx) {
         const tone = ((cell.row * 19 + cell.col * 23) % 9) - 4;
         const baseByTile = {
             floor: [91, 59, 38],
@@ -1364,8 +1551,7 @@ class MobileMazeGame {
         }
     }
 
-    drawSpecials(row, col, x, y, size) {
-        const ctx = this.ctx;
+    drawSpecials(row, col, x, y, size, ctx = this.ctx) {
         const cell = this.runtime.grid[row][col];
         if (cell.visibility === "hidden") {
             return;
@@ -1445,12 +1631,11 @@ class MobileMazeGame {
         }
     }
 
-    drawWalls(cell, x, y, size) {
+    drawWalls(cell, x, y, size, ctx = this.ctx) {
         if (cell.visibility === "hidden") {
             return;
         }
 
-        const ctx = this.ctx;
         const visibilityStrength = cell.visibility === "visible" ? (cell.visibilityStrength ?? 1) : 0.3;
         ctx.strokeStyle = cell.visibility === "visible"
             ? `rgba(213, 227, 255, ${0.18 + visibilityStrength * 0.82})`
@@ -1476,16 +1661,20 @@ class MobileMazeGame {
         ctx.stroke();
     }
 
-    drawOneWayGates(size) {
+    drawOneWayGates(size, ctx = this.ctx, affectedCells = null) {
         const gates = this.runtime.features.oneWayBlocked;
         if (!gates.size || size <= 1) {
             return;
         }
 
-        const ctx = this.ctx;
         gates.forEach((key) => {
             const edge = parseEdgeKey(key);
             if (!edge) {
+                return;
+            }
+            if (affectedCells &&
+                !affectedCells.has(cellKey(edge.fromRow, edge.fromCol)) &&
+                !affectedCells.has(cellKey(edge.toRow, edge.toCol))) {
                 return;
             }
 
@@ -1986,18 +2175,27 @@ class MobileMazeGame {
         const modifiers = this.buffSystem.getActiveModifiers();
         const revealAll = forceReveal || modifiers.revealAll;
         const radius = clamp(runtime.level.visionRadius + modifiers.visionBonus, 1, 8);
+        const shouldTrackDirty = runtime === this.runtime && this.mapRenderState;
+        const setVisibility = (cell, visibility, strength) => {
+            const changed = cell.visibility !== visibility || Math.abs((cell.visibilityStrength ?? 0) - strength) > 0.001;
+            cell.visibility = visibility;
+            cell.visibilityStrength = strength;
+            if (changed && shouldTrackDirty) {
+                this.markDirtyCell(cell.row, cell.col);
+            }
+        };
 
         runtime.grid.flat().forEach((cell) => {
             if (cell.visibility === "visible") {
-                cell.visibility = this.saveData.settings.rememberFog ? "explored" : "hidden";
+                setVisibility(cell, this.saveData.settings.rememberFog ? "explored" : "hidden", 0);
+            } else if (cell.visibilityStrength !== 0) {
+                setVisibility(cell, cell.visibility, 0);
             }
-            cell.visibilityStrength = 0;
         });
 
         if (revealAll) {
             runtime.grid.flat().forEach((cell) => {
-                cell.visibility = "visible";
-                cell.visibilityStrength = 1;
+                setVisibility(cell, "visible", 1);
             });
             return;
         }
@@ -2008,10 +2206,9 @@ class MobileMazeGame {
                 if (distance > radius + 0.35) {
                     continue;
                 }
-                runtime.grid[row][col].visibility = "visible";
                 const normalized = clamp(distance / Math.max(radius, 0.001), 0, 1);
                 const eased = 1 - Math.pow(normalized, 1.85);
-                runtime.grid[row][col].visibilityStrength = clamp(0.16 + eased * 0.84, 0.16, 1);
+                setVisibility(runtime.grid[row][col], "visible", clamp(0.16 + eased * 0.84, 0.16, 1));
             }
         }
     }
@@ -2038,5 +2235,6 @@ export {
     edgeKey,
     formatTime,
     mergeCompletionRecord,
+    normalizeSaveData,
     parseEdgeKey
 };

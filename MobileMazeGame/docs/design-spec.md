@@ -617,9 +617,10 @@ class HostAdapter {
 ```js
 {
   settings: {
-    musicEnabled: true,
-    sfxEnabled: true,
-    inputMode: "swipe+dpad"
+    showDpad: true,
+    vibration: true,
+    sound: true,
+    rememberFog: true
   },
   progress: {
     unlockedLevel: 1,
@@ -633,6 +634,8 @@ class HostAdapter {
   }
 }
 ```
+
+读取存档时会规范化为上述结构；旧版字段 `sfxEnabled`、`musicEnabled`、`inputMode` 仅作为兼容输入，不再写回新存档。
 
 通关评级使用每关的 `targetTimeSec` 与 `targetMoves`：
 

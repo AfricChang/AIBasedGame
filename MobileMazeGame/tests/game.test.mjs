@@ -13,6 +13,7 @@ import {
     cellKey,
     edgeKey,
     mergeCompletionRecord,
+    normalizeSaveData,
     parseEdgeKey
 } from "../game.js";
 
@@ -363,16 +364,46 @@ test("storage merges defaults for old saves and recovers from malformed data", (
     try {
         const storage = new StorageService();
         values.set("mobileMazeGame.save.v1", JSON.stringify({
-            settings: { showDpad: false },
-            progress: { unlockedLevel: 4 }
+            settings: { inputMode: "swipe-only", sfxEnabled: false },
+            progress: {
+                unlockedLevel: 4,
+                completedLevels: {
+                    "1": { bestTimeMs: 48210, bestMoves: 31 },
+                    "2": { bestTimeMs: 30000, bestMoves: 20, stars: 9 },
+                    "999": { bestTimeMs: 1, bestMoves: 1, stars: 3 }
+                }
+            }
         }));
 
         const loaded = storage.load();
         assert.equal(loaded.settings.showDpad, false);
-        assert.equal(loaded.settings.sound, true);
+        assert.equal(loaded.settings.sound, false);
         assert.equal(loaded.settings.vibration, true);
+        assert.equal(loaded.settings.rememberFog, true);
         assert.equal(loaded.progress.unlockedLevel, 4);
-        assert.deepEqual(loaded.progress.completedLevels, {});
+        assert.deepEqual(loaded.progress.completedLevels, {
+            1: { bestTimeMs: 48210, bestMoves: 31, stars: 2 },
+            2: { bestTimeMs: 30000, bestMoves: 20, stars: 3 }
+        });
+
+        storage.save({
+            settings: { showDpad: true, vibration: false, sound: true, rememberFog: false },
+            progress: {
+                unlockedLevel: 99,
+                completedLevels: {
+                    1: { bestTimeMs: 20000, bestMoves: 20, stars: 3 }
+                }
+            }
+        });
+        assert.deepEqual(JSON.parse(values.get("mobileMazeGame.save.v1")), {
+            settings: { showDpad: true, vibration: false, sound: true, rememberFog: false },
+            progress: {
+                unlockedLevel: 20,
+                completedLevels: {
+                    1: { bestTimeMs: 20000, bestMoves: 20, stars: 3 }
+                }
+            }
+        });
 
         values.set("mobileMazeGame.save.v1", "{not-json");
         console.warn = () => {};
@@ -385,6 +416,44 @@ test("storage merges defaults for old saves and recovers from malformed data", (
             globalThis.window = originalWindow;
         }
     }
+});
+
+test("save data normalization keeps the documented schema stable", () => {
+    assert.deepEqual(normalizeSaveData({
+        settings: { showDpad: 0, vibration: 1, sound: "", rememberFog: "yes" },
+        progress: {
+            unlockedLevel: -4,
+            completedLevels: {
+                1: { bestTimeMs: -100, bestMoves: 12.8, stars: 0 },
+                bad: { bestTimeMs: 10, bestMoves: 10, stars: 3 }
+            }
+        }
+    }), {
+        settings: { showDpad: false, vibration: true, sound: false, rememberFog: true },
+        progress: {
+            unlockedLevel: 1,
+            completedLevels: {
+                1: { bestTimeMs: 0, bestMoves: 12, stars: 1 }
+            }
+        }
+    });
+});
+
+test("render dirtiness can track full and cell-level redraws", () => {
+    const game = Object.create(MobileMazeGame.prototype);
+    game.runtime = { level: { rows: 3, cols: 4 } };
+    game.mapRenderState = {
+        fullDirty: false,
+        dirtyCells: new Set()
+    };
+
+    game.markDirtyCell(1, 2);
+    game.markDirtyCell(4, 2);
+    assert.deepEqual([...game.mapRenderState.dirtyCells], ["1,2"]);
+
+    game.markMapDirty(true);
+    assert.equal(game.mapRenderState.fullDirty, true);
+    assert.equal(game.mapRenderState.dirtyCells.size, 0);
 });
 
 test("disabled audio does not create an audio context", () => {
