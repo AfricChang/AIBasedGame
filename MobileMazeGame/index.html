@@ -47,10 +47,6 @@
                 </div>
                 <div class="settings-list">
                     <label class="setting-item">
-                        <span>显示方向键</span>
-                        <input id="showDpadSetting" type="checkbox" checked>
-                    </label>
-                    <label class="setting-item">
                         <span>触觉反馈</span>
                         <input id="vibrationSetting" type="checkbox" checked>
                     </label>
@@ -117,15 +113,6 @@
                     <canvas id="gameCanvas" aria-label="迷宫画布"></canvas>
                     <button id="swipeHint" class="swipe-hint" type="button">滑动移动</button>
                 </div>
-
-                <div id="dpad" class="dpad">
-                    <button class="dpad-btn" data-dir="up">↑</button>
-                    <div class="dpad-middle">
-                        <button class="dpad-btn" data-dir="left">←</button>
-                        <button class="dpad-btn" data-dir="down">↓</button>
-                        <button class="dpad-btn" data-dir="right">→</button>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -146,7 +133,7 @@
                 <h3 id="resultTitle">挑战完成</h3>
                 <p id="resultSummary">你顺利穿过了迷宫。</p>
                 <div class="result-rating">
-                    <strong id="resultStars">未评级</strong>
+                    <div id="resultStars" class="result-stars" aria-label="关卡评级"></div>
                     <span id="resultTargets">目标 00:00.0 / 0步</span>
                     <span id="resultRatingDetail">通关后根据目标时间和步数评级</span>
                 </div>

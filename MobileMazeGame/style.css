@@ -124,7 +124,6 @@ button {
 .text-btn,
 .hud-btn,
 .back-btn,
-.dpad-btn,
 .swipe-hint {
     cursor: pointer;
     transition: transform 0.16s ease, opacity 0.16s ease, background-color 0.16s ease;
@@ -160,8 +159,7 @@ button {
 .ghost-btn:active,
 .text-btn:active,
 .hud-btn:active,
-.back-btn:active,
-.dpad-btn:active {
+.back-btn:active {
     transform: scale(0.97);
 }
 
@@ -266,8 +264,10 @@ button {
 
 .game-layout {
     width: min(100%, 920px);
+    min-height: calc(100dvh - 36px);
     margin: 0 auto;
     display: grid;
+    grid-template-rows: auto auto minmax(360px, 1fr);
     gap: 12px;
 }
 
@@ -342,7 +342,7 @@ button {
 
 .game-viewport {
     position: relative;
-    min-height: clamp(300px, 46dvh, 580px);
+    min-height: clamp(420px, 64dvh, 720px);
     border-radius: 28px;
     overflow: hidden;
     background:
@@ -372,34 +372,6 @@ button {
 
 .swipe-hint.hidden {
     display: none;
-}
-
-.dpad {
-    display: grid;
-    gap: 8px;
-    justify-items: center;
-    padding-bottom: 4px;
-}
-
-.dpad-middle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.dpad-btn {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    font-size: 1.2rem;
-    color: var(--text);
-}
-
-.dpad > .dpad-btn {
-    width: 58px;
 }
 
 .overlay {
@@ -433,9 +405,9 @@ button {
 
 .result-rating {
     display: grid;
-    gap: 5px;
+    gap: 8px;
     justify-items: center;
-    padding: 12px;
+    padding: 14px 12px;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.06);
 }
@@ -448,6 +420,94 @@ button {
 .result-rating span {
     color: var(--muted);
     font-size: 0.88rem;
+}
+
+.star {
+    display: inline-block;
+    font-family: "Segoe UI Symbol", "Apple Color Emoji", "Segoe UI", sans-serif;
+    font-style: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+}
+
+.star--filled {
+    color: #ffd23f;
+    text-shadow:
+        0 0 6px rgba(255, 210, 63, 0.55),
+        0 0 12px rgba(255, 168, 38, 0.35),
+        0 1px 0 rgba(120, 60, 0, 0.45);
+}
+
+.star--empty {
+    color: rgba(255, 255, 255, 0.22);
+    text-shadow: none;
+}
+
+.result-stars {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 2.4rem;
+    min-height: 1em;
+}
+
+.result-stars .star {
+    transition: transform 0.18s ease, color 0.18s ease, text-shadow 0.18s ease;
+}
+
+.result-stars .star--pending {
+    transform: scale(0.2) rotate(-90deg);
+    opacity: 0;
+    color: rgba(255, 255, 255, 0.22);
+    text-shadow: none;
+}
+
+.result-stars .star--pop {
+    animation: star-pop 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes star-pop {
+    0% {
+        transform: scale(0.2) rotate(-90deg);
+        opacity: 0;
+        color: rgba(255, 255, 255, 0.22);
+        text-shadow: none;
+    }
+    55% {
+        transform: scale(1.45) rotate(10deg);
+        opacity: 1;
+        color: #fff7c2;
+        text-shadow:
+            0 0 18px rgba(255, 224, 102, 0.95),
+            0 0 30px rgba(255, 168, 38, 0.7);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+        color: #ffd23f;
+        text-shadow:
+            0 0 6px rgba(255, 210, 63, 0.55),
+            0 0 12px rgba(255, 168, 38, 0.35),
+            0 1px 0 rgba(120, 60, 0, 0.45);
+    }
+}
+
+.level-stars {
+    display: inline-flex;
+    gap: 4px;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.star-tally {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.star--inline {
+    font-size: 1em;
 }
 
 .result-stats {
@@ -496,13 +556,7 @@ button {
     }
 
     .game-viewport {
-        min-height: clamp(280px, 42dvh, 500px);
-    }
-
-    .dpad-btn,
-    .dpad > .dpad-btn {
-        width: 54px;
-        height: 54px;
+        min-height: clamp(390px, 58dvh, 660px);
     }
 }
 

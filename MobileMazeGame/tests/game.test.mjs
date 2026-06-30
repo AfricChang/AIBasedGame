@@ -376,7 +376,6 @@ test("storage merges defaults for old saves and recovers from malformed data", (
         }));
 
         const loaded = storage.load();
-        assert.equal(loaded.settings.showDpad, false);
         assert.equal(loaded.settings.sound, false);
         assert.equal(loaded.settings.vibration, true);
         assert.equal(loaded.settings.rememberFog, true);
@@ -387,7 +386,7 @@ test("storage merges defaults for old saves and recovers from malformed data", (
         });
 
         storage.save({
-            settings: { showDpad: true, vibration: false, sound: true, rememberFog: false },
+            settings: { vibration: false, sound: true, rememberFog: false },
             progress: {
                 unlockedLevel: 99,
                 completedLevels: {
@@ -396,7 +395,7 @@ test("storage merges defaults for old saves and recovers from malformed data", (
             }
         });
         assert.deepEqual(JSON.parse(values.get("mobileMazeGame.save.v1")), {
-            settings: { showDpad: true, vibration: false, sound: true, rememberFog: false },
+            settings: { vibration: false, sound: true, rememberFog: false },
             progress: {
                 unlockedLevel: 20,
                 completedLevels: {
@@ -429,7 +428,7 @@ test("save data normalization keeps the documented schema stable", () => {
             }
         }
     }), {
-        settings: { showDpad: false, vibration: true, sound: false, rememberFog: true },
+        settings: { vibration: true, sound: false, rememberFog: true },
         progress: {
             unlockedLevel: 1,
             completedLevels: {

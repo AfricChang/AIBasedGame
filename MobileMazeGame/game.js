@@ -10,7 +10,6 @@ const DIRS = {
 
 const DEFAULT_SAVE = {
     settings: {
-        showDpad: true,
         vibration: true,
         sound: true,
         rememberFog: true
@@ -97,6 +96,16 @@ function formatLevelTarget(level) {
     return `${formatTime(level.targetTimeSec * 1000)} / ${level.targetMoves}步`;
 }
 
+function buildStarsMarkup(earned, total = 3) {
+    const filledCount = clamp(Math.round(earned) || 0, 0, total);
+    let markup = "";
+    for (let index = 0; index < total; index += 1) {
+        const filled = index < filledCount;
+        markup += `<span class="star ${filled ? "star--filled" : "star--empty"}" style="--star-index:${index};">★</span>`;
+    }
+    return markup;
+}
+
 function deepCloneSave(save) {
     return JSON.parse(JSON.stringify(save));
 }
@@ -104,7 +113,6 @@ function deepCloneSave(save) {
 function normalizeSaveData(rawSave) {
     const rawSettings = rawSave && typeof rawSave === "object" ? rawSave.settings || {} : {};
     const settings = {
-        showDpad: rawSettings.showDpad ?? (rawSettings.inputMode ? rawSettings.inputMode !== "swipe-only" : DEFAULT_SAVE.settings.showDpad),
         vibration: rawSettings.vibration ?? DEFAULT_SAVE.settings.vibration,
         sound: rawSettings.sound ?? rawSettings.sfxEnabled ?? rawSettings.musicEnabled ?? DEFAULT_SAVE.settings.sound,
         rememberFog: rawSettings.rememberFog ?? DEFAULT_SAVE.settings.rememberFog
@@ -138,7 +146,6 @@ function normalizeSaveData(rawSave) {
 
     return {
         settings: {
-            showDpad: !!settings.showDpad,
             vibration: !!settings.vibration,
             sound: !!settings.sound,
             rememberFog: !!settings.rememberFog
@@ -530,7 +537,6 @@ class MobileMazeGame {
             targetLabel: document.getElementById("targetLabel"),
             buffLabel: document.getElementById("buffLabel"),
             swipeHint: document.getElementById("swipeHint"),
-            dpad: document.getElementById("dpad"),
             pauseOverlay: document.getElementById("pauseOverlay"),
             resultOverlay: document.getElementById("resultOverlay"),
             resultTitle: document.getElementById("resultTitle"),
@@ -544,7 +550,6 @@ class MobileMazeGame {
             resultSecondaryBtn: document.getElementById("resultSecondaryBtn"),
             resultMenuBtn: document.getElementById("resultMenuBtn"),
             settings: {
-                showDpad: document.getElementById("showDpadSetting"),
                 vibration: document.getElementById("vibrationSetting"),
                 sound: document.getElementById("soundSetting"),
                 rememberFog: document.getElementById("rememberFogSetting")
@@ -609,7 +614,6 @@ class MobileMazeGame {
             this.showScreen("levelSelectScreen");
         });
 
-        this.elements.settings.showDpad.addEventListener("change", () => this.saveSetting("showDpad", this.elements.settings.showDpad.checked));
         this.elements.settings.vibration.addEventListener("change", () => this.saveSetting("vibration", this.elements.settings.vibration.checked));
         this.elements.settings.sound.addEventListener("change", () => {
             this.saveSetting("sound", this.elements.settings.sound.checked);
@@ -670,30 +674,6 @@ class MobileMazeGame {
             }
         });
 
-        this.elements.dpad.querySelectorAll(".dpad-btn").forEach((button) => {
-            const direction = button.dataset.dir;
-            button.addEventListener("pointerdown", (event) => {
-                event.preventDefault();
-                this.setHeldDirection(direction, "dpad", performance.now());
-                this.requestMove(direction);
-            });
-            button.addEventListener("pointerup", () => {
-                if (this.heldDirectionSource === "dpad" && this.heldDirection === direction) {
-                    this.clearHeldDirection();
-                }
-            });
-            button.addEventListener("pointerleave", () => {
-                if (this.heldDirectionSource === "dpad" && this.heldDirection === direction) {
-                    this.clearHeldDirection();
-                }
-            });
-            button.addEventListener("pointercancel", () => {
-                if (this.heldDirectionSource === "dpad" && this.heldDirection === direction) {
-                    this.clearHeldDirection();
-                }
-            });
-        });
-
         this.canvas.addEventListener("pointerdown", (event) => {
             this.swipeStart = { x: event.clientX, y: event.clientY };
         });
@@ -744,11 +724,9 @@ class MobileMazeGame {
     }
 
     applySettingsToUI() {
-        this.elements.settings.showDpad.checked = !!this.saveData.settings.showDpad;
         this.elements.settings.vibration.checked = !!this.saveData.settings.vibration;
         this.elements.settings.sound.checked = !!this.saveData.settings.sound;
         this.elements.settings.rememberFog.checked = !!this.saveData.settings.rememberFog;
-        this.elements.dpad.classList.toggle("hidden", !this.saveData.settings.showDpad);
     }
 
     markMapDirty(full = false) {
@@ -832,7 +810,8 @@ class MobileMazeGame {
         const totalStars = LEVELS.reduce((sum, level) => {
             return sum + getCompletionStars(level, this.saveData.progress.completedLevels[level.id]);
         }, 0);
-        this.elements.progressMeta.textContent = `已解锁 ${this.saveData.progress.unlockedLevel} / ${LEVELS.length} · 星级 ${totalStars} / ${LEVELS.length * 3}`;
+        const maxStars = LEVELS.length * 3;
+        this.elements.progressMeta.innerHTML = `已解锁 ${this.saveData.progress.unlockedLevel} / ${LEVELS.length} · <span class="star-tally"><span class="star star--filled star--inline">★</span>${totalStars} / ${maxStars}</span>`;
     }
 
     renderLevelGrid() {
@@ -848,13 +827,15 @@ class MobileMazeGame {
 
             const completed = this.saveData.progress.completedLevels[level.id];
             const stars = getCompletionStars(level, completed);
+            const starsMarkup = `<span class="level-stars">${buildStarsMarkup(stars)}</span>`;
             const bestSummary = completed
-                ? `最佳 ${formatTime(completed.bestTimeMs)} · ${completed.bestMoves}步 · ${stars}星`
+                ? `最佳 ${formatTime(completed.bestTimeMs)} · ${completed.bestMoves}步`
                 : "尚未通关";
             card.innerHTML = `
                 <strong>${level.code} ${level.name}</strong>
                 <small>${level.rows}x${level.cols} · 视野 ${level.visionRadius} · ${this.getObjectiveText(level)}</small>
                 <span class="level-target">目标 ${formatLevelTarget(level)}</span>
+                ${starsMarkup}
                 <span class="${completed ? "level-best" : "level-empty"}">${bestSummary}</span>
             `;
             card.addEventListener("click", () => this.startLevel(level.id));
@@ -1164,11 +1145,38 @@ class MobileMazeGame {
             : "你已经完成全部 20 个迷宫挑战。";
         this.elements.resultTime.textContent = formatTime(runtime.elapsedMs);
         this.elements.resultMoves.textContent = String(runtime.moveCount);
-        this.elements.resultStars.textContent = `${rating.stars} 星`;
+        this.renderResultStars(rating.stars, true);
         this.elements.resultTargets.textContent = `目标 ${formatLevelTarget(runtime.level)}`;
         this.elements.resultRatingDetail.textContent = `${rating.metTimeTarget ? "时间达标" : "时间超出"} · ${rating.metMoveTarget ? "步数达标" : "步数超出"}`;
         this.elements.resultPrimaryBtn.textContent = this.currentLevelId < LEVELS.length ? "下一关" : "再次挑战";
         this.showOverlay(this.elements.resultOverlay);
+    }
+
+    renderResultStars(earned, animate) {
+        const total = 3;
+        const filledCount = clamp(Math.round(earned) || 0, 0, total);
+        const container = this.elements.resultStars;
+        container.classList.toggle("result-stars--unrated", filledCount <= 0 && !animate);
+        container.innerHTML = "";
+
+        for (let index = 0; index < total; index += 1) {
+            const star = document.createElement("span");
+            const filled = index < filledCount;
+            star.className = `star ${filled ? "star--filled" : "star--empty"}`;
+            star.textContent = "★";
+            container.appendChild(star);
+
+            if (animate && filled) {
+                star.classList.add("star--pending");
+                const delay = 180 + index * 260;
+                setTimeout(() => {
+                    star.classList.remove("star--pending");
+                    star.classList.add("star--pop");
+                    this.audio.play("key");
+                    this.softVibrate(20);
+                }, delay);
+            }
+        }
     }
 
     handleLevelFailed(message) {
@@ -1184,7 +1192,7 @@ class MobileMazeGame {
         this.elements.resultSummary.textContent = message;
         this.elements.resultTime.textContent = formatTime(runtime.elapsedMs);
         this.elements.resultMoves.textContent = String(runtime.moveCount);
-        this.elements.resultStars.textContent = "未评级";
+        this.renderResultStars(0, false);
         this.elements.resultTargets.textContent = `目标 ${formatLevelTarget(runtime.level)}`;
         this.elements.resultRatingDetail.textContent = "通关后根据目标时间和步数评级";
         this.elements.resultPrimaryBtn.textContent = "再试一次";

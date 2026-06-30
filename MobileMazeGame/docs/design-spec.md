@@ -224,7 +224,7 @@ MobileMazeGame/
         rule-system.js
       input/
         swipe-input.js
-        dpad-input.js
+        touch-input.js
         input-adapter.js
       render/
         canvas-renderer.js
@@ -617,7 +617,6 @@ class HostAdapter {
 ```js
 {
   settings: {
-    showDpad: true,
     vibration: true,
     sound: true,
     rememberFog: true
@@ -635,7 +634,7 @@ class HostAdapter {
 }
 ```
 
-读取存档时会规范化为上述结构；旧版字段 `sfxEnabled`、`musicEnabled`、`inputMode` 仅作为兼容输入，不再写回新存档。
+读取存档时会规范化为上述结构；旧版字段 `sfxEnabled`、`musicEnabled`、`inputMode`、`showDpad` 仅作为兼容输入，不再写回新存档。
 
 通关评级使用每关的 `targetTimeSec` 与 `targetMoves`：
 
