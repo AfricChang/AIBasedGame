@@ -309,6 +309,25 @@ test("visibility can forget old cells when rememberFog is disabled", () => {
     assert.equal(runtime.grid.flat().some((cell) => cell.visibility === "explored"), false);
 });
 
+test("visionMemorySec fades explored cells once the window expires", () => {
+    const finiteLevel = LEVELS.find((item) => Number.isFinite(item.visionMemorySec) && item.visionMemorySec > 0);
+    assert.ok(finiteLevel, "Expected at least one level with a finite visionMemorySec");
+
+    const game = createGameHarness({ rememberFog: true });
+    const runtime = game.createLevelRuntime(finiteLevel);
+    runtime.player.row = runtime.exit.row;
+    runtime.player.col = runtime.exit.col;
+    runtime.elapsedMs = 0;
+    game.computeVisibilityForRuntime(runtime);
+    const exploredAtStart = runtime.grid.flat().filter((cell) => cell.visibility === "explored").length;
+    assert.ok(exploredAtStart > 0, "Expected some explored cells right after moving");
+
+    runtime.elapsedMs = (finiteLevel.visionMemorySec + 1) * 1000;
+    game.computeVisibilityForRuntime(runtime);
+    const exploredAfterExpiry = runtime.grid.flat().filter((cell) => cell.visibility === "explored").length;
+    assert.equal(exploredAfterExpiry, 0, "Expected no explored cells once the memory window has elapsed");
+});
+
 test("buff system refreshes, expires, and aggregates modifiers", () => {
     const buffs = new BuffSystem();
     buffs.add({

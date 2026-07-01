@@ -12,7 +12,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["tutorial", "short-path"],
         targetTimeSec: 40,
-        targetMoves: 70
+        targetMoves: 70,
+        visionMemorySec: null
     },
     {
         id: 2,
@@ -27,7 +28,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["forks", "backtrack"],
         targetTimeSec: 50,
-        targetMoves: 95
+        targetMoves: 95,
+        visionMemorySec: 60
     },
     {
         id: 3,
@@ -42,7 +44,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["dead-ends", "memory"],
         targetTimeSec: 60,
-        targetMoves: 95
+        targetMoves: 95,
+        visionMemorySec: 45
     },
     {
         id: 4,
@@ -57,7 +60,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["low-vision"],
         targetTimeSec: 70,
-        targetMoves: 120
+        targetMoves: 120,
+        visionMemorySec: 35
     },
     {
         id: 5,
@@ -72,7 +76,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["key-door"],
         targetTimeSec: 75,
-        targetMoves: 75
+        targetMoves: 75,
+        visionMemorySec: 30
     },
     {
         id: 6,
@@ -87,7 +92,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["beacon", "buff-validation"],
         targetTimeSec: 80,
-        targetMoves: 135
+        targetMoves: 135,
+        visionMemorySec: 25
     },
     {
         id: 7,
@@ -102,7 +108,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["slow-tiles"],
         targetTimeSec: 90,
-        targetMoves: 115
+        targetMoves: 115,
+        visionMemorySec: 22
     },
     {
         id: 8,
@@ -117,7 +124,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["teleport-pair"],
         targetTimeSec: 95,
-        targetMoves: 100
+        targetMoves: 100,
+        visionMemorySec: 18
     },
     {
         id: 9,
@@ -132,7 +140,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["one-way-gate"],
         targetTimeSec: 100,
-        targetMoves: 80
+        targetMoves: 80,
+        visionMemorySec: 16
     },
     {
         id: 10,
@@ -147,7 +156,8 @@ export const LEVELS = [
         timerSec: 90,
         challengeTags: ["timer"],
         targetTimeSec: 85,
-        targetMoves: 180
+        targetMoves: 180,
+        visionMemorySec: 14
     },
     {
         id: 11,
@@ -162,7 +172,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["vision-debuff", "trap-tiles"],
         targetTimeSec: 110,
-        targetMoves: 155
+        targetMoves: 155,
+        visionMemorySec: 12
     },
     {
         id: 12,
@@ -177,7 +188,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["dual-keys", "route-planning"],
         targetTimeSec: 120,
-        targetMoves: 145
+        targetMoves: 145,
+        visionMemorySec: 10
     },
     {
         id: 13,
@@ -192,7 +204,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["hidden-shortcut", "exploration-reward"],
         targetTimeSec: 125,
-        targetMoves: 135
+        targetMoves: 135,
+        visionMemorySec: 9
     },
     {
         id: 14,
@@ -207,7 +220,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["pressure-plate", "sequence"],
         targetTimeSec: 130,
-        targetMoves: 100
+        targetMoves: 100,
+        visionMemorySec: 8
     },
     {
         id: 15,
@@ -222,7 +236,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["multi-beacon", "buff-management"],
         targetTimeSec: 135,
-        targetMoves: 84
+        targetMoves: 84,
+        visionMemorySec: 7
     },
     {
         id: 16,
@@ -237,7 +252,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["teleport-chain", "orientation"],
         targetTimeSec: 145,
-        targetMoves: 90
+        targetMoves: 90,
+        visionMemorySec: 6
     },
     {
         id: 17,
@@ -252,7 +268,8 @@ export const LEVELS = [
         timerSec: null,
         challengeTags: ["low-vision", "long-route"],
         targetTimeSec: 155,
-        targetMoves: 96
+        targetMoves: 96,
+        visionMemorySec: 5
     },
     {
         id: 18,
@@ -267,7 +284,8 @@ export const LEVELS = [
         timerSec: 150,
         challengeTags: ["multi-route", "timer", "decision-pressure"],
         targetTimeSec: 145,
-        targetMoves: 92
+        targetMoves: 92,
+        visionMemorySec: 4
     },
     {
         id: 19,
@@ -282,7 +300,8 @@ export const LEVELS = [
         timerSec: 165,
         challengeTags: ["compound-mechanics", "dual-keys", "teleport-pair", "timer"],
         targetTimeSec: 160,
-        targetMoves: 104
+        targetMoves: 104,
+        visionMemorySec: 3
     },
     {
         id: 20,
@@ -297,6 +316,7 @@ export const LEVELS = [
         timerSec: 180,
         challengeTags: ["final-trial", "beacon", "dual-keys", "pressure-plate", "teleport-chain", "timer"],
         targetTimeSec: 175,
-        targetMoves: 118
+        targetMoves: 118,
+        visionMemorySec: 3
     }
 ];

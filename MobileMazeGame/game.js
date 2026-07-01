@@ -537,6 +537,7 @@ class MobileMazeGame {
             visionLabel: document.getElementById("visionLabel"),
             moveCountLabel: document.getElementById("moveCountLabel"),
             targetLabel: document.getElementById("targetLabel"),
+            memoryLabel: document.getElementById("memoryLabel"),
             buffLabel: document.getElementById("buffLabel"),
             swipeHint: document.getElementById("swipeHint"),
             pauseOverlay: document.getElementById("pauseOverlay"),
@@ -884,6 +885,7 @@ class MobileMazeGame {
         this.currentLevelId = levelId;
         this.audio.play("start");
         this.buffSystem.clear();
+        this.visionMemoryTicker = 0;
         this.pendingDirection = null;
         this.clearHeldDirection();
         this.hideOverlay(this.elements.pauseOverlay);
@@ -896,7 +898,17 @@ class MobileMazeGame {
             this.resizeCanvas();
             this.computeVisibility();
         });
-        this.flashMessage("");
+
+        const memorySec = level.visionMemorySec;
+        if (!this.saveData.settings.rememberFog) {
+            this.flashMessage("视野记忆已关闭");
+        } else if (memorySec === null || memorySec === undefined) {
+            this.flashMessage("视野记忆：永久");
+        } else if (memorySec > 0) {
+            this.flashMessage(`视野记忆：${memorySec}s`);
+        } else {
+            this.flashMessage("");
+        }
     }
 
     restartLevel() {
@@ -1241,6 +1253,7 @@ class MobileMazeGame {
         const timerBucket = Math.floor(runtime.elapsedMs / 100);
         const buffLabel = this.buffSystem.getLabel();
         const targetLabel = formatLevelTarget(runtime.level);
+        const memoryLabel = this.formatMemoryLabel(runtime.level);
         if (
             this.elements.levelTitle.textContent === `${runtime.level.code} ${runtime.level.name}` &&
             this.elements.objectiveLabel.textContent === this.getObjectiveStatusText(runtime) &&
@@ -1248,6 +1261,7 @@ class MobileMazeGame {
             this.elements.visionLabel.textContent === String(this.getCurrentVisionRadius()) &&
             this.elements.moveCountLabel.textContent === String(runtime.moveCount) &&
             this.elements.targetLabel.textContent === targetLabel &&
+            this.elements.memoryLabel?.textContent === memoryLabel &&
             this.elements.buffLabel.textContent === buffLabel
         ) {
             return;
@@ -1262,7 +1276,24 @@ class MobileMazeGame {
         this.elements.visionLabel.textContent = String(this.getCurrentVisionRadius());
         this.elements.moveCountLabel.textContent = String(runtime.moveCount);
         this.elements.targetLabel.textContent = targetLabel;
+        if (this.elements.memoryLabel) {
+            this.elements.memoryLabel.textContent = memoryLabel;
+        }
         this.elements.buffLabel.textContent = buffLabel;
+    }
+
+    formatMemoryLabel(level) {
+        if (!this.saveData.settings.rememberFog) {
+            return "关";
+        }
+        const sec = level.visionMemorySec;
+        if (sec === null || sec === undefined) {
+            return "∞";
+        }
+        if (sec <= 0) {
+            return "关";
+        }
+        return `${sec}s`;
     }
 
     getObjectiveStatusText(runtime) {
@@ -1357,6 +1388,15 @@ class MobileMazeGame {
             if (this.lastHudRenderMs !== currentBucket) {
                 this.lastHudRenderMs = currentBucket;
                 this.updateHUD();
+            }
+
+            const memorySec = runtime.level.visionMemorySec;
+            if (this.saveData.settings.rememberFog && memorySec !== null && memorySec !== undefined) {
+                this.visionMemoryTicker = (this.visionMemoryTicker ?? 0) + deltaMs;
+                if (this.visionMemoryTicker >= 250) {
+                    this.visionMemoryTicker = 0;
+                    this.computeVisibility();
+                }
             }
         }
     }
@@ -2216,6 +2256,14 @@ class MobileMazeGame {
         const modifiers = this.buffSystem.getActiveModifiers();
         const revealAll = forceReveal || modifiers.revealAll;
         const radius = clamp(runtime.level.visionRadius + modifiers.visionBonus, 1, 8);
+        const nowMs = runtime.elapsedMs ?? 0;
+        const rememberEnabled = !!this.saveData.settings.rememberFog;
+        const levelMemorySec = runtime.level.visionMemorySec;
+        const memoryMs = !rememberEnabled
+            ? 0
+            : levelMemorySec === null || levelMemorySec === undefined
+                ? Infinity
+                : Math.max(0, levelMemorySec * 1000);
         const shouldTrackDirty = runtime === this.runtime && this.mapRenderState;
         const setVisibility = (cell, visibility, strength) => {
             const changed = cell.visibility !== visibility || Math.abs((cell.visibilityStrength ?? 0) - strength) > 0.001;
@@ -2226,16 +2274,9 @@ class MobileMazeGame {
             }
         };
 
-        runtime.grid.flat().forEach((cell) => {
-            if (cell.visibility === "visible") {
-                setVisibility(cell, this.saveData.settings.rememberFog ? "explored" : "hidden", 0);
-            } else if (cell.visibilityStrength !== 0) {
-                setVisibility(cell, cell.visibility, 0);
-            }
-        });
-
         if (revealAll) {
             runtime.grid.flat().forEach((cell) => {
+                cell.lastSeenMs = nowMs;
                 setVisibility(cell, "visible", 1);
             });
             return;
@@ -2243,13 +2284,18 @@ class MobileMazeGame {
 
         for (let row = 0; row < runtime.level.rows; row += 1) {
             for (let col = 0; col < runtime.level.cols; col += 1) {
+                const cell = runtime.grid[row][col];
                 const distance = Math.hypot((row + 0.5) - (runtime.player.row + 0.5), (col + 0.5) - (runtime.player.col + 0.5));
-                if (distance > radius + 0.35) {
-                    continue;
+                if (distance <= radius + 0.35) {
+                    const normalized = clamp(distance / Math.max(radius, 0.001), 0, 1);
+                    const eased = 1 - Math.pow(normalized, 1.85);
+                    cell.lastSeenMs = nowMs;
+                    setVisibility(cell, "visible", clamp(0.16 + eased * 0.84, 0.16, 1));
+                } else {
+                    const seenAt = cell.lastSeenMs;
+                    const withinMemory = seenAt !== undefined && seenAt !== null && (nowMs - seenAt) < memoryMs;
+                    setVisibility(cell, withinMemory ? "explored" : "hidden", 0);
                 }
-                const normalized = clamp(distance / Math.max(radius, 0.001), 0, 1);
-                const eased = 1 - Math.pow(normalized, 1.85);
-                setVisibility(runtime.grid[row][col], "visible", clamp(0.16 + eased * 0.84, 0.16, 1));
             }
         }
     }

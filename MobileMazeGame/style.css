@@ -603,11 +603,22 @@ button {
 .hud-right {
     min-width: 92px;
     text-align: right;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.hud-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+    flex-shrink: 0;
 }
 
 .status-strip {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
     padding: 10px 12px;
 }
@@ -619,19 +630,23 @@ button {
     background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 8px;
 }
 
-.status-chip span {
+.chip-icon {
+    width: 16px;
+    height: 16px;
     color: var(--muted);
-    font-size: 0.82rem;
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .status-chip strong {
     font-size: 1rem;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .buff-chip strong {
@@ -935,8 +950,9 @@ button {
         padding: 9px 10px;
     }
 
-    .status-chip span {
-        font-size: 0.76rem;
+    .chip-icon {
+        width: 14px;
+        height: 14px;
     }
 
     .status-chip strong {
