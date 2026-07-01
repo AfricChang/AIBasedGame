@@ -13,16 +13,60 @@
     <div class="app-shell">
         <section id="mainMenu" class="screen active">
             <div class="hero-card">
-                <p class="eyebrow">Mobile Maze Game</p>
-                <h1>迷踪微光</h1>
-                <p class="hero-copy">在有限视野中摸索出口，利用信标、钥匙和传送门完成 20 个渐进式迷宫挑战。</p>
-                <div class="hero-actions">
-                    <button id="startGameBtn" class="primary-btn">开始游戏</button>
-                    <button id="levelSelectBtn" class="ghost-btn">关卡选择</button>
+                <div class="hero-decor" aria-hidden="true">
+                    <svg class="hero-maze" viewBox="0 0 240 240" preserveAspectRatio="xMaxYMin slice">
+                        <defs>
+                            <pattern id="mazeGrid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+                                <path d="M0 24 V0 H24" fill="none" stroke="rgba(102,217,210,0.09)" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#mazeGrid)"/>
+                        <path class="hero-path" d="M24 24 L96 24 L96 96 L168 96 L168 168 L216 168"
+                              fill="none" stroke="rgba(255,200,87,0.55)" stroke-width="2.2"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle class="hero-dot" cx="24" cy="24" r="3" fill="#66d9d2"/>
+                        <circle class="hero-dot" cx="96" cy="96" r="3" fill="#66d9d2"/>
+                        <circle class="hero-dot" cx="168" cy="168" r="3" fill="#66d9d2"/>
+                        <circle class="hero-dot hero-dot--exit" cx="216" cy="168" r="4.5" fill="#ffc857"/>
+                    </svg>
+                    <span class="hero-orb hero-orb--1"></span>
+                    <span class="hero-orb hero-orb--2"></span>
                 </div>
-                <div class="hero-actions secondary-actions">
-                    <button id="settingsBtn" class="text-btn">设置</button>
-                    <button id="aboutBtn" class="text-btn">关于</button>
+                <div class="hero-content">
+                    <p class="eyebrow">Mobile Maze Game</p>
+                    <h1>迷踪微光</h1>
+                    <p class="hero-copy">在有限视野中摸索出口，利用信标、钥匙和传送门完成 20 个渐进式迷宫挑战。</p>
+                    <div class="hero-progress">
+                        <div class="hero-progress-stat">
+                            <span>关卡</span>
+                            <strong id="heroProgressLevels">1 / 20</strong>
+                        </div>
+                        <div class="hero-progress-divider" aria-hidden="true"></div>
+                        <div class="hero-progress-stat">
+                            <span>星级</span>
+                            <strong id="heroProgressStars"><span class="star star--filled star--inline">★</span> 0 / 60</strong>
+                        </div>
+                    </div>
+                    <div class="hero-actions">
+                        <button id="startGameBtn" class="primary-btn primary-btn--icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                            <span>开始游戏</span>
+                        </button>
+                        <button id="levelSelectBtn" class="ghost-btn ghost-btn--icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
+                            <span>关卡选择</span>
+                        </button>
+                    </div>
+                    <div class="hero-actions secondary-actions">
+                        <button id="settingsBtn" class="text-btn text-btn--icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .31.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                            <span>设置</span>
+                        </button>
+                        <button id="aboutBtn" class="text-btn text-btn--icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                            <span>关于</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -30,7 +74,9 @@
         <section id="levelSelectScreen" class="screen">
             <div class="panel">
                 <div class="panel-header">
-                    <button class="back-btn" data-target="mainMenu">返回</button>
+                    <button class="back-btn" data-target="mainMenu" aria-label="返回">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </button>
                     <h2>关卡选择</h2>
                     <span class="panel-meta" id="progressMeta">已解锁 1 / 20</span>
                 </div>
@@ -41,9 +87,11 @@
         <section id="settingsScreen" class="screen">
             <div class="panel">
                 <div class="panel-header">
-                    <button class="back-btn" data-target="mainMenu">返回</button>
+                    <button class="back-btn" data-target="mainMenu" aria-label="返回">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </button>
                     <h2>设置</h2>
-                    <span class="panel-meta">移动端优先</span>
+                    <span class="panel-meta" aria-hidden="true"></span>
                 </div>
                 <div class="settings-list">
                     <label class="setting-item">
@@ -65,9 +113,11 @@
         <section id="aboutScreen" class="screen">
             <div class="panel">
                 <div class="panel-header">
-                    <button class="back-btn" data-target="mainMenu">返回</button>
+                    <button class="back-btn" data-target="mainMenu" aria-label="返回">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </button>
                     <h2>关于</h2>
-                    <span class="panel-meta">独立小游戏 / 可嵌入合集</span>
+                    <span class="panel-meta" aria-hidden="true"></span>
                 </div>
                 <div class="about-copy">
                     <p>《迷踪微光》是一款为移动端设计的 2D 网格迷宫游戏。</p>
@@ -134,12 +184,22 @@
                 <p id="resultSummary">你顺利穿过了迷宫。</p>
                 <div class="result-rating">
                     <div id="resultStars" class="result-stars" aria-label="关卡评级"></div>
-                    <span id="resultTargets">目标 00:00.0 / 0步</span>
-                    <span id="resultRatingDetail">通关后根据目标时间和步数评级</span>
-                </div>
-                <div class="result-stats">
-                    <span>时间 <strong id="resultTime">00:00.0</strong></span>
-                    <span>步数 <strong id="resultMoves">0</strong></span>
+                    <div class="result-metrics">
+                        <div id="resultTimeMetric" class="result-metric" aria-label="时间">
+                            <svg class="result-metric-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+                            <div class="result-metric-values">
+                                <strong id="resultTime">00:00.0</strong>
+                                <small>目标 <span id="resultTimeTarget">00:00.0</span></small>
+                            </div>
+                        </div>
+                        <div id="resultMovesMetric" class="result-metric" aria-label="步数">
+                            <svg class="result-metric-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg>
+                            <div class="result-metric-values">
+                                <strong id="resultMoves">0</strong>
+                                <small>目标 <span id="resultMovesTarget">0</span></small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="overlay-actions">
                     <button id="resultPrimaryBtn" class="primary-btn">下一关</button>
